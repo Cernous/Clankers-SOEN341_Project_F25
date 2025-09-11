@@ -43,5 +43,13 @@ Event administrators moderate content and oversee organizations.
 	 - Analytics
 	     - View global stats: number of events, tickets issued, and participation trends.
 
-## Team
+## Team Members
 
+- [Jonah Dorant](https://github.com/Dafurball)
+- [Batu Erata](https://github.com/BatuErata)
+- [Yi Fu Li](https://github.com/YifuLi-blip)
+- [Kelvin Luong](https://github.com/KelvinLuong)
+- [Abhishek Thakur](https://github.com/Abhi514583)
+- [Jia Cheng Wang](https://github.com/Ljwangftw)
+- [Anthony Wilson](https://github.com/replicationpond)
+- [Clarence Zhen](https://github.com/Cernous)
