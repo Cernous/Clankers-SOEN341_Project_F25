@@ -4,14 +4,14 @@
 
 ### Description
 
-a Campus Events & Ticketing Web Application designed to help students discover, organize, and attend events on campus. 
+__A Campus Events & Ticketing Web Application__ designed to help students discover, organize, and attend events on campus. 
 
 The system enables students to: 
 - browse and save events 
 - claim free or paid tickets 
 - check into events using QR codes
 
-organizers can:
+Event Organizers can:
 - create and manage events
 - track attendance
 - access analytics through dashboards
@@ -20,27 +20,27 @@ Event administrators moderate content and oversee organizations.
  
 ### Core Features
 
- Three primary users: Students, Organizers, and Administrators.
- 1. Student Event Experience
- 	- Event Discovery
+Three primary users: Students, Organizers, and Administrators.
+ 1. __Student Event Experience__
+ 	- *Event Discovery*
 		- Browse and search events with filters (date, category, organization).
- 	- Event Management
+ 	- *Event Management*
 	     - Save events to a personal calendar.
 	     - Claim tickets (free or mock paid).
 	     - Receive a digital ticket with a unique QR code.
- 2. Organizer Event Management
-	 - Event Creation
+ 2. __Organizer Event Management__
+	 - *Event Creation*
 	     - Enter event details: title, description, date/time, location, ticket capacity, ticket type (free or paid).
-	 - Event Analytics
+	 - *Event Analytics*
 	     - Dashboard per event with stats: tickets issued, attendance rates, and remaining capacity.
-	 - Tools
+	 - *Tools*
 	     - Export the attendee list in CSV.
 	     - Integrated QR scanner for ticket validation (for simplicity, you can assume the QR code image can be provided via file upload).
- 3. Administrator Dashboard & Moderation
-	 - Platform Oversight
+ 3. __Administrator Dashboard & Moderation__
+	 - *Platform Oversight*
 	     - Approve organizer accounts.
 	     - Moderate event listings for policy compliance.
-	 - Analytics
+	 - *Analytics*
 	     - View global stats: number of events, tickets issued, and participation trends.
 
 ## Team Members
