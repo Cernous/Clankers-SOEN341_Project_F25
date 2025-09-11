@@ -45,11 +45,11 @@ Three primary users: Students, Organizers, and Administrators.
 
 ## Team Members
 
-- Jonah Dorant 		- [Dafurball](https://github.com/Dafurball)
-- Batu Erata 		- [BatuErata](https://github.com/BatuErata)
-- Yi Fu Li 			- [YifuLi-blip](https://github.com/YifuLi-blip)
-- Kelvin Luong 		- [KelvinLuong](https://github.com/KelvinLuong)
-- Abhishek Thakur 	- [Abhi51483](https://github.com/Abhi514583)
-- Jia Cheng Wang 	- [Ljwangftw](https://github.com/Ljwangftw)
-- Anthony Wilson 	- [replicationpond](https://github.com/replicationpond)
-- Clarence Zhen 	- [Cernous](https://github.com/Cernous)
+- Jonah Dorant 		- 21313339  - [Dafurball](https://github.com/Dafurball)
+- Batu Erata 		- 40170153  - [BatuErata](https://github.com/BatuErata)
+- Yi Fu Li 			- 40286100  - [YifuLi-blip](https://github.com/YifuLi-blip)
+- Kelvin Luong 		- 40211121  - [KelvinLuong](https://github.com/KelvinLuong)
+- Abhishek Thakur 	- 40096430  - [Abhi51483](https://github.com/Abhi514583)
+- Jia Cheng Wang 	- 40240758  - [Ljwangftw](https://github.com/Ljwangftw)
+- Anthony Wilson 	- 40206639  - [replicationpond](https://github.com/replicationpond)
+- Clarence Zhen 	- 40166293  - [Cernous](https://github.com/Cernous)
