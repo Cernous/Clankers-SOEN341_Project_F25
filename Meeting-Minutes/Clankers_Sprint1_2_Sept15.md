@@ -12,17 +12,17 @@
 
 ## Goals
 
-Define the user stories for the required features of the project
-Discuss the development stack to be used
+- Define the user stories for the required features of the project
+- Discuss the development stack to be used
 
 ## Discussion Points
 
-SQLite vs Firebase for backend up to debate
-Tag based filtering for events
-Osmand as a possible open source map API if map feature is chosen
+- SQLite vs Firebase for backend up to debate
+- Tag based filtering for events
+- Osmand as a possible open source map API if map feature is chosen
 
 ## Actions & Decisions
 
-Research the Firebase implementation and compare to SQLite
-Complete the user stories for the required features
-Decide on which optional features to create user stories for
+- Research the Firebase implementation and compare to SQLite
+- Complete the user stories for the required features
+- Decide on which optional features to create user stories for
