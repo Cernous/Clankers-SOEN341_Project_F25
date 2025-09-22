@@ -43,6 +43,10 @@ Three primary users: Students, Organizers, and Administrators.
 	 - *Analytics*
 	     - View global stats: number of events, tickets issued, and participation trends.
    
+ 4. __Extra Feature__
+	- *Feeling Lucky Button*
+	- *Google Maps* 
+   
 ## Tech Stack
 
 ### Frontend
