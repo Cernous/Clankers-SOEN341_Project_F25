@@ -51,12 +51,19 @@ Three primary users: Students, Organizers, and Administrators.
 - TanStack Router
 - Axios
 - React
+- ViteJS
 
 ### Backend
 
 - Python
 - FastAPI
+	- SQLAlchemy
+	- SQLModel
 - SQLite
+
+### Validation
+- CI/CD GitHub Action
+- Selenium
 
 ## Team Members
 
