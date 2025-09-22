@@ -42,6 +42,21 @@ Three primary users: Students, Organizers, and Administrators.
 	     - Moderate event listings for policy compliance.
 	 - *Analytics*
 	     - View global stats: number of events, tickets issued, and participation trends.
+   
+## Tech Stack
+
+### Frontend
+
+- NodeJS
+- TanStack Router
+- Axios
+- React
+
+### Backend
+
+- Python
+- FastAPI
+- SQLite
 
 ## Team Members
 
