@@ -42,6 +42,8 @@ Three primary users: Students, Organizers, and Administrators.
 	     - Moderate event listings for policy compliance.
 	 - *Analytics*
 	     - View global stats: number of events, tickets issued, and participation trends.
+     - *Management*
+     	 - Manage organizations and assign roles
    
  4. __Extra Feature__
 	- *Feeling Lucky Button*
