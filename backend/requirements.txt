@@ -1,2 +1,5 @@
 fastapi[standard]
 pydantic_settings
+jwt
+passlib
+sqlmodel
