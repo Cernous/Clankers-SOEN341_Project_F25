@@ -1,4 +1,4 @@
-# Meeting Minutes - *Date*
+# Meeting Minutes - 2 October 2025
 
 ## Attendees
 - Kelvin
