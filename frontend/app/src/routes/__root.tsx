@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
+import { useLocation } from '@tanstack/react-router';
 
 import Header from '../components/Header'
 
@@ -32,13 +33,19 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+
+  //list of paths where the header should be hidden
+  const hideHeaderPaths = ['/login']; //add your target path(s)
+  const shouldHideHeader = hideHeaderPaths.includes(location.pathname);
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <Header />
+        {!shouldHideHeader && <Header />}
         {children}
         <TanstackDevtools
           config={{
@@ -56,3 +63,4 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     </html>
   )
 }
+
