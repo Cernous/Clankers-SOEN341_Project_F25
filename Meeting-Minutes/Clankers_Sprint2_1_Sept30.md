@@ -1,7 +1,7 @@
 # Meeting Minutes - *September 30, 2025*
 
 ## Attendees
-- Larry
+- Jiacheng (Larry)
 - Jonah
 - Anthony
 - Clarence
