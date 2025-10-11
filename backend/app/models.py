@@ -29,6 +29,10 @@ class UserCreate(SQLModel):
     last_name: str = ""
     password: str = ""
 
+class UserSignIn(SQLModel):
+    username: str = ""
+    password: str = ""
+
 # class OrganizerCreate(UserCreate):
 
 
