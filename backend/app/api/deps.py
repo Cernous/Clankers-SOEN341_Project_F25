@@ -23,7 +23,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{config.settings.API_STR}/login/access-token"
 )
 
-def get_db()
+def get_db():
     with Session(engine) as session:
         yield session
 
