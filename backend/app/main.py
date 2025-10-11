@@ -1,3 +1,6 @@
+from sqlalchemy import Engine
+from sqlmodel import Session, select
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
@@ -5,9 +8,19 @@ import uvicorn
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.sqlite_manager import engine
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
+
+def init(db_engine: Engine) -> None:
+    '''
+        Checks if db is awake
+    '''
+    with Session(db_engine) as session:
+        session.exec(select(1))
+
+init(engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
