@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app import crud
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
-from app.core import security
-from app.core.config import settings
-from app.core.security import get_password_hash
-from app.models import Message, NewPassword, Token, UserPublic
+import crud
+from api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from core import security
+from core.config import settings
+from core.security import get_password_hash
+from models import Message, NewPassword, Token, UserPublic
 
 router = APIRouter(tags=['login'])
 

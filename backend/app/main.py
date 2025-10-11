@@ -6,9 +6,9 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api.router import api_router
-from app.core.config import settings
-from app.core.sqlite_manager import engine
+from api.router import api_router
+from core.config import settings
+from core.sqlite_manager import engine
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'

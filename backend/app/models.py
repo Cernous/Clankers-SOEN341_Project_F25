@@ -21,6 +21,12 @@ class UserBase(SQLModel):
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
 
+class UserRegister(SQLModel):
+    email: EmailStr = Field(max_length=255)
+    password: str = Field(min_length=8, max_length=40)
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
+
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(unique=True, index=True, max_length=255)
     password: str | None = Field(min_length=8, max_length=40)
@@ -30,12 +36,12 @@ class UserUpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid64, primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     # insert list of events and list of saved events
 
 class UserPublic(UserBase):
-    id: uuid.UUID = Field(default_factory=uuid.uuid64, primary_key=True)
+    id: uuid.UUID
 
 class Message(SQLModel):
     message: str

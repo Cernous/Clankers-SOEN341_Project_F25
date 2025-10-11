@@ -15,10 +15,10 @@ from pydantic import ValidationError
 
 from sqlmodel import Session
 
-from app.models import User, TokenPayload
-from app.core import security
-from app.core import config
-from app.core.sqlite_manager import engine
+from models import User, TokenPayload
+from core import security
+from core import config
+from core.sqlite_manager import engine
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{config.settings.API_STR}/login/access-token"

@@ -1,7 +1,7 @@
 from sqlmodel import Session, create_engine, select
-from app import crud
-from app.core.config import settings
-from app.models import User, UserCreate
+import crud
+from core.config import settings
+from models import User, UserCreate
 
 engine = create_engine("sqlite:///database.db")
 
