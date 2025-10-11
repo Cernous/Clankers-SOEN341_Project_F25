@@ -9,6 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from typing import Literal
 
+### 
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     first_name: str | None
@@ -31,7 +32,21 @@ class UserUpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid64, primary_key=True)
     hashed_password: str
+    # insert list of events and list of saved events
 
+class UserPublic(UserBase):
+    id: uuid.UUID = Field(default_factory=uuid.uuid64, primary_key=True)
 
+class Message(SQLModel):
+    message: str
 
+class Token(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
 
+class TokenPayload(SQLModel):
+    sub: str | None = None
+
+class NewPassword(SQLModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=40)
