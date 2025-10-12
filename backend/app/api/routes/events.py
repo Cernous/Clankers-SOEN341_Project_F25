@@ -2,15 +2,15 @@ from sqlmodel import SQLModel, Field, create_engine, Session, select
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead
 
-app = FastAPI()
+router = APIRouter()
 
 ########################### CRUD operations #####################################
-@app.post("/events")
+@router.post("/events")
 def create_event(data: EventCreate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
 
     if user.role != "organizer":
@@ -25,7 +25,7 @@ def create_event(data: EventCreate, session: Session = Depends(get_session), use
     return EventOrganizerRead.model_validate(event)
 
 
-@app.get("/events/{event_id}")
+@router.get("/events/{event_id}")
 def read_event(event_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
     event = session.get(EventDB, event_id)
     if not event:
@@ -45,7 +45,7 @@ def read_event(event_id: int, session: Session = Depends(get_session), user: Use
     raise HTTPException(status_code=403, detail="Invalid role used")
 
 
-@app.put("/events/{event_id}")
+@router.put("/events/{event_id}")
 def update_event( event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
 
     #setting up the event session
@@ -79,7 +79,7 @@ def update_event( event_id: int, data: EventUpdate, session: Session = Depends(g
     return EventOrganizerRead.model_validate(event)
 
 
-@app.patch("/events/{event_id}")
+@router.patch("/events/{event_id}")
 def patch_event(event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
 
     #setting up the event session
@@ -112,7 +112,7 @@ def patch_event(event_id: int, data: EventUpdate, session: Session = Depends(get
     #both organizer and admin get the same view of the event
     return EventOrganizerRead.model_validate(event)
 
-@app.delete("/events/{event_id}")
+@router.delete("/events/{event_id}")
 def delete_event( event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
     #setting up the event session
     event = session.get(EventDB, event_id)
