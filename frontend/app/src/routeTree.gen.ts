@@ -12,6 +12,7 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as EventCreationRouteImport } from './routes/event-creation'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
@@ -24,6 +25,11 @@ const rootServerRouteImport = createServerRootRoute()
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventCreationRoute = EventCreationRouteImport.update({
+  id: '/event-creation',
+  path: '/event-creation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +65,7 @@ const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -76,6 +84,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/event-creation'
     | '/events'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/event-creation'
     | '/events'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/event-creation'
     | '/events'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -111,6 +123,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventCreationRoute: typeof EventCreationRoute
   EventsRoute: typeof EventsRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
@@ -146,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/events'
       preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/event-creation': {
+      id: '/event-creation'
+      path: '/event-creation'
+      fullPath: '/event-creation'
+      preLoaderRoute: typeof EventCreationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -199,6 +219,7 @@ declare module '@tanstack/react-start/server' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventCreationRoute: EventCreationRoute,
   EventsRoute: EventsRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
