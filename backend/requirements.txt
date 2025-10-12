@@ -1,5 +1,5 @@
 fastapi[standard]
 pydantic_settings
-jwt
+pyjwt
 passlib
 sqlmodel
