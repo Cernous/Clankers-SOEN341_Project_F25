@@ -1,29 +1,42 @@
 import { Link } from '@tanstack/react-router'
+import { useAuth } from '../hooks/AuthContext'
 
 export default function Header() {
+  const { isLoggedIn, login, logout } = useAuth()
+
   return (
-    <header className="p-2 flex gap-2 bg-white text-black justify-between">
-      <nav className="flex flex-row">
-        <div className="px-2 font-bold">
-          <Link to="/">Home</Link>
-        </div>
+    <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        {/* Brand */}
+        <Link to="/" className="text-lg font-extrabold tracking-tight">
+          CampusEvents
+        </Link>
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/start/server-funcs">Start - Server Functions</Link>
-        </div>
+        {/* Nav */}
+        <nav className="flex items-center gap-4 text-sm font-medium">
+          <Link to="/" className="hover:underline">Home</Link>
+          <Link to="/events" className="hover:underline">Events</Link>
+        </nav>
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/start/api-request">Start - API Request</Link>
+        {/* Auth */}
+        <div className="flex items-center gap-2">
+          {isLoggedIn ? (
+            <button
+              onClick={logout}
+              className="rounded-full border border-neutral-300 bg-white px-4 py-1 text-sm font-medium hover:bg-neutral-50"
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              onClick={login}
+              className="rounded-full bg-black px-4 py-1 text-sm font-medium text-white hover:bg-neutral-900"
+            >
+              Login
+            </button>
+          )}
         </div>
-
-        <div className="px-2 font-bold">
-          <Link to="/demo/form/simple">Simple Form</Link>
-        </div>
-
-        <div className="px-2 font-bold">
-          <Link to="/demo/form/address">Address Form</Link>
-        </div>
-      </nav>
+      </div>
     </header>
   )
 }

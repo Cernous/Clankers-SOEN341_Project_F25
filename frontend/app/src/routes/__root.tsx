@@ -3,29 +3,18 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
+import { AuthProvider } from '../hooks/AuthContext'  // ✅ NEW IMPORT
 
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'TanStack Start Starter' },
     ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
 
   shellComponent: RootDocument,
@@ -38,12 +27,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Header />
-        {children}
+        {/* ✅ Wrap the app in AuthProvider so auth is available globally */}
+        <AuthProvider>
+          <Header />
+          {children}
+        </AuthProvider>
+
+        {/* Devtools remain outside */}
         <TanstackDevtools
-          config={{
-            position: 'bottom-left',
-          }}
+          config={{ position: 'bottom-left' }}
           plugins={[
             {
               name: 'Tanstack Router',
