@@ -7,16 +7,22 @@ import uuid
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
-from typing import Literal
+from typing import Optional, Literal
+from enum import Enum
 
-### 
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    STUDENT = "student"
+    ORGANIZER = "organizer"
+
 class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
+    email: EmailStr = Field(unique=True, max_length=255, index=True)
     first_name: str | None
     last_name: str | None 
     pronouns: str | None
     username: str 
-    role: Literal['admin', 'organizer', 'student'] = "student"
+    role: UserRole = Field(default=UserRole.STUDENT)
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
@@ -35,11 +41,6 @@ class UserUpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
 
-class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
-    # insert list of events and list of saved events
-
 class UserPublic(UserBase):
     id: uuid.UUID
 
@@ -56,3 +57,8 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+class User(UserBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    hashed_password: str
+    # insert list of events and list of saved events
