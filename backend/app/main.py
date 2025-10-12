@@ -1,5 +1,5 @@
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -19,9 +19,10 @@ def init(db_engine: Engine) -> None:
     '''
     with Session(db_engine) as session:
         session.exec(select(1))
-        # init_db(session)
+        init_db(session)
 
-init(engine)
+# SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
+# init(engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
