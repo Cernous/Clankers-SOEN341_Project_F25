@@ -15,19 +15,20 @@ from pydantic import ValidationError
 
 from sqlmodel import Session
 
-from app.models import User, TokenPayload
-from app.core import security
-from app.core import config
+from models import User, TokenPayload
+from core import security
+from core import config
+from core.sqlite_manager import engine
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{config.settings.API_STR}/login/access-token"
 )
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
 
-# SessionDep = Annotated[Session, Depends(get_db)]
+SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
@@ -45,14 +46,11 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     user = session.get(User, token_Data.sub)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
-    
     return user
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if not current_user.is_superuser:
+    if not current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Does not have enough privileges")
     return current_user

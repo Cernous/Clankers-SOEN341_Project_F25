@@ -1,15 +1,30 @@
+from sqlalchemy import Engine
+from sqlmodel import Session, select, SQLModel
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api.router import api_router
-from app.core.config import settings
+from api.router import api_router
+from core.config import settings
+from core.sqlite_manager import engine, init_db
 
 engine = create_engine("sqlite:///database.db")
 SQLModel.metadata.create_all(engine)
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
+
+def init(db_engine: Engine) -> None:
+    '''
+        Checks if db is awake
+    '''
+    with Session(db_engine) as session:
+        session.exec(select(1))
+        init_db(session)
+
+# SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
+# init(engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
