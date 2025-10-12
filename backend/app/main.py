@@ -10,8 +10,6 @@ from api.router import api_router
 from core.config import settings
 from core.sqlite_manager import engine, init_db
 
-engine = create_engine("sqlite:///database.db")
-SQLModel.metadata.create_all(engine)
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
 
@@ -23,7 +21,7 @@ def init(db_engine: Engine) -> None:
         session.exec(select(1))
         init_db(session)
 
-# SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
+SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
 # init(engine)
 
 app = FastAPI(
