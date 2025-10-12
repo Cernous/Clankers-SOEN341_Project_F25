@@ -4,14 +4,14 @@ from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
-from app.api.deps import CurrentUser, SessionDep
-from app.models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead
+from api.deps import CurrentUser, SessionDep, get_current_user
+from models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead, User
 
-router = APIRouter()
+router = APIRouter(tags=['events'])
 
 ########################### CRUD operations #####################################
 @router.post("/events")
-def create_event(data: EventCreate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+def create_event(data: EventCreate, session: SessionDep, user: User = Depends(get_current_user)):
 
     if user.role != "organizer":
         raise HTTPException(status_code=403, detail="Only organizers can create events")
@@ -26,7 +26,7 @@ def create_event(data: EventCreate, session: Session = Depends(get_session), use
 
 
 @router.get("/events/{event_id}")
-def read_event(event_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+def read_event(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
     event = session.get(EventDB, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -46,7 +46,7 @@ def read_event(event_id: int, session: Session = Depends(get_session), user: Use
 
 
 @router.put("/events/{event_id}")
-def update_event( event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+def update_event( event_id: int, data: EventUpdate, session: SessionDep, user: User = Depends(get_current_user)):
 
     #setting up the event session
     event = session.get(EventDB, event_id)
@@ -80,7 +80,7 @@ def update_event( event_id: int, data: EventUpdate, session: Session = Depends(g
 
 
 @router.patch("/events/{event_id}")
-def patch_event(event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+def patch_event(event_id: int, data: EventUpdate, session: SessionDep, user: User = Depends(get_current_user)):
 
     #setting up the event session
     event = session.get(EventDB, event_id)
@@ -113,7 +113,7 @@ def patch_event(event_id: int, data: EventUpdate, session: Session = Depends(get
     return EventOrganizerRead.model_validate(event)
 
 @router.delete("/events/{event_id}")
-def delete_event( event_id: int, data: EventUpdate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: User = Depends(get_current_user)):
     #setting up the event session
     event = session.get(EventDB, event_id)
     if not event:
