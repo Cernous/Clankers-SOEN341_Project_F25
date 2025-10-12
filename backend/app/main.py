@@ -10,6 +10,8 @@ from api.router import api_router
 from core.config import settings
 from core.sqlite_manager import engine, init_db
 
+engine = create_engine("sqlite:///database.db")
+SQLModel.metadata.create_all(engine)
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
 
