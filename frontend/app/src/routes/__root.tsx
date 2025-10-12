@@ -1,43 +1,30 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
-import { useLocation } from '@tanstack/react-router';
 
 import Header from '../components/Header'
+import { AuthProvider } from '../hooks/AuthContext'
 
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'TanStack Start Starter' },
     ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
-
   shellComponent: RootDocument,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
+  const location = useLocation()
 
-  //list of paths where the header should be hidden
-  const hideHeaderPaths = ['/login']; //add your target path(s)
-  const shouldHideHeader = hideHeaderPaths.includes(location.pathname);
+  // paths where the header should be hidden
+  const hideHeaderPaths = ['/login']
+  const shouldHideHeader = hideHeaderPaths.includes(location.pathname)
 
   return (
     <html lang="en">
@@ -45,12 +32,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {!shouldHideHeader && <Header />}
-        {children}
+        {/* Provide Auth globally */}
+        <AuthProvider>
+          {/* Conditionally render header (hide on /login) */}
+          {!shouldHideHeader && <Header />}
+          {children}
+        </AuthProvider>
+
+        {/* Enable when needed */}
         {/* <TanstackDevtools
-          config={{
-            position: 'bottom-left',
-          }}
+          config={{ position: 'bottom-left' }}
           plugins={[
             {
               name: 'Tanstack Router',
@@ -58,9 +49,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         /> */}
+
         <Scripts />
       </body>
     </html>
   )
 }
-
