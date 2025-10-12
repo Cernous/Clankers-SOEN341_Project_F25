@@ -12,7 +12,7 @@
             "args": [
                 "dev",
             ],
-            "cwd": "backend/"
+            "cwd": "${workspaceFolder}/backend"
             // "jinja": true
         }
     ]
