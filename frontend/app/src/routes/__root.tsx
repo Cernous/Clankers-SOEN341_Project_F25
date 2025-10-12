@@ -1,9 +1,9 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
-import { AuthProvider } from '../hooks/AuthContext'  // ✅ NEW IMPORT
+import { AuthProvider } from '../hooks/AuthContext'
 
 import appCss from '../styles.css?url'
 
@@ -16,25 +16,31 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
-
   shellComponent: RootDocument,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+
+  // paths where the header should be hidden
+  const hideHeaderPaths = ['/login']
+  const shouldHideHeader = hideHeaderPaths.includes(location.pathname)
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        {/* ✅ Wrap the app in AuthProvider so auth is available globally */}
+        {/* Provide Auth globally */}
         <AuthProvider>
-          <Header />
+          {/* Conditionally render header (hide on /login) */}
+          {!shouldHideHeader && <Header />}
           {children}
         </AuthProvider>
 
-        {/* Devtools remain outside */}
-        <TanstackDevtools
+        {/* Enable when needed */}
+        {/* <TanstackDevtools
           config={{ position: 'bottom-left' }}
           plugins={[
             {
@@ -42,7 +48,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
-        />
+        /> */}
+
         <Scripts />
       </body>
     </html>
