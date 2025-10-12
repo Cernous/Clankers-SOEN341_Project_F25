@@ -13,3 +13,9 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+/* This rule is for URL */
+a {
+  color: rgb(0, 132, 255);
+  text-decoration: underline;
+} 
