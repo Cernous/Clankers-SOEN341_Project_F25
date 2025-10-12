@@ -8,7 +8,7 @@ import uvicorn
 
 from api.router import api_router
 from core.config import settings
-from core.sqlite_manager import engine
+from core.sqlite_manager import engine, init_db
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
@@ -19,6 +19,7 @@ def init(db_engine: Engine) -> None:
     '''
     with Session(db_engine) as session:
         session.exec(select(1))
+        # init_db(session)
 
 init(engine)
 
