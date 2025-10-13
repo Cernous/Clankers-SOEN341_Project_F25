@@ -14,6 +14,7 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as EventCreationRouteImport } from './routes/event-creation'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
@@ -53,6 +54,11 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventCreationRoute = EventCreationRouteImport.update({
+  id: '/event-creation',
+  path: '/event-creation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -86,6 +92,7 @@ const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
@@ -111,6 +119,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/event-creation'
     | '/events'
     | '/login'
     | '/payment-success'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/event-creation'
     | '/events'
     | '/login'
     | '/payment-success'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/event-creation'
     | '/events'
     | '/login'
     | '/payment-success'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventCreationRoute: typeof EventCreationRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   PaymentSuccessLazyRoute: typeof PaymentSuccessLazyRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/event-creation': {
+      id: '/event-creation'
+      path: '/event-creation'
+      fullPath: '/event-creation'
+      preLoaderRoute: typeof EventCreationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -282,6 +302,7 @@ declare module '@tanstack/react-start/server' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventCreationRoute: EventCreationRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   PaymentSuccessLazyRoute: PaymentSuccessLazyRoute,
