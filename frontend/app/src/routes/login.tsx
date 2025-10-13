@@ -16,7 +16,7 @@ function RouteComponent() {
       <div className="flex justify-center items-center flex-col">
         <div className="mb-5 text-center">
           <p className="mb-3 mt-10 text-5xl font-normal">Login</p>
-          <p>Don't have an account? <a href="/register">Create Account Now</a></p>
+          <p>Don't have an account? <a href="/signup" id = "s_l">Create Account Now</a></p>
         </div>
         <div className="px-[30px]">
           <form>
@@ -32,13 +32,13 @@ function RouteComponent() {
             
             <div className="mb-15 text-center">
               <button  className="mb-5 text-[20px] bg-[#912338] text-white py-[5px] px-[60px] rounded-[5px]">Login</button>
-              <p><a href="/forgot-password">Forgot Password?</a></p>
+              <p><a href="/forgot-password" id = "s_l">Forgot Password?</a></p>
             </div>
 
             <div className="text-center mt-auto">
               <p className="text-xs">Copyright © 2025 Clanker, LLC.</p>
               <p className="text-xs mb-3">Clanker™ is a trademark of Clanker, LLC.</p>
-              <p className="text-xs"><a href="/terms-of-service">Terms of Service</a> | <a href="/privacy-policy">Privacy Policy</a></p>
+              <p className="text-xs"><a href="/terms-of-service" id = "s_l">Terms of Service</a> | <a href="/privacy-policy">Privacy Policy</a></p>
             </div>
 
           </form>

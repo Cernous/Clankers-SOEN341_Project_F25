@@ -1,4 +1,8 @@
+import { useAuth } from '../hooks/AuthContext' 
+
 export default function Hero() {
+  const { isLoggedIn } = useAuth() 
+
   return (
     <section className="mx-auto max-w-4xl px-4 pt-14 pb-10 md:pt-20 md:pb-14">
       <h1 className="m-0 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
@@ -15,12 +19,16 @@ export default function Hero() {
         >
           Explore Events
         </a>
-        <a
-          href="/signup"
-          className="inline-block rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold hover:bg-neutral-50"
-        >
-          Sign Up
-        </a>
+
+        {/*Hide Sign Up button when logged in */}
+        {!isLoggedIn && (
+          <a
+            href="/signup"
+            className="inline-block rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold hover:bg-neutral-50"
+          >
+            Sign Up
+          </a>
+        )}
       </div>
 
       {/* Placeholder hero art block */}

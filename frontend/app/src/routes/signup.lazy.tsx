@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Link, useNavigate, createLazyFileRoute } from '@tanstack/react-router'
+import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createLazyFileRoute('/signup')({
   component: SignUpPage,
@@ -16,6 +17,7 @@ type FormDataShape = {
 }
 
 function SignUpPage() {
+  const { signup } = useAuth()
   const navigate = useNavigate()
   const [showPw, setShowPw] = React.useState(false)
   const [errors, setErrors] = React.useState<Partial<Record<keyof FormDataShape, string>>>({})
@@ -33,29 +35,38 @@ function SignUpPage() {
     return e
   }
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
-    const data = {
-      firstName: raw.firstName?.trim() ?? '',
-      lastName: raw.lastName?.trim() ?? '',
-      email: raw.email?.trim() ?? '',
-      username: raw.username?.trim() ?? '',
-      role: (raw.role as 'student' | 'creator') ?? 'student',
-      password: raw.password ?? '',
-      confirm: raw.confirm ?? '',
-    }
-    const errs = validate(data)
-    setErrors(errs)
-    if (Object.keys(errs).length) return
-
-    // TODO: 在这里接你们后端注册 API
-    // const res = await fetch('/backend-api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-    // if (!res.ok) { setMessage('Failed to sign up'); return }
-
-    setMessage('Account created! Redirecting to login…')
-    setTimeout(() => navigate({ to: '/login' }), 800)
+ async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault()
+  const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
+  const data = {
+    firstName: raw.firstName?.trim() ?? '',
+    lastName: raw.lastName?.trim() ?? '',
+    email: raw.email?.trim() ?? '',
+    username: raw.username?.trim() ?? '',
+    role: (raw.role as 'student' | 'creator') ?? 'student',
+    password: raw.password ?? '',
+    confirm: raw.confirm ?? '',
   }
+  const errs = validate(data)
+  setErrors(errs)
+  if (Object.keys(errs).length) return
+
+  // Build minimal user for fake signup/login
+  const newUser = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    username: data.username,
+    role: data.role,
+  }
+
+  // Save to auth (localStorage) and auto-login
+  signup(newUser)
+
+  // Redirect based on role
+  const dest = data.role === 'creator' ? '/' : '/events'
+  navigate({ to: dest })
+}
 
   return (
     <div className="min-h-[calc(100vh-44px)] grid md:grid-cols-2 bg-[#7A0019]">

@@ -1,4 +1,5 @@
 // src/components/events/EventPreviewModal.tsx
+import { Link } from '@tanstack/react-router'
 export type PreviewEvent = {
   id: string
   title: string
@@ -40,23 +41,28 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose, onRegist
           <p className="mt-2 text-neutral-700">{event.date}</p>
 
           <div className="mt-4 flex gap-3">
-            <button
-              onClick={() => (isLoggedIn ? onRegister?.(event) : null)}
-              disabled={!isLoggedIn}
-              className={[
-                "rounded-full px-4 py-2 text-sm font-semibold text-white",
-                isLoggedIn ? "bg-black hover:bg-neutral-900" : "bg-neutral-400 cursor-not-allowed",
-              ].join(" ")}
-            >
-              {isLoggedIn ? "Register / Save" : "Log in to register"}
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => onRegister?.(event)}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-white bg-black hover:bg-neutral-900"
+              >
+                Register / Save
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="rounded-full px-4 py-2 text-sm font-semibold text-white bg-black hover:bg-neutral-900"
+              >
+                Log in to register
+              </Link>
+            )}
 
-            <a
-              href={`/events/${event.id}`}
+            <Link
+              to={`/events`}
               className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
             >
               View details
-            </a>
+            </Link>
           </div>
         </div>
 

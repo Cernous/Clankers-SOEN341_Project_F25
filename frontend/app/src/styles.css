@@ -15,7 +15,7 @@ code {
 }
 
 /* This rule is for URL */
-a {
+#s_l {
   color: rgb(0, 132, 255);
   text-decoration: underline;
 } 
