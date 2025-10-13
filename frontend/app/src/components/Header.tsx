@@ -1,6 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useHasRole } from '../hooks/useRole'
 import RoleSelector from './RoleSelector'
+import AdminDashboard from './AdminDashboard'
 
 export default function Header() {
   const location = useLocation()

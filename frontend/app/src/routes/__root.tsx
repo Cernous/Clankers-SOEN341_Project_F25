@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
+import AdminDashboard from '../components/AdminDashboard'
 
 import appCss from '../styles.css?url'
 
@@ -39,6 +40,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
+        <AdminDashboard />
         {children}
         <TanstackDevtools
           config={{
