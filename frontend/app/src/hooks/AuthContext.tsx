@@ -1,6 +1,6 @@
 import React from 'react'
 
-export type UserRole = 'student' | 'creator'
+export type UserRole = 'student' | 'creator' | 'admin'
 
 export type User = {
   id?: string

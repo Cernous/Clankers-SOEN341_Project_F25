@@ -11,7 +11,7 @@ type FormDataShape = {
   lastName: string
   email: string
   username: string
-  role: 'student' | 'creator'
+   role: 'student' | 'creator' | 'admin'   //added admin
   password: string
   confirm: string
 }
@@ -31,7 +31,7 @@ function SignUpPage() {
     if (!d.username) e.username = 'Required'
     if (d.password.length < 8) e.password = 'At least 8 characters'
     if (d.password !== d.confirm) e.confirm = 'Passwords do not match'
-    if (!['student', 'creator'].includes(d.role)) e.role = 'Select a role'
+    if (!['student', 'creator', 'admin'].includes(d.role)) e.role = 'Select a role'
     return e
   }
 
@@ -43,7 +43,7 @@ function SignUpPage() {
     lastName: raw.lastName?.trim() ?? '',
     email: raw.email?.trim() ?? '',
     username: raw.username?.trim() ?? '',
-    role: (raw.role as 'student' | 'creator') ?? 'student',
+    role: (raw.role as 'student' | 'creator' | 'admin') ?? 'student',
     password: raw.password ?? '',
     confirm: raw.confirm ?? '',
   }
@@ -64,8 +64,12 @@ function SignUpPage() {
   signup(newUser)
 
   // Redirect based on role
-  const dest = data.role === 'creator' ? '/' : '/events'
+  const dest =
+  data.role === 'admin' ? '/admin'
+  : data.role === 'creator' ? '/'
+  : '/events'
   navigate({ to: dest })
+
 }
 
   return (
@@ -111,6 +115,7 @@ function SignUpPage() {
               <select name="role" defaultValue="student" className="w-full border rounded-lg px-3 py-2">
                 <option value="student">Student</option>
                 <option value="creator">Event Creator</option>
+                <option value="admin">Admin</option>
               </select>
               {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
             </label>

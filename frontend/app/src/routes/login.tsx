@@ -1,5 +1,5 @@
 //This is the general login page for all users (organizer, student and admin)
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute,Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -10,8 +10,10 @@ function RouteComponent() {
   <div className="w-screen h-screen flex" id="login">
     <div className="flex flex-col w-[500px]" id="form">
       <div className="bg-[#912338] min-h-[200px] w-full flex flex-col justify-center items-center px-5">
-        <h1 className="text-[40px] text-white font-bold mt-0">Concordia</h1>
-        <h2 className="text-[25px] text-white">Campus Events & Ticketing Web App</h2>
+        <Link to="/" className="bg-[#912338] min-h-[200px] w-full flex flex-col justify-center items-center px-5 no-underline">
+          <h1 className="text-[40px] text-white font-bold mt-0">Concordia</h1>
+          <h2 className="text-[25px] text-white">Campus Events & Ticketing Web App</h2>
+      </Link>
       </div>
       <div className="flex justify-center items-center flex-col">
         <div className="mb-5 text-center">
