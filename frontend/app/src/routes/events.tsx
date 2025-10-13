@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import EventsList from "../components/events/EventsList";
 import FilterBar from "../components/events/FilterBar";
 import EventPreviewModal from "../components/events/EventPreviewModal";
 import { useAuth } from "../hooks/AuthContext";
-import { sampleEvents } from "../data/events.sample";
+import { sampleEvents, type SimpleEvent } from "../data/events.sample"; //  import the type
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
@@ -12,28 +12,41 @@ export const Route = createFileRoute("/events")({
 
 function EventsPage() {
   const { isLoggedIn } = useAuth();
-  const [selected, setSelected] = useState<{
-    id: string; title: string; date: string; org: string; where: string;
-  } | null>(null);
 
+  //  selected must be a SimpleEvent (or null)
+  const [selected, setSelected] = useState<SimpleEvent | null>(null);
+
+  // search + filters
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState(""); // exact match, '' = any
+  const [date, setDate] = useState("");         // exact match (YYYY-MM-DD), '' = any
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+
+    return sampleEvents.filter((e) => {
+      // title-only search
+      if (q && !e.title.toLowerCase().includes(q)) return false;
+
+      // exact category match
+      if (category && e.category !== category) return false;
+
+      // exact date match
+      if (date && e.dateISO !== date) return false;
+
+      return true;
+    });
+  }, [query, category, date]);
 
   const handleLucky = () => {
-    const i = Math.floor(Math.random() * sampleEvents.length);
-    setSelected(sampleEvents[i]);
+    if (!filtered.length) return;
+    const i = Math.floor(Math.random() * filtered.length);
+    setSelected(filtered[i]); // filtered[i] is SimpleEvent
   };
 
   const handleRegister = (ev: { id: string; title: string }) => {
     alert(`Registered for: ${ev.title}`);
   };
-
-  // case-insensitive search over title/org/where
-  const q = query.trim().toLowerCase();
-  const filtered = q
-  ? sampleEvents.filter((e) =>
-      e.title.toLowerCase().includes(q)
-    )
-  : sampleEvents;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -46,7 +59,11 @@ function EventsPage() {
 
       <FilterBar
         query={query}
+        category={category}
+        date={date}
         onQueryChange={setQuery}
+        onCategoryChange={setCategory}
+        onDateChange={setDate}
         onFeelingLucky={handleLucky}
       />
 

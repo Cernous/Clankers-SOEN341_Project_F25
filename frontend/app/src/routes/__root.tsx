@@ -1,4 +1,5 @@
 import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import { UserDataProvider } from '../hooks/UserDataContext'
 
 
 import Header from '../components/Header'
@@ -33,9 +34,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         {/* Provide Auth globally */}
         <AuthProvider>
+          <UserDataProvider>
           {/* Conditionally render header (hide on /login) */}
           {!shouldHideHeader && <Header />}
           {children}
+          </UserDataProvider>
         </AuthProvider>
 
         {/* Enable when needed */}

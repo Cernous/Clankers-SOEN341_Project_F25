@@ -1,22 +1,35 @@
 // src/components/events/EventPreviewModal.tsx
-import { Link } from '@tanstack/react-router'
-export type PreviewEvent = {
-  id: string
-  title: string
-  date: string
-  org: string
-  where: string
-}
+import { useAuth } from "../../hooks/AuthContext"
+import { useUserData } from "../../hooks/UserDataContext"
+import type { SimpleEvent } from "../../data/events.sample"
 
 type Props = {
-  event: PreviewEvent | null
+  event: SimpleEvent | null
   isLoggedIn: boolean
   onClose: () => void
-  onRegister?: (ev: PreviewEvent) => void
+  // onRegister no longer required; use claimTicket() from context
+  onRegister?: (ev: SimpleEvent) => void
 }
 
-export default function EventPreviewModal({ event, isLoggedIn, onClose, onRegister }: Props) {
+export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props) {
+  const { user } = useAuth()
+  const { isSaved, toggleSave, claimTicket } = useUserData()
+
   if (!event) return null
+
+  const saved = isSaved(event.id)
+
+  const handleSave = () => {
+    if (!isLoggedIn) return
+    toggleSave(event)
+  }
+
+  const handleClaim = () => {
+    if (!isLoggedIn || !user) return
+    const owner = user.username || user.email || "me"
+    const t = claimTicket(event, owner, "free")
+    alert(`Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`)
+  }
 
   return (
     <div
@@ -40,29 +53,40 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose, onRegist
           </p>
           <p className="mt-2 text-neutral-700">{event.date}</p>
 
-          <div className="mt-4 flex gap-3">
-            {isLoggedIn ? (
-              <button
-                onClick={() => onRegister?.(event)}
-                className="rounded-full px-4 py-2 text-sm font-semibold text-white bg-black hover:bg-neutral-900"
-              >
-                Register / Save
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                className="rounded-full px-4 py-2 text-sm font-semibold text-white bg-black hover:bg-neutral-900"
-              >
-                Log in to register
-              </Link>
-            )}
+          <div className="mt-4 flex flex-wrap gap-3">
+            {/* Save / Unsave */}
+            <button
+              onClick={handleSave}
+              disabled={!isLoggedIn}
+              className={[
+                "rounded-full px-4 py-2 text-sm font-semibold",
+                isLoggedIn ? "border border-neutral-300 hover:bg-neutral-50" : "bg-neutral-300 cursor-not-allowed text-white",
+              ].join(" ")}
+              title={isLoggedIn ? "" : "Log in to save"}
+            >
+              {saved ? "Unsave" : "Save to Calendar"}
+            </button>
 
-            <Link
-              to={`/events`}
+            {/* Claim ticket */}
+            <button
+              onClick={handleClaim}
+              disabled={!isLoggedIn}
+              className={[
+                "rounded-full px-4 py-2 text-sm font-semibold text-white",
+                isLoggedIn ? "bg-black hover:bg-neutral-900" : "bg-neutral-400 cursor-not-allowed",
+              ].join(" ")}
+              title={isLoggedIn ? "" : "Log in to claim tickets"}
+            >
+              Claim Free Ticket
+            </button>
+
+            {/* View details */}
+            <a
+              href={`/events/${event.id}`}
               className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
             >
               View details
-            </Link>
+            </a>
           </div>
         </div>
 

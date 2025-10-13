@@ -11,7 +11,7 @@ type FormDataShape = {
   lastName: string
   email: string
   username: string
-   role: 'student' | 'creator' | 'admin'   //added admin
+   role: 'student' | 'creator' | 'admin'   
   password: string
   confirm: string
 }
