@@ -18,9 +18,9 @@ class UserRole(str, Enum):
 
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, max_length=255, index=True)
-    first_name: str | None
-    last_name: str | None 
-    pronouns: str | None
+    first_name: str | None = None
+    last_name: str | None = None
+    pronouns: str | None = None
     username: str 
     role: UserRole = Field(default=UserRole.STUDENT)
 
