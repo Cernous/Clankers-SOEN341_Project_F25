@@ -21,7 +21,7 @@ def init(db_engine: Engine) -> None:
         session.exec(select(1))
         init_db(session)
 
-SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
+# SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
 init(engine)
 
 app = FastAPI(
