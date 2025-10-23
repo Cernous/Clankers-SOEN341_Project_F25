@@ -42,7 +42,7 @@ class Settings(BaseSettings):
         # we can leave this empty 
     ]
 
-    FIRST_SUPERUSER: str = "ClankAdmin@Clankers.com"
+    FIRST_SUPERUSER: str = "ClankAdmin@clankers.com"
     FIRST_SUPERUSER_PASSWORD: str = "password"
 
     @computed_field
