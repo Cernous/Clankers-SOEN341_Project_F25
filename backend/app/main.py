@@ -22,7 +22,7 @@ def init(db_engine: Engine) -> None:
         init_db(session)
 
 SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
-# init(engine)
+init(engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
