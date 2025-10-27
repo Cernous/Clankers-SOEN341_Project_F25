@@ -61,6 +61,8 @@ class NewPassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
+    reviews: list["Review"] = Relationship(back_populates="user")
+
     # insert list of events and list of saved events
 
 class EventBase(SQLModel):
@@ -115,3 +117,39 @@ class EventDB(EventBase, table=True):
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     pictures: Optional[str] = None
+    reviews: list["Review"] = Relationship(back_populates="event")
+    attendees: list["Attendees"] = Relationship(back_populates="event")
+
+#review table, one to many relationship with each event
+class ReviewBase(SQLModel):
+    desc: str | None = None
+    star: int | None = None
+    date_created: datetime = Field(default_factory=datetime.utcnow)
+
+class Review(ReviewBase, table=True):
+    id: int = Field(primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id") 
+    event_id: int = Field(foreign_key="eventdb.id")
+    visible: bool = Field(default=True)
+    
+    #This may cause infinite recursion we have to test it
+    user: Optional["User"] = Relationship(back_populates="reviews")
+    event: Optional["EventDB"] = Relationship(back_populates="reviews")
+   
+#lets admin hide reviews
+class ReviewModerate(SQLModel):
+    visible: bool | None = None
+
+class ReviewRead(ReviewBase):
+    first_name: str
+    event_id: int
+    desc: str
+    star: int
+    date_created: datetime
+
+class Attendees(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id")
+    event_id: int = Field(foreign_key="eventdb.id")
+    ticket: str
+    event: Optional["EventDB"] = Relationship(back_populates="attendees")
