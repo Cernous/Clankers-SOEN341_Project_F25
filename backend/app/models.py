@@ -9,7 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from typing import Optional, Literal
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -61,6 +61,8 @@ class NewPassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
+    tickets: Optional[str] = None
+    date_of_birth: Optional[date] = None
     reviews: list["Review"] = Relationship(back_populates="user")
 
     # insert list of events and list of saved events
@@ -117,6 +119,7 @@ class EventDB(EventBase, table=True):
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     pictures: Optional[str] = None
+    tickets_left: Optional[int] = None
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
 

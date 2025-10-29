@@ -13,7 +13,7 @@ from core.sqlite_manager import engine, db_create, db_init
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
 
-db_create(engine) # Only runs on the first dry run without DB
+db_create(engine) #only runs on the first dry run without DB
 db_init(engine) #sets up superuser if not already there
 
 app = FastAPI(
