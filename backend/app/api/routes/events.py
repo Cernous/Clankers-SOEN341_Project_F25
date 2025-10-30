@@ -134,25 +134,6 @@ def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
 def get_all_events(session: SessionDep):
     return session.query(EventDB).all()
 
-
-@router.get("/{event_id}")
-def get_event(event_id: int, session: SessionDep):
-    event = session.query(EventDB).filter(Event.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return event
-
-
-@router.delete("/{event_id}")
-def delete_event(event_id: int, session: SessionDep):
-    event = session.query(EventDB).filter(EventDB.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    session.delete(event)
-    session.commit()
-    return {"message": "Event deleted successfully"}
-
-
 @router.post("/{event_id}/add_ticket/{user_id}")
 def add_ticket(event_id: int, user_id: int, session: SessionDep):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
