@@ -113,3 +113,8 @@ class EventDB(EventBase, table=True):
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     pictures: Optional[str] = None
+
+#to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and picturesS
+class EventList(EventBase):
+    tags: Optional[str] = None
+    pictures: Optional[str] = None
