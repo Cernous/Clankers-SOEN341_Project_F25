@@ -9,6 +9,7 @@ from app.core.config import settings
 
 URL = "http://localhost:8000/"
 
+### Test Fixtures ###
 @pytest.fixture
 def client():
     client = requests.Session()
@@ -31,6 +32,7 @@ def superuser_token_headers(client: requests.Session) -> dict[str, str]:
     headers = {"Authorization": f"Bearer {auth_token}"}
     return headers
 
+### Actual Tests
 def test_seed_database(client:requests.Session, superuser_token_headers: dict[str, str]) -> None:
     
     response = client.post(
