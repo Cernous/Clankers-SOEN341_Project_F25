@@ -24,7 +24,7 @@ jobs:
               run: |
                     cd backend
                     python -m venv .venv
-                    source .venv/Scripts/activate
+                    source .venv/bin/activate
             
             - name: Install dependencies
               run: |
