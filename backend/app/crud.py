@@ -7,7 +7,7 @@ from typing import List, Optional
 
 
 from core.security import get_password_hash, verify_password
-from models import User, UserCreate, UserUpdate, Review, Attendees
+from models import EventDB, User, UserCreate, UserUpdate, Review, Attendees
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
