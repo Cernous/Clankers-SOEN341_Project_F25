@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from api.deps import CurrentUser, SessionDep, get_current_user
-from models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead, EventList, User
+from models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead, User
 
 router = APIRouter(tags=['events'])
 
@@ -13,8 +13,8 @@ router = APIRouter(tags=['events'])
 @router.post("/events")
 def create_event(data: EventCreate, session: SessionDep, user: User = Depends(get_current_user)):
 
-    if user.role == "student":
-        raise HTTPException(status_code=403, detail="Only organizers or admins can create events")
+    if user.role != "organizer":
+        raise HTTPException(status_code=403, detail="Only organizers can create events")
     
     event = EventDB(**data.model_dump(), organizer_id=user.id)
 
@@ -43,17 +43,6 @@ def read_event(event_id: int, session: SessionDep, user: User = Depends(get_curr
         return EventOrganizerRead.model_validate(event)
 
     raise HTTPException(status_code=403, detail="Invalid role used")
-
-#in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
-@router.get("/events")
-def list_events(session: SessionDep, user: User = Depends(get_current_user)):
-   
-   #if user.role != "admin":
-       # raise HTTPException(status_code=406, detail="Admin access required")
-
-    events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
-    
-    return EventList.model_validate(events, many=True)
 
 
 @router.put("/events/{event_id}")
