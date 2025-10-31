@@ -8,21 +8,13 @@ import uvicorn
 
 from api.router import api_router
 from core.config import settings
-from core.sqlite_manager import engine, init_db
+from core.sqlite_manager import engine, db_create, db_init
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
 
-def init(db_engine: Engine) -> None:
-    '''
-        Checks if db is awake
-    '''
-    with Session(db_engine) as session:
-        session.exec(select(1))
-        init_db(session)
-
-# SQLModel.metadata.create_all(engine) # Only Run on the first dry run without DB
-init(engine)
+db_create(engine) #only runs on the first dry run without DB
+db_init(engine) #sets up superuser if not already there
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
