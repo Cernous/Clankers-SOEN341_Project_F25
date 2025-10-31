@@ -35,3 +35,5 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_STR)
+
+generate_openapi_client()
