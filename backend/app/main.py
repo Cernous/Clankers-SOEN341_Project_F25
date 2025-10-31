@@ -4,7 +4,7 @@ from sqlmodel import Session, select, SQLModel
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-import uvicorn
+import uvicorn, json
 
 from api.router import api_router
 from core.config import settings
@@ -12,6 +12,11 @@ from core.sqlite_manager import engine, db_create, db_init
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
+
+def generate_openapi_client():
+    f = open("openapi.json", "w")
+    f.write(json.dumps(app.openapi()))
+    f.close()
 
 db_create(engine) #only runs on the first dry run without DB
 db_init(engine) #sets up superuser if not already there
