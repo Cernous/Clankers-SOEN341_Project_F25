@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import uuid
 
 from models import User, EventDB, UserRole
@@ -13,7 +13,7 @@ def seed_database(session: SessionDep):
     #user dummy data
     users = [
         User(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             email="alice@example.com",
             first_name="Alice",
             last_name="Nguyen",
@@ -25,7 +25,7 @@ def seed_database(session: SessionDep):
             tickets=None
         ),
         User(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             email="bob@example.com",
             first_name="Bob",
             last_name="Martinez",
@@ -37,7 +37,7 @@ def seed_database(session: SessionDep):
             tickets=None
         ),
         User(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             email="jordan@example.com",
             first_name="Jordan",
             last_name="Lee",
@@ -49,7 +49,7 @@ def seed_database(session: SessionDep):
             tickets=None
         ),
         User(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             email="admin@example.com",
             first_name="Sam",
             last_name="Blake",
@@ -63,7 +63,7 @@ def seed_database(session: SessionDep):
     ]
 
     #event dummy data
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     events = [
         EventDB(
             name="Tech Expo 2025",

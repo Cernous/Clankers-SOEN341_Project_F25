@@ -7,7 +7,9 @@ from sqlmodel import Field, Relationship, SQLModel, Uuid
 
 from typing import Optional, Literal
 from enum import Enum
-from datetime import datetime, date
+from datetime import datetime, date, timezone
+from functools import partial
+import uuid
 
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -20,6 +22,7 @@ class UserBase(SQLModel):
     last_name: str | None = None
     pronouns: str | None = None
     username: str 
+    date_of_birth: Optional[date] = Field(default=None)
     role: UserRole = Field(default=UserRole.STUDENT)
 
 class UserCreate(UserBase):
@@ -57,12 +60,10 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 class User(UserBase, table=True):
-    id: str = Field(default_factory=Uuid(as_uuid=False), primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     hashed_password: str
     tickets: Optional[str] = None
-    date_of_birth: Optional[date] = None
     reviews: list["Review"] = Relationship(back_populates="user")
-
     # insert list of events and list of saved events
 
 class EventBase(SQLModel):
@@ -113,7 +114,7 @@ class EventDB(EventBase, table=True):
     visibility: str = "public"
     state: str = "upcoming"
     count_attendees: int = 0
-    date_created: datetime = Field(default_factory=datetime.utcnow)
+    date_created: Optional[datetime] = None
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     pictures: Optional[str] = None
@@ -125,11 +126,11 @@ class EventDB(EventBase, table=True):
 class ReviewBase(SQLModel):
     desc: str | None = None
     star: int | None = None
-    date_created: datetime = Field(default_factory=datetime.utcnow)
+    date_created: datetime = Field(default_factory=None)
 
 class Review(ReviewBase, table=True):
     id: int = Field(primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id") 
+    user_id: str = Field(foreign_key="user.id") 
     event_id: int = Field(foreign_key="eventdb.id")
     visible: bool = Field(default=True)
     
@@ -150,7 +151,7 @@ class ReviewRead(ReviewBase):
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id")
+    user_id: str = Field(foreign_key="user.id")
     event_id: int = Field(foreign_key="eventdb.id")
     ticket: str
     event: Optional["EventDB"] = Relationship(back_populates="attendees")
