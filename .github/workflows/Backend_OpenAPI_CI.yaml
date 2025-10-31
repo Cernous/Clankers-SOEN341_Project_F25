@@ -1,4 +1,4 @@
-name: Validate FastAPI OpenAPI Schema
+name: Validate OpenAPI Schema
 
 on:
     push:

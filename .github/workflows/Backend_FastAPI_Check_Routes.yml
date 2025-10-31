@@ -1,4 +1,4 @@
-name: Validate FastAPI OpenAPI Schema
+name: Validate FastAPI Routes Using Pytest & Requests
 
 on:
     push:
@@ -7,8 +7,8 @@ on:
         branches: [main, backend]
 
 jobs:
-    validate-openapi:
-        name: Validate OpenAPI
+    validate-fastapi:
+        name: Validate FastAPI
         runs-on: ubuntu-latest
 
         steps:
