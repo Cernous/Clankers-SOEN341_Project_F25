@@ -5,14 +5,13 @@ from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from api.deps import CurrentUser, SessionDep, get_current_user
-from models import EventDB, EventCreate, EventUpdate, EventPublicRead, EventOrganizerRead, User
+from models import EventDB, EventCreate, EventAdminCreate, EventUpdate, EventPublicRead, EventOrganizerRead, EventList, User
 
 router = APIRouter(tags=['events'])
 
 ########################### CRUD operations #####################################
 @router.post("/events")
 def create_event(data: EventCreate, session: SessionDep, user: User = Depends(get_current_user)):
-
     if user.role != "organizer":
         raise HTTPException(status_code=403, detail="Only organizers can create events")
     
@@ -23,6 +22,32 @@ def create_event(data: EventCreate, session: SessionDep, user: User = Depends(ge
     session.refresh(event)
 
     return EventOrganizerRead.model_validate(event)
+
+@router.post("/events/admin_create")
+def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create events via this route")
+    
+    event = EventDB(**data.model_dump())
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return EventOrganizerRead.model_validate(event)
+
+
+#in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
+@router.get("/events/list", response_model=list[EventList])
+def list_events(session: SessionDep, user: User = Depends(get_current_user)):
+   #if user.role != "admin":
+
+       # raise HTTPException(status_code=403, detail="Admin access required")
+
+    events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
+
+    return events 
+
 
 
 @router.get("/events/{event_id}")
@@ -60,7 +85,8 @@ def update_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
         raise HTTPException(status_code=403, detail="Not your event broski")
 
     #get the fields to update, exclude_unset means only fields sent in the request body will be included
-    updates = data.model_dump(exclude_unset=True)
+    updates = data.model_dump()  #literally "exclude_unset=True" is dif between put and patch, oops
+
 
     #never allow these attributes to change
     immutable = {"id", "organizer_id", "date_created"}
