@@ -34,9 +34,11 @@ jobs:
 
             - name: Start FastAPI
               run: |
+                    cd backend
                     fastapi dev &
                     sleep 5
             
             - name: Validate OpenAPI Schema
               run: |
+                    cd backend
                     python -m openapi_spec_validator openapi.json
