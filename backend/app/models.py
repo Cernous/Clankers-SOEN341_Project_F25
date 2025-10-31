@@ -2,10 +2,8 @@
     This is where we create the different sqlmodels for the responses and request arguments
 """
 
-import uuid
-
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, Uuid
 
 from typing import Optional, Literal
 from enum import Enum
@@ -42,7 +40,7 @@ class UserUpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 class UserPublic(UserBase):
-    id: uuid.UUID
+    id: str
 
 class Message(SQLModel):
     message: str
@@ -59,7 +57,7 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(default_factory=Uuid(as_uuid=False), primary_key=True)
     hashed_password: str
     tickets: Optional[str] = None
     date_of_birth: Optional[date] = None

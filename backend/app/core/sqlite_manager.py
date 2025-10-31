@@ -1,4 +1,4 @@
-from sqlmodel import Session, create_engine, select, SQLModel
+from sqlmodel import Session, create_engine, select, SQLModel, func
 import crud
 from core.config import settings
 from models import User, UserCreate
@@ -14,7 +14,7 @@ def db_create(db_engine: Engine) -> None:
 
 def def_admin_create(session: Session) -> None:
     user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
+        select(User).where(func.lower(User.email) == func.lower(settings.FIRST_SUPERUSER))
     ).first()
     if not user:
         user_in = UserCreate(
