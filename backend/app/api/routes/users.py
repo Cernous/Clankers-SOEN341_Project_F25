@@ -97,12 +97,6 @@ def create_organizer(user: UserRegister, session: SessionDep) -> Token:
         )
     )
 
-# Most of these should be put into tools
-
-
-
-
-
 @router.get("/{user_id}")
 def get_user(user_id: int, session: SessionDep):
     usersTable = select(User)
