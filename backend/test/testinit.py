@@ -18,7 +18,7 @@ def client():
 @pytest.fixture
 def superuser_token_headers(client: requests.Session) -> dict[str, str]:
     data = {
-        "username": settings.FIRST_SUPERUSER,
+        "username": "clankAdmin",
         "password": settings.FIRST_SUPERUSER_PASSWORD
     }
 
