@@ -14,5 +14,5 @@ api_router = APIRouter()
 api_router.include_router(events.router)
 api_router.include_router(login.router)
 api_router.include_router(users.router)
-# api_router.include_router(tools.router)
+api_router.include_router(tools.router)
 api_router.include_router(seed_routes.router) #dummy data route
