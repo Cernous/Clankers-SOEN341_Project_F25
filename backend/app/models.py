@@ -83,7 +83,7 @@ class EventCreate(EventBase):
 
 
 class EventAdminCreate(EventCreate):
-    organizer_id: str = Field(default=None)
+    organizer_id: Optional[str] = None
 
 #we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
 class EventUpdate(SQLModel):

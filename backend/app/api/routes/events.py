@@ -21,39 +21,22 @@ router = APIRouter(tags=['events'])
 
 ########################### CRUD operations #####################################
 @router.post("/events")
-def create_event(data: EventCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "organizer":
-        raise HTTPException(status_code=403, detail="Only organizers can create events")
-    
-    event = EventDB(**data.model_dump(), organizer_id=user.id)
-
-    session.add(event)
-    session.commit()
-    session.refresh(event)
-
-    return EventOrganizerRead.model_validate(event)
-
-@router.post("/events/admin_create/")
 def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can create events via this route")
-    
-    table = select(User)
-    user = session.exec(table.where(data.organizer_id == User.id)).first()
-    if not user:
-        raise HTTPException(400, "Organizer does not exist")
-    
+    if user.role != "organizer" or user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only organizers can create events")
+    if user.role == "organizer":
+        data.organizer_id = user.id
     event = EventDB(**data.model_dump())
+
     session.add(event)
     session.commit()
     session.refresh(event)
 
     return EventOrganizerRead.model_validate(event)
-
 
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
 @router.get("/events/list", response_model=list[EventList])
-def list_events(session: SessionDep, user: User = Depends(get_current_user)):
+def list_events(session: SessionDep):
     events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
     return events 
 
