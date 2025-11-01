@@ -148,30 +148,25 @@ def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
 
     return {"detail": "Event deleted, bye bye"}
 
-@router.get("/")
-def get_all_events(session: SessionDep):
-    return session.query(EventDB).all()
-
-@router.post("/{event_id}/add_ticket/{user_id}")
-def add_ticket(event_id: int, user_id: str, session: SessionDep):
+@router.post("/{event_id}/add_ticket/")
+def add_ticket(event_id: int, session: SessionDep, current_user: CurrentUser):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
-    user = session.query(User).filter(User.id == user_id).first()
-    if not event or not user:
+    if not event:
         raise HTTPException(status_code=404, detail="Event or User not found")
     if event.tickets_left <= 0:
         raise HTTPException(status_code=400, detail="No tickets left")
     event.tickets_left -= 1
-    session.add(Attendees(event_id=event_id, user_id=user_id))
+    session.add(Attendees(event_id=event_id, user_id=current_user.id))
     session.commit()
     return {"message": "Ticket added and user added to attendees"}
 
 
-@router.post("/{event_id}/remove_ticket/{user_id}")
-def remove_ticket(event_id: int, user_id: str, session: SessionDep):
+@router.post("/{event_id}/remove_ticket")
+def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     attendee = (
         session.query(Attendees)
-        .filter(Attendees.event_id == event_id, Attendees.user_id == user_id)
+        .filter(Attendees.event_id == event_id, Attendees.user_id == current_user.id)
         .first()
     )
     if not event or not attendee:
