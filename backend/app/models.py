@@ -86,7 +86,7 @@ class EventAdminCreate(EventBase):
     tags: Optional[str] = None
     pictures: Optional[str] = None
     visibility: str
-    organizer_id: Optional[int] = None
+    organizer_id: str = Field(default=None)
 
 #we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
 class EventUpdate(SQLModel):

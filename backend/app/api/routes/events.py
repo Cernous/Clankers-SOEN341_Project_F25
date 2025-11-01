@@ -33,13 +33,17 @@ def create_event(data: EventCreate, session: SessionDep, user: User = Depends(ge
 
     return EventOrganizerRead.model_validate(event)
 
-@router.post("/events/admin_create")
+@router.post("/events/admin_create/")
 def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
     if user.role != "admin":
         raise HTTPException(status_code=403, detail="Only admins can create events via this route")
     
+    table = select(User)
+    user = session.exec(table.where(data.organizer_id == User.id)).first()
+    if not user:
+        raise HTTPException(400, "Organizer does not exist")
+    
     event = EventDB(**data.model_dump())
-
     session.add(event)
     session.commit()
     session.refresh(event)
