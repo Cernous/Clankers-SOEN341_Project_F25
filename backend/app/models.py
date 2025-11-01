@@ -20,7 +20,7 @@ class UserBase(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
-    username: str 
+    username: str = Field(unique=True, max_length=255)
     date_of_birth: Optional[date] = Field(default=None)
     role: UserRole = Field(default=UserRole.STUDENT)
 
@@ -28,10 +28,13 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
 
 class UserRegister(SQLModel):
+    username: str = Field(unique=True, max_length=255)
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
-    first_name: str | None = Field(default=None, max_length=255)
-    last_name: str | None = Field(default=None, max_length=255)
+    first_name: str = Field(default=None, max_length=255)
+    last_name: str = Field(default=None, max_length=255)
+    pronouns: str | None = None
+    date_of_birth: Optional[date] = Field(default=None)
 
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(unique=True, index=True, max_length=255)

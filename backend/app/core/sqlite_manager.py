@@ -19,7 +19,7 @@ def def_admin_create(session: Session) -> None:
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
-            username=settings.FIRST_SUPERUSER,
+            username="clankAdmin",
             password=settings.FIRST_SUPERUSER_PASSWORD,
             role="admin"
         )
