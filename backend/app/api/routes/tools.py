@@ -28,9 +28,9 @@ from core import security
 from datetime import date, timedelta
 from sqlmodel import  func, select
 
-router = APIRouter(prefix="/tools", tags=["tools", "analytics"])
+router = APIRouter(prefix="/tools", tags=["Tools"])
 
-@router.get("/users/get-all")
+@router.get("/users/get-all", tags=["Users"])
 def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get all users from the database and returns them (including personal detail)
@@ -40,7 +40,7 @@ def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     usersTable = select(User)
     return session.exec(usersTable).all()
 
-@router.delete("/users/delete/{user_id}")
+@router.delete("/users/delete/{user_id}", tags=["Users"])
 def delete_user(user_id: int, session: SessionDep, user: User = Depends(get_current_user)):
     """
         Directly delete a user from its user_id from the database
@@ -57,7 +57,7 @@ def delete_user(user_id: int, session: SessionDep, user: User = Depends(get_curr
 
 ### Analytics
 
-@router.get("/analytics/pronoun_count")
+@router.get("/analytics/pronoun_count", tags=["Analytics"])
 def get_pronoun_count(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get the pronouns count from the whole user base
@@ -72,7 +72,7 @@ def get_pronoun_count(session: SessionDep, user: User = Depends(get_current_user
     )
     return {p: c for p, c in results}
 
-@router.get("/analytics/average_age")
+@router.get("/analytics/average_age", tags=["Analytics"])
 def get_average_age(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get the average age of the user base
@@ -88,7 +88,7 @@ def get_average_age(session: SessionDep, user: User = Depends(get_current_user))
     ) / len(users)
     return {"average_age": round(avg_age, 2)}
 
-@router.get("/analytics/average_age/{event_id}")
+@router.get("/analytics/average_age/{event_id}", tags=["Analytics"])
 def get_event_average_age(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get the average age of the attendees in a given event
