@@ -82,10 +82,7 @@ class EventCreate(EventBase):
     visibility: str
 
 
-class EventAdminCreate(EventBase):
-    tags: Optional[str] = None
-    pictures: Optional[str] = None
-    visibility: str
+class EventAdminCreate(EventCreate):
     organizer_id: str = Field(default=None)
 
 #we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
