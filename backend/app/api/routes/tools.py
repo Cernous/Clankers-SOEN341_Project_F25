@@ -20,6 +20,7 @@ from core.config import settings
 from core import security
 from datetime import date, timedelta
 from sqlmodel import  func, select
+import crud
 
 router = APIRouter(prefix="/tools", tags=["Tools"])
 
@@ -100,13 +101,7 @@ def get_pronoun_count(session: SessionDep, user: User = Depends(get_current_user
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
-    usersTable = select(func.count(User.id)).select_from(User.pronouns)
-    results = (
-        session.query(User.pronouns, func.count(User.id))
-        .group_by(User.pronouns)
-        .all()
-    )
-    return {p: c for p, c in results}
+    return crud.get_all_pronoun(session=session)
 
 @router.get("/analytics/average_age", tags=["Analytics"])
 def get_average_age(session: SessionDep, user: User = Depends(get_current_user)):
