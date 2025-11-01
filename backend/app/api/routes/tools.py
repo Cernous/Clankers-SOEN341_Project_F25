@@ -34,6 +34,17 @@ def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     usersTable = select(User)
     return session.exec(usersTable).all()
 
+@router.get("/users/get-all-organizers", tags=["Users"])
+def get_all_organizers(session: SessionDep, user: User = Depends(get_current_user)):
+    """
+        Get all organizers from the database and returns them (including personal detail)
+        Scope: "admin"
+    """
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Invalid role used")
+    usersTable = select(User)
+    return session.exec(usersTable.where(UserRole.ORGANIZER == User.role)).all()
+
 @router.delete("/users/delete/{user_id}", tags=["Users"])
 def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_current_user)):
     """
@@ -52,7 +63,7 @@ def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_curr
 
 ### Analytics
 
-@router.get("/users/user_count", tags=["Analytics"])
+@router.get("/analytics/user_count", tags=["Analytics"])
 def get_num_users(session:SessionDep, current_user:CurrentUser):
     """
         Retrieves the number of users on the platform without sending the whole database table
@@ -62,6 +73,20 @@ def get_num_users(session:SessionDep, current_user:CurrentUser):
         raise HTTPException(status_code=403, detail="Invalid role")
     userTable = select(User)
     result = len(session.exec(userTable).all())
+    return {
+        "number": result
+    }
+
+@router.get("/analytics/organizer_count", tags=["Analytics"])
+def get_num_organizers(session: SessionDep, current_user: CurrentUser):
+    """
+        Retrieves the number of organizers on the platform without sending the whole database table
+        Scope: "admin"
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Invalid role")
+    userTable = select(User)
+    result = len(session.exec(userTable.where(UserRole.ORGANIZER == User.role)).all())
     return {
         "number": result
     }
