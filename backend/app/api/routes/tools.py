@@ -3,21 +3,13 @@
 """
 from fastapi import APIRouter, Depends, HTTPException
 
-import crud
 from models import (
     EventDB,
-    Token,
     User,
-    UserRegister,
     UserRole,
-    UserUpdatePassword,
-    UserUpdate,
-    UserCreate,
-    UserPublic,
     Attendees
 )
 from api.deps import (
-    CurrentUser, 
     SessionDep, 
     get_current_active_superuser,
     get_current_user
@@ -41,14 +33,14 @@ def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     return session.exec(usersTable).all()
 
 @router.delete("/users/delete/{user_id}", tags=["Users"])
-def delete_user(user_id: int, session: SessionDep, user: User = Depends(get_current_user)):
+def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_current_user)):
     """
         Directly delete a user from its user_id from the database
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
     usersTable = select(User)
-    user = session.exec(usersTable).filter(User.id == user_id).first()
+    user = session.exec(usersTable.filter(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user)
