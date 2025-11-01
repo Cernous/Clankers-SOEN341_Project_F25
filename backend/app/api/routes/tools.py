@@ -10,6 +10,7 @@ from models import (
     Attendees
 )
 from api.deps import (
+    CurrentUser,
     SessionDep, 
     get_current_active_superuser,
     get_current_user
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/tools", tags=["Tools"])
 def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get all users from the database and returns them (including personal detail)
+        Scope: "admin"
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
@@ -36,6 +38,7 @@ def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
 def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_current_user)):
     """
         Directly delete a user from its user_id from the database
+        Scope: "admin"
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
@@ -49,10 +52,26 @@ def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_curr
 
 ### Analytics
 
+@router.get("/users/user_count", tags=["Analytics"])
+def get_num_users(session:SessionDep, current_user:CurrentUser):
+    """
+        Retrieves the number of users on the platform without sending the whole database table
+        Scope: "admin"
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Invalid role")
+    userTable = select(User)
+    result = len(session.exec(userTable).all())
+    return {
+        "number": result
+    }
+
+
 @router.get("/analytics/pronoun_count", tags=["Analytics"])
 def get_pronoun_count(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get the pronouns count from the whole user base
+        Scope: "admin"
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
@@ -68,6 +87,7 @@ def get_pronoun_count(session: SessionDep, user: User = Depends(get_current_user
 def get_average_age(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get the average age of the user base
+        Scope: "admin"
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
@@ -80,10 +100,11 @@ def get_average_age(session: SessionDep, user: User = Depends(get_current_user))
     ) / len(users)
     return {"average_age": round(avg_age, 2)}
 
-@router.get("/analytics/average_age/{event_id}", tags=["Analytics"])
+@router.get("/analytics/average_age/{event_id}", tags=["Analytics", "events"])
 def get_event_average_age(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
     """
-        Get the average age of the attendees in a given event
+        Get the average age of the attendees in a given event 
+        Scope: "organizer"
     """
     event = session.get(EventDB, event_id)
     if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
