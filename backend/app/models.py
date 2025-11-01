@@ -111,11 +111,12 @@ class EventOrganizerRead(EventBase):
     visibility: str
     state: str
     count_attendees: int
-    date_created: datetime
+    date_created: Optional[datetime] = None
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     tags: Optional[str] = None
     pictures: Optional[str] = None
+    tickets_left: Optional[int] = None
 
 class EventDB(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

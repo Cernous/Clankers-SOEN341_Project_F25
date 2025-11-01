@@ -149,13 +149,18 @@ def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
     return {"detail": "Event deleted, bye bye"}
 
 @router.post("/{event_id}/add_ticket/")
-def add_ticket(event_id: int, session: SessionDep, current_user: CurrentUser):
+def add_ticket(event_id: int, session: SessionDep, ticket: str, current_user: CurrentUser):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event or User not found")
     if event.tickets_left <= 0:
         raise HTTPException(status_code=400, detail="No tickets left")
     event.tickets_left -= 1
+    ticket = str(event_id) + ":" + f"{ticket}"
+    if current_user.tickets == None:
+        current_user.tickets = ticket
+    else:
+        current_user.tickets += f",{ticket}"
     session.add(Attendees(event_id=event_id, user_id=current_user.id))
     session.commit()
     return {"message": "Ticket added and user added to attendees"}
@@ -172,6 +177,7 @@ def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser)
     if not event or not attendee:
         raise HTTPException(status_code=404, detail="Event or Attendee not found")
     event.tickets_left += 1
+    for 
     session.delete(attendee)
     session.commit()
     return {"message": "Ticket removed and user removed from attendees"}
