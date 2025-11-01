@@ -11,7 +11,8 @@ from models import EventDB, User, UserCreate, UserUpdate, Review, Attendees
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
+        user_create, 
+        update={"hashed_password": get_password_hash(user_create.password)}
     )
     session.add(db_obj)
     session.commit()
@@ -38,9 +39,13 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
     session_user = session.exec(statement).first()
     return session_user
 
+def get_user_by_username(*, session: Session, username: str) -> User | None:
+    statement = select(User).where(func.lower(User.username) == func.lower(username))
+    session_user = session.exec(statement).first()
+    return session_user
 
-def authenticate(*, session: Session, email: str, password: str) -> User | None:
-    db_user = get_user_by_email(session=session, email=email)
+def authenticate(*, session: Session, username: str, password: str) -> User | None:
+    db_user = get_user_by_username(session=session, username=username)
     if not db_user:
         return None
     if not verify_password(password, db_user.hashed_password):
