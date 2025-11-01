@@ -4,33 +4,79 @@ import RoleSelector from './RoleSelector'
 
 export default function Header() {
   const location = useLocation()
-  const hasCreatorRole = useHasRole('creator')
+  const hasCreatorRole = useHasRole('creator
+                                      const { isLoggedIn, user, logout } = useAuth()
+  const { saved, tickets } = useUserData()')
 
   // Don't show creator buttons on sign/login routes
   const isAuthRoute =
     location.pathname.includes('/sign') || location.pathname.includes('/login')
 
+
   return (
-    <header className="p-2 flex gap-2 bg-white text-black justify-between">
-      <nav className="flex flex-row">
-        <div className="px-2 font-bold">
-          <Link to="/">Home</Link>
-        </div>
+    <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        {/* Brand */}
+        <Link to="/" className="text-lg font-extrabold tracking-tight">
+          CampusEvents
+        </Link>
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/start/server-funcs">Start - Server Functions</Link>
-        </div>
+        {/* Nav */}
+        <nav className="flex items-center gap-4 text-sm font-medium">
+          <Link to="/" className="hover:underline">Home</Link>
+          <Link to="/events" className="hover:underline">Events</Link>
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/start/api-request">Start - API Request</Link>
-        </div>
+          {/* Creator-only */}
+          {isLoggedIn && user?.role === 'creator' && (
+            <Link to="/event-creation" className="hover:underline text-[#7A0019] font-semibold">
+              + Create Event
+            </Link>
+          )}
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/form/simple">Simple Form</Link>
-        </div>
+          {/* Admin-only */}
+          {isLoggedIn && user?.role === 'admin' && (
+            <Link to="/admin" className="hover:underline font-semibold">
+              Admin
+            </Link>
+          )}
 
-        <div className="px-2 font-bold">
-          <Link to="/demo/form/address">Address Form</Link>
+          {/* Logged-in only */}
+          {isLoggedIn && (
+            <>
+              <Link to="/calendar" className="hover:underline">
+                My Calendar{saved.length ? ` (${saved.length})` : ''}
+              </Link>
+              <Link to="/tickets" className="hover:underline">
+                My Tickets{tickets.length ? ` (${tickets.length})` : ''}
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Auth */}
+        <div className="flex items-center gap-3">
+          {isLoggedIn && user ? (
+            <>
+              <span className="max-w-[180px] truncate rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
+                {user.firstName || user.username} ({user.role})
+              </span>
+              <button
+                onClick={logout}
+                className="rounded-full border border-neutral-300 bg-white px-4 py-1 text-sm font-medium hover:bg-neutral-50"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="rounded-full bg-black px-4 py-1 text-sm font-medium text-white hover:bg-neutral-900">
+                Login
+              </Link>
+              <Link to="/signup" className="rounded-full border border-neutral-300 bg-white px-4 py-1 text-sm font-medium hover:bg-neutral-50">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
