@@ -36,9 +36,11 @@ class UserRegister(SQLModel):
     pronouns: str | None = None
     date_of_birth: Optional[date] = Field(default=None)
 
-class UserUpdate(UserBase):
+class UserUpdate(SQLModel):
     email: EmailStr | None = Field(unique=True, index=True, max_length=255)
-    password: str | None = Field(min_length=8, max_length=40)
+    first_name: str | None = None
+    last_name: str | None = None
+    pronouns: str | None = None
 
 class UserUpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
@@ -156,15 +158,15 @@ class ReviewModerate(SQLModel):
     visible: bool | None = None
 
 class ReviewRead(ReviewBase):
-    first_name: str
-    event_id: int
-    desc: str
-    star: int
-    date_created: datetime
+    first_name: str | None = None
+    event_id: int | None = None
+    desc: str | None = None
+    star: int | None = None
+    date_created: Optional[datetime] = Field(default=None)
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
     user_id: str = Field(foreign_key="user.id")
     event_id: int = Field(foreign_key="eventdb.id")
-    ticket: str
+    ticket: str | None = None
     event: Optional["EventDB"] = Relationship(back_populates="attendees")
