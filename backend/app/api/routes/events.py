@@ -5,7 +5,17 @@ from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from api.deps import CurrentUser, SessionDep, get_current_user
-from models import EventDB, EventCreate, EventAdminCreate, EventUpdate, EventPublicRead, EventOrganizerRead, EventList, User
+from models import (
+    EventDB, 
+    EventCreate, 
+    EventAdminCreate, 
+    EventUpdate, 
+    EventPublicRead, 
+    EventOrganizerRead, 
+    EventList, 
+    User,
+    Attendees
+)
 
 router = APIRouter(tags=['events'])
 
@@ -40,12 +50,7 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
 @router.get("/events/list", response_model=list[EventList])
 def list_events(session: SessionDep, user: User = Depends(get_current_user)):
-   #if user.role != "admin":
-
-       # raise HTTPException(status_code=403, detail="Admin access required")
-
     events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
-
     return events 
 
 
@@ -178,8 +183,8 @@ def add_ticket(event_id: int, user_id: int, session: SessionDep):
 def remove_ticket(event_id: int, user_id: int, session: SessionDep):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     attendee = (
-        session.query(Attendee)
-        .filter(Attendee.event_id == event_id, Attendee.user_id == user_id)
+        session.query(Attendees)
+        .filter(Attendees.event_id == event_id, Attendees.user_id == user_id)
         .first()
     )
     if not event or not attendee:
