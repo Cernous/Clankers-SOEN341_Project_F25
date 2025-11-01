@@ -166,7 +166,7 @@ def get_all_events(session: SessionDep):
     return session.query(EventDB).all()
 
 @router.post("/{event_id}/add_ticket/{user_id}")
-def add_ticket(event_id: int, user_id: int, session: SessionDep):
+def add_ticket(event_id: int, user_id: str, session: SessionDep):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     user = session.query(User).filter(User.id == user_id).first()
     if not event or not user:
@@ -174,13 +174,13 @@ def add_ticket(event_id: int, user_id: int, session: SessionDep):
     if event.tickets_left <= 0:
         raise HTTPException(status_code=400, detail="No tickets left")
     event.tickets_left -= 1
-    session.add(Attendee(event_id=event_id, user_id=user_id))
+    session.add(Attendees(event_id=event_id, user_id=user_id))
     session.commit()
     return {"message": "Ticket added and user added to attendees"}
 
 
 @router.post("/{event_id}/remove_ticket/{user_id}")
-def remove_ticket(event_id: int, user_id: int, session: SessionDep):
+def remove_ticket(event_id: int, user_id: str, session: SessionDep):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     attendee = (
         session.query(Attendees)
