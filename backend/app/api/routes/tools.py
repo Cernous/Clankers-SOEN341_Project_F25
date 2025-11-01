@@ -23,7 +23,7 @@ from sqlmodel import  func, select
 
 router = APIRouter(prefix="/tools", tags=["Tools"])
 
-@router.get("/users/get-all", tags=["Users"])
+@router.get("/users/get-all-users", tags=["Users"])
 def get_all_users(session: SessionDep, user: User = Depends(get_current_user)):
     """
         Get all users from the database and returns them (including personal detail)
@@ -123,3 +123,16 @@ def get_event_average_age(event_id: int, session: SessionDep, user: User = Depen
         (today - u.date_of_birth).days / 365 for u in attendees
     ) / len(attendees)
     return {"average_age": round(avg_age, 2)}
+
+@router.get("/analytics/get-all-events/detail", tags=["Analytics", "events"])
+def get_all_events(session: SessionDep, current_user: CurrentUser):
+    """
+        Get all events' detail
+        Scope: "admin"
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            403,
+            "Invalid Role"
+        )
+    return session.exec(select(EventDB)).all()
