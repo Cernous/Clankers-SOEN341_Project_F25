@@ -4,7 +4,6 @@
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, Uuid
-
 from typing import Optional, Literal
 from enum import Enum
 from datetime import datetime, date, timezone
@@ -77,6 +76,14 @@ class EventBase(SQLModel):
 class EventCreate(EventBase):
     tags: Optional[str] = None
     pictures: Optional[str] = None
+    visibility: str
+
+
+class EventAdminCreate(EventBase):
+    tags: Optional[str] = None
+    pictures: Optional[str] = None
+    visibility: str
+    organizer_id: Optional[int] = None
 
 #we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
 class EventUpdate(SQLModel):
@@ -95,6 +102,7 @@ class EventPublicRead(EventBase):
     tags: Optional[str] = None
     pictures: Optional[str] = None
 
+#not just for organizers, also for admins!
 class EventOrganizerRead(EventBase):
     id: int
     organizer_id: int
@@ -121,6 +129,11 @@ class EventDB(EventBase, table=True):
     tickets_left: Optional[int] = None
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
+
+#to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
+class EventList(EventBase):
+    tags: Optional[str] = None
+    pictures: Optional[str] = None
 
 #review table, one to many relationship with each event
 class ReviewBase(SQLModel):
