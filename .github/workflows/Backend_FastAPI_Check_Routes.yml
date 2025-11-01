@@ -1,0 +1,44 @@
+name: Validate FastAPI Routes Using Pytest & Requests
+
+on:
+    push:
+        branches: [feat--validation-script-for-`backend`]
+    pull_request:
+        branches: [main, backend]
+
+jobs:
+    validate-fastapi:
+        name: Validate FastAPI
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v5
+            
+            - name: Set Up Python
+              uses: actions/setup-python@v6
+              with:
+                    python-version: '3.13.7'
+            
+            - name: Activate Virtual Environment
+              run: |
+                    cd backend
+                    python -m venv .venv
+                    source .venv/bin/activate
+            
+            - name: Install Dependencies
+              run: |
+                    cd backend
+                    pip install -r requirements.txt
+                    pip install pytest requests
+
+            - name: Start FastAPI
+              run: |
+                    cd backend
+                    fastapi dev &
+                    sleep 5
+            
+            - name: Validate Certain Routes
+              run: |
+                    cd backend
+                    python -m pytest test/testinit.py
