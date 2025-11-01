@@ -11,7 +11,8 @@ from models import (
     UserUpdatePassword,
     UserUpdate,
     UserCreate,
-    UserPublic
+    UserPublic,
+    Attendees
 )
 from api.deps import CurrentUser, SessionDep, get_current_active_superuser
 
@@ -55,12 +56,14 @@ def create_user(user: UserCreate, session: SessionDep):
 
 @router.get("/")
 def get_all_users(session: SessionDep):
-    return session.query(User).all()
+    usersTable = select(User)
+    return session.exec(usersTable).all()
 
 
 @router.get("/{user_id}")
 def get_user(user_id: int, session: SessionDep):
-    user = session.query(User).filter(User.id == user_id).first()
+    usersTable = select(User)
+    user = session.exec(usersTable).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -68,7 +71,8 @@ def get_user(user_id: int, session: SessionDep):
 
 @router.delete("/{user_id}")
 def delete_user(user_id: int, session: SessionDep):
-    user = session.query(User).filter(User.id == user_id).first()
+    usersTable = select(User)
+    user = session.exec(usersTable).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user)
@@ -78,6 +82,7 @@ def delete_user(user_id: int, session: SessionDep):
 
 @router.get("/analytics/pronoun_count")
 def get_pronoun_count(session: SessionDep):
+    usersTable = select(func.count(User.id)).select_from(User.pronouns)
     results = (
         session.query(User.pronouns, func.count(User.id))
         .group_by(User.pronouns)
@@ -103,8 +108,8 @@ def get_event_average_age(event_id: int, session: SessionDep):
     today = date.today()
     attendees = (
         session.query(User)
-        .join(Attendee, Attendee.user_id == User.id)
-        .filter(Attendee.event_id == event_id)
+        .join(Attendees, Attendees.user_id == User.id)
+        .filter(Attendees.event_id == event_id)
         .filter(User.date_of_birth.isnot(None))
         .all()
     )
