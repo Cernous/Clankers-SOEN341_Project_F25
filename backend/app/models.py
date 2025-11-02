@@ -37,7 +37,7 @@ class UserRegister(SQLModel):
     date_of_birth: Optional[date] = Field(default=None)
 
 class UserUpdate(SQLModel):
-    email: EmailStr | None = Field(unique=True, index=True, max_length=255)
+    email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
