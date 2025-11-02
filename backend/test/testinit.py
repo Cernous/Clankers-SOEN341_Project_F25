@@ -3,10 +3,11 @@ import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 import importlib
+import time
 
 import pytest
 import requests
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 ROOT_PATH = Path(__file__).resolve().parents[1]
 APP_PATH = ROOT_PATH / "app"
@@ -78,17 +79,42 @@ def create_user(client: requests.Session):
             json=payload,
         )
         assert response.status_code == 200, response.text
-        token = response.json()["access_token"]
+        login_response = client.post(
+            api_url("/login/access-token"),
+            data={
+                "username": payload["username"],
+                "password": payload["password"],
+            },
+        )
+        assert login_response.status_code == 200, login_response.text
+        token = login_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
-        profile = client.get(api_url("/users/me"), headers=headers)
-        assert profile.status_code == 200, profile.text
+        profile = None
+        for _ in range(10):
+            profile = client.get(api_url("/users/me"), headers=headers)
+            if profile.status_code == 200:
+                break
+            time.sleep(0.2)
+        assert profile is not None and profile.status_code == 200, profile.text if profile else "Profile lookup failed"
+
+        user_record = None
+        for _ in range(5):
+            with Session(engine) as session:
+                user_record = session.exec(
+                    select(models.User).where(models.User.username == payload["username"])
+                ).first()
+            if user_record:
+                break
+            time.sleep(0.1)
+        assert user_record is not None, "User not persisted in database"
 
         return {
             "token": token,
             "headers": headers,
             "payload": payload,
             "profile": profile.json(),
+            "id": user_record.id,
         }
 
     return _create
