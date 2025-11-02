@@ -22,7 +22,7 @@ router = APIRouter(tags=['events'])
 ########################### CRUD operations #####################################
 @router.post("/events")
 def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "organizer" or user.role != "admin":
+    if user.role not in ["organizer","admin"]:
         raise HTTPException(status_code=403, detail="Only organizers can create events")
     if user.role == "organizer":
         data.organizer_id = user.id
