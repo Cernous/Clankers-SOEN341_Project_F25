@@ -19,6 +19,8 @@ sys.modules.setdefault("app.models", models)
 
 from core.config import settings
 from core.sqlite_manager import engine
+from core import security
+import jwt
 
 Attendees = models.Attendees
 EventDB = models.EventDB
@@ -118,6 +120,14 @@ def create_user(client: requests.Session):
                 break
             time.sleep(0.1)
         assert user_record is not None, "User not persisted in database"
+
+        payload_data = jwt.decode(
+            token,
+            options={"verify_signature": False},
+            algorithms=[security.ALGORITHM],
+        )
+        subject = payload_data.get("sub")
+        assert subject in {user_record.id, user_record.username}
 
         profile_response = wait_for_profile(client, headers)
         assert profile_response is not None and profile_response.status_code == 200, (

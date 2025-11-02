@@ -13,7 +13,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from pydantic import ValidationError
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from models import User, TokenPayload, UserRole
 from core import security
@@ -46,6 +46,10 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     user = session.exec(
         select(User).where(User.id == token_Data.sub)
     ).first()
+    if not user and token_Data.sub:
+        user = session.exec(
+            select(User).where(func.lower(User.username) == func.lower(token_Data.sub))
+        ).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
