@@ -1,121 +1,135 @@
 """
     User management related API endpoints
 """
-import uuid
-from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 import crud
 from models import (
+    EventDB,
+    Message,
+    Token,
     User,
+    UserRegister,
+    UserRole,
     UserUpdatePassword,
     UserUpdate,
     UserCreate,
     UserPublic,
     Attendees
 )
-from api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from api.deps import (
+    CurrentUser, 
+    SessionDep, 
+    get_current_active_superuser,
+    get_current_user
+)
 
 from core.config import settings
-from core.security import get_password_hash, verify_password
-from datetime import date
-from time import time
-from sqlmodel import col, delete, func, select
+from core import security
+from datetime import date, timedelta
+from sqlmodel import  func, select
 
 # being called by the router in the previous directory
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.get(
-    "/",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=UserPublic,
-)
-def read_users(session: SessionDep, skip: int=0, limit: int = 100) -> Any:
-    """
-        Retrieves the list of registered users
-    """
-    count_statement = select(func.count()).select_from(User)
-
-@router.post("/")
-def create_user(user: UserCreate, session: SessionDep):
-    hashed_pw = get_password_hash(user.password)
-    db_user = User(
+@router.post("/signup/{userRole}")
+def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token:
+    '''
+        Registers an user into the database as student
+    '''
+    user_sesh = session.exec(select(User).where(user.email == User.email or user.username == User.username)).all()
+    if user_sesh:
+        raise HTTPException(status_code=403, 
+                            detail="Username or Email has been previously used. Please try again")
+    if userRole.lower() not in ["student", "organizer"]:
+        raise HTTPException(status_code=400, 
+                            details="Role not specified or does not exist")
+    user_in = UserCreate(
         email=user.email,
         username=user.username,
         first_name=user.first_name,
         last_name=user.last_name,
         pronouns=user.pronouns,
-        hashed_password=hashed_pw,
+        password=user.password,
         date_of_birth=user.date_of_birth,
+        role=userRole
     )
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
+    user_out = crud.create_user(session=session, user_create=user_in)
+    # generate an access token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return Token(
+        access_token=security.create_access_token(
+            user_out.id, expires_delta=access_token_expires
+        )
+    )
 
-
-@router.get("/")
-def get_all_users(session: SessionDep):
+@router.get("/{user_id}", response_model=UserPublic)
+def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
+    """
+        Get User depending on the given user ID
+    """
     usersTable = select(User)
-    return session.exec(usersTable).all()
-
-
-@router.get("/{user_id}")
-def get_user(user_id: int, session: SessionDep):
-    usersTable = select(User)
-    user = session.exec(usersTable).filter(User.id == user_id).first()
+    user = session.exec(usersTable.filter(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    if user.role == UserRole.ADMIN or user == current_user:
+        return user
+    else:
+        raise HTTPException(status_code=403, details = "You don't have permission to view this profile")
 
+@router.patch("/me/update-password", response_model=Message)
+def update_password(passwordform: UserUpdatePassword, session: SessionDep, user:CurrentUser):
+    """
+        Allows the user to update their password
+    """
+    if passwordform.new_password == passwordform.current_password:
+        raise HTTPException(400, "Your new password should not be the same as your current password")
+    if not crud.verify_password(passwordform.current_password, user.hashed_password):
+        raise HTTPException(400, "Incorrect password")
 
-@router.delete("/{user_id}")
-def delete_user(user_id: int, session: SessionDep):
-    usersTable = select(User)
-    user = session.exec(usersTable).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    session.delete(user)
+    new_hashed_password = crud.get_password_hash(passwordform.new_password)
+    user.hashed_password = new_hashed_password
+    session.add(user)
     session.commit()
-    return {"message": "User deleted successfully"}
+    return Message(message="Password Updated Successfully")
 
+@router.get("/me", response_model=UserPublic)
+def get_me_user(current_user: CurrentUser):
+    """
+        Get me info
+    """
+    return current_user
 
-@router.get("/analytics/pronoun_count")
-def get_pronoun_count(session: SessionDep):
-    usersTable = select(func.count(User.id)).select_from(User.pronouns)
-    results = (
-        session.query(User.pronouns, func.count(User.id))
-        .group_by(User.pronouns)
-        .all()
-    )
-    return {p: c for p, c in results}
+@router.delete("/me", response_model=Message)
+def delete_me(session: SessionDep, current_user:CurrentUser):
+    """
+        Delete me user and say goodbye
+    """
+    if current_user.role == UserRole.ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="As an admin, you cannot delete yourself. Try doing it by deleting the database"
+        )
+    
+    session.delete(current_user)
+    session.commit()
+    return Message(message="Goodbye User. User has been deleted")
 
-
-@router.get("/analytics/average_age")
-def get_average_age(session: SessionDep):
-    today = date.today()
-    users = session.query(User).filter(User.date_of_birth.isnot(None)).all()
-    if not users:
-        return {"average_age": None}
-    avg_age = sum(
-        (today - u.date_of_birth).days / 365.25 for u in users
-    ) / len(users)
-    return {"average_age": round(avg_age, 2)}
-
-
-@router.get("/analytics/average_age/{event_id}")
-def get_event_average_age(event_id: int, session: SessionDep):
-    today = date.today()
-    attendees = (
-        session.query(User)
-        .join(Attendees, Attendees.user_id == User.id)
-        .filter(Attendees.event_id == event_id)
-        .filter(User.date_of_birth.isnot(None))
-        .all()
-    )
-    if not attendees:
-        return {"average_age": None}
-    avg_age = sum(
-        (today - u.date_of_birth).days / 365 for u in attendees
-    ) / len(attendees)
-    return {"average_age": round(avg_age, 2)}
+@router.patch("/me/update", response_model=UserPublic)
+def update_me(*, session:SessionDep, user_in: UserUpdate, current_user:CurrentUser):
+    """
+        Update me user
+    """
+    if user_in.email:
+        existing_user = crud.get_user_by_email(session=session, email=user_in.email)
+        if existing_user and existing_user.id != current_user.id:
+            raise HTTPException(
+                status_code=409, detail="User with this email already exists"
+            )
+    user_data = user_in.model_dump(exclude_unset=True)
+    current_user.sqlmodel_update(user_data)
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return current_user
+        

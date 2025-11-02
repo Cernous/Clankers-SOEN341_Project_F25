@@ -5,29 +5,27 @@ from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from api.deps import CurrentUser, SessionDep, get_current_user
-from models import EventDB, EventCreate, EventAdminCreate, EventUpdate, EventPublicRead, EventOrganizerRead, EventList, User
+from models import (
+    EventDB, 
+    EventCreate, 
+    EventAdminCreate, 
+    EventUpdate, 
+    EventPublicRead, 
+    EventOrganizerRead, 
+    EventList, 
+    User,
+    Attendees
+)
 
 router = APIRouter(tags=['events'])
 
 ########################### CRUD operations #####################################
 @router.post("/events")
-def create_event(data: EventCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "organizer":
-        raise HTTPException(status_code=403, detail="Only organizers can create events")
-    
-    event = EventDB(**data.model_dump(), organizer_id=user.id)
-
-    session.add(event)
-    session.commit()
-    session.refresh(event)
-
-    return EventOrganizerRead.model_validate(event)
-
-@router.post("/events/admin_create")
 def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can create events via this route")
-    
+    if user.role not in ["organizer","admin"]:
+        raise HTTPException(status_code=403, detail="Only organizers can create events")
+    if user.role == "organizer":
+        data.organizer_id = user.id
     event = EventDB(**data.model_dump())
 
     session.add(event)
@@ -36,16 +34,10 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
 
     return EventOrganizerRead.model_validate(event)
 
-
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
 @router.get("/events/list", response_model=list[EventList])
-def list_events(session: SessionDep, user: User = Depends(get_current_user)):
-   #if user.role != "admin":
-
-       # raise HTTPException(status_code=403, detail="Admin access required")
-
+def list_events(session: SessionDep):
     events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
-
     return events 
 
 
@@ -156,35 +148,35 @@ def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
 
     return {"detail": "Event deleted, bye bye"}
 
-@router.get("/")
-def get_all_events(session: SessionDep):
-    return session.query(EventDB).all()
-
-@router.post("/{event_id}/add_ticket/{user_id}")
-def add_ticket(event_id: int, user_id: int, session: SessionDep):
+@router.post("/{event_id}/add_ticket/")
+def add_ticket(event_id: int, session: SessionDep, ticket: str, current_user: CurrentUser):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
-    user = session.query(User).filter(User.id == user_id).first()
-    if not event or not user:
+    if not event:
         raise HTTPException(status_code=404, detail="Event or User not found")
     if event.tickets_left <= 0:
         raise HTTPException(status_code=400, detail="No tickets left")
     event.tickets_left -= 1
-    session.add(Attendee(event_id=event_id, user_id=user_id))
+    ticket = str(event_id) + ":" + f"{ticket}"
+    if current_user.tickets == None:
+        current_user.tickets = ticket
+    else:
+        current_user.tickets += f",{ticket}"
+    session.add(Attendees(event_id=event_id, user_id=current_user.id))
     session.commit()
     return {"message": "Ticket added and user added to attendees"}
 
 
-@router.post("/{event_id}/remove_ticket/{user_id}")
-def remove_ticket(event_id: int, user_id: int, session: SessionDep):
+@router.post("/{event_id}/remove_ticket")
+def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser):
     event = session.query(EventDB).filter(EventDB.id == event_id).first()
     attendee = (
-        session.query(Attendee)
-        .filter(Attendee.event_id == event_id, Attendee.user_id == user_id)
+        session.query(Attendees)
+        .filter(Attendees.event_id == event_id, Attendees.user_id == current_user.id)
         .first()
     )
     if not event or not attendee:
         raise HTTPException(status_code=404, detail="Event or Attendee not found")
-    event.tickets_left += 1
+    event.tickets_left += 1 
     session.delete(attendee)
     session.commit()
     return {"message": "Ticket removed and user removed from attendees"}

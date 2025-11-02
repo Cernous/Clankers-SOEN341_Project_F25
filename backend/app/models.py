@@ -20,7 +20,7 @@ class UserBase(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
-    username: str 
+    username: str = Field(unique=True, max_length=255)
     date_of_birth: Optional[date] = Field(default=None)
     role: UserRole = Field(default=UserRole.STUDENT)
 
@@ -28,14 +28,19 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
 
 class UserRegister(SQLModel):
+    username: str = Field(unique=True, max_length=255)
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
-    first_name: str | None = Field(default=None, max_length=255)
-    last_name: str | None = Field(default=None, max_length=255)
+    first_name: str = Field(default=None, max_length=255)
+    last_name: str = Field(default=None, max_length=255)
+    pronouns: str | None = None
+    date_of_birth: Optional[date] = Field(default=None)
 
-class UserUpdate(UserBase):
+class UserUpdate(SQLModel):
     email: EmailStr | None = Field(unique=True, index=True, max_length=255)
-    password: str | None = Field(min_length=8, max_length=40)
+    first_name: str | None = None
+    last_name: str | None = None
+    pronouns: str | None = None
 
 class UserUpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
@@ -79,11 +84,8 @@ class EventCreate(EventBase):
     visibility: str
 
 
-class EventAdminCreate(EventBase):
-    tags: Optional[str] = None
-    pictures: Optional[str] = None
-    visibility: str
-    organizer_id: Optional[int] = None
+class EventAdminCreate(EventCreate):
+    organizer_id: Optional[str] = None
 
 #we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
 class EventUpdate(SQLModel):
@@ -109,11 +111,12 @@ class EventOrganizerRead(EventBase):
     visibility: str
     state: str
     count_attendees: int
-    date_created: datetime
+    date_created: Optional[datetime] = None
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     tags: Optional[str] = None
     pictures: Optional[str] = None
+    tickets_left: Optional[int] = None
 
 class EventDB(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -156,15 +159,15 @@ class ReviewModerate(SQLModel):
     visible: bool | None = None
 
 class ReviewRead(ReviewBase):
-    first_name: str
-    event_id: int
-    desc: str
-    star: int
-    date_created: datetime
+    first_name: str | None = None
+    event_id: int | None = None
+    desc: str | None = None
+    star: int | None = None
+    date_created: Optional[datetime] = Field(default=None)
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
     user_id: str = Field(foreign_key="user.id")
     event_id: int = Field(foreign_key="eventdb.id")
-    ticket: str
+    ticket: str | None = None
     event: Optional["EventDB"] = Relationship(back_populates="attendees")

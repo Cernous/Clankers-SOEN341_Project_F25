@@ -19,7 +19,7 @@ def def_admin_create(session: Session) -> None:
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
-            username=settings.FIRST_SUPERUSER,
+            username="clankAdmin",
             password=settings.FIRST_SUPERUSER_PASSWORD,
             role="admin"
         )
@@ -31,4 +31,9 @@ def db_init(db_engine: Engine) -> None:
     '''
     with Session(db_engine) as session:
         session.exec(select(1))
-        def_admin_create(session)
+        try:
+            def_admin_create(session)
+            # if admin already exists in database
+            # but has different credentials
+        except:
+            pass
