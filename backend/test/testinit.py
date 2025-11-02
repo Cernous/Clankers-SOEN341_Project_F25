@@ -127,12 +127,15 @@ def create_user(client: requests.Session):
             algorithms=[security.ALGORITHM],
         )
         subject = payload_data.get("sub")
+        Path("temp_output.txt").write_text(
+            f"token:{token}\nsubject:{subject}\ndb_id:{user_record.id}\n",
+            encoding="utf-8",
+        )
         assert subject in {user_record.id, user_record.username}
 
         profile_response = wait_for_profile(client, headers)
-        assert profile_response is not None and profile_response.status_code == 200, (
-            profile_response.text if profile_response else "Profile lookup failed"
-        )
+        assert profile_response is not None, "Profile lookup failed (no response)"
+        assert profile_response.status_code == 200, profile_response.text
         profile = profile_response.json()
 
         role_value = (

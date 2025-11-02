@@ -51,7 +51,10 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             select(User).where(func.lower(User.username) == func.lower(token_Data.sub))
         ).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User not found for subject {token_Data.sub}",
+        )
     return user
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
