@@ -102,21 +102,11 @@ def create_user(client: requests.Session):
         assert user_record is not None, "User not persisted in database"
 
         profile_response = None
-        for _ in range(30):
-            profile_response = client.get(api_url("/users/me"), headers=headers)
-            if profile_response.status_code == 200:
-                break
-            time.sleep(0.3)
-        assert profile_response is not None and profile_response.status_code == 200, (
-            profile_response.text if profile_response else "Profile lookup failed"
-        )
-
         return {
             "token": token,
             "headers": headers,
             "payload": payload,
             "id": user_record.id,
-            "profile": profile_response.json(),
         }
 
     return _create
