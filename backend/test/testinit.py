@@ -90,16 +90,8 @@ def create_user(client: requests.Session):
         token = login_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
-        profile = None
-        for _ in range(10):
-            profile = client.get(api_url("/users/me"), headers=headers)
-            if profile.status_code == 200:
-                break
-            time.sleep(0.2)
-        assert profile is not None and profile.status_code == 200, profile.text if profile else "Profile lookup failed"
-
         user_record = None
-        for _ in range(5):
+        for _ in range(10):
             with Session(engine) as session:
                 user_record = session.exec(
                     select(models.User).where(models.User.username == payload["username"])
@@ -109,12 +101,22 @@ def create_user(client: requests.Session):
             time.sleep(0.1)
         assert user_record is not None, "User not persisted in database"
 
+        profile_response = None
+        for _ in range(30):
+            profile_response = client.get(api_url("/users/me"), headers=headers)
+            if profile_response.status_code == 200:
+                break
+            time.sleep(0.3)
+        assert profile_response is not None and profile_response.status_code == 200, (
+            profile_response.text if profile_response else "Profile lookup failed"
+        )
+
         return {
             "token": token,
             "headers": headers,
             "payload": payload,
-            "profile": profile.json(),
             "id": user_record.id,
+            "profile": profile_response.json(),
         }
 
     return _create
@@ -220,7 +222,7 @@ def test_get_me_returns_current_user(client: requests.Session, create_user) -> N
     user = create_user()
     response = client.get(api_url("/users/me"), headers=user["headers"])
     assert response.status_code == 200
-    assert response.json()["id"] == user["profile"]["id"]
+    assert response.json()["id"] == user["id"]
 
 
 def test_update_me_allows_profile_changes(client: requests.Session, create_user) -> None:
@@ -280,11 +282,11 @@ def test_admin_can_retrieve_user_by_id(
 ) -> None:
     user = create_user()
     response = client.get(
-        api_url(f"/users/{user['profile']['id']}"),
+        api_url(f"/users/{user['id']}"),
         headers=admin_headers,
     )
     assert response.status_code == 200
-    assert response.json()["id"] == user["profile"]["id"]
+    assert response.json()["id"] == user["id"]
 
 
 def test_admin_can_get_all_users(
@@ -321,7 +323,7 @@ def test_admin_can_delete_user(
 ) -> None:
     user = create_user()
     response = client.delete(
-        api_url(f"/tools/users/delete/{user['profile']['id']}"),
+        api_url(f"/tools/users/delete/{user['id']}"),
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -448,7 +450,7 @@ def test_add_and_remove_ticket_flow(
         assert db_event.tickets_left == 5
         attendees = refresh_session.query(Attendees).filter(
             Attendees.event_id == event.id,
-            Attendees.user_id == attendee["profile"]["id"],
+            Attendees.user_id == attendee["id"],
         ).all()
         assert not attendees
 
