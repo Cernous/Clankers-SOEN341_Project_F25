@@ -1,9 +1,16 @@
+import sys
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 import requests
 from sqlmodel import Session
+
+ROOT_PATH = Path(__file__).resolve().parents[1]
+APP_PATH = ROOT_PATH / "app"
+if str(APP_PATH) not in sys.path:
+    sys.path.insert(0, str(APP_PATH))
 
 from app.core.config import settings
 from app.core.sqlite_manager import engine
