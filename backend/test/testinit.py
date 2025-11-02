@@ -115,43 +115,35 @@ def test_analytics_average_age(client: requests.Session, superuser_token_headers
     for key in data.keys():
         assert isinstance(data[key], float)
 
-# def test_sign_up_student(client:requests.Session) -> None:
-#     """
-#         Sign Up as a Student 
-#         - Scope: Public
-#     """
-#     global STUDENT_DATA
-#     response = client.post(
-#         f"{URL}{settings.API_STR}/users/signup/student",
-#         data={
-#             "username": "clankStudent",
-#             "email": "clankStudent@clank.com",
-#             "password": "password123",
-#             "first_name": "Clank",
-#             "last_name": "Clink",
-#             "pronouns": "Clink/Clank",
-#             "date_of_birth": "2025-11-01"
-#         }
-#     )
-#     print(response.text)
-#     assert response.status_code == 200
-#     assert isinstance(response.json()["access_token"], str)
-#     assert response.json()["token_type"] == "bearer"
+def test_sign_up_student(client:requests.Session) -> None:
+    """
+        Sign Up as a Student 
+        - Scope: Public
+    """
+    global STUDENT_DATA
+    response = client.post(
+        f"{URL}{settings.API_STR}/users/signup/student",
+        json=STUDENT_DATA
+    )
+    print(response.text)
+    assert response.status_code == 200
+    assert isinstance(response.json()["access_token"], str)
+    assert response.json()["token_type"] == "bearer"
 
-# def test_sign_in_student(client:requests.Session) -> None:
-#     """
-#         Sign In as a Student
-#         - Scope: Public
-#     """
-#     global STUDENT_DATA
-#     response = client.post(
-#         f"{URL}{settings.API_STR}/login/access-token",
-#         data={
-#             "username":STUDENT_DATA["username"],
-#             "password":STUDENT_DATA["password"]
-#         }
-#     )
+def test_sign_in_student(client:requests.Session) -> None:
+    """
+        Sign In as a Student
+        - Scope: Public
+    """
+    global STUDENT_DATA
+    response = client.post(
+        f"{URL}{settings.API_STR}/login/access-token",
+        data={
+            "username":STUDENT_DATA["username"],
+            "password":STUDENT_DATA["password"]
+        }
+    )
 
-#     assert response.status_code == 200
-#     assert isinstance(response.json()["access_token"], str)
-#     assert response.json()["token_type"] == "bearer"
+    assert response.status_code == 200
+    assert isinstance(response.json()["access_token"], str)
+    assert response.json()["token_type"] == "bearer"
