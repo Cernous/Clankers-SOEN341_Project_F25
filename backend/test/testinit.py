@@ -2,6 +2,7 @@ import sys
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+import importlib
 
 import pytest
 import requests
@@ -12,9 +13,14 @@ APP_PATH = ROOT_PATH / "app"
 if str(APP_PATH) not in sys.path:
     sys.path.insert(0, str(APP_PATH))
 
-from app.core.config import settings
-from app.core.sqlite_manager import engine
-from app.models import Attendees, EventDB
+models = importlib.import_module("models")
+sys.modules.setdefault("app.models", models)
+
+from core.config import settings
+from core.sqlite_manager import engine
+
+Attendees = models.Attendees
+EventDB = models.EventDB
 
 URL = "http://localhost:8000/"
 BASE_URL = f"{URL.rstrip('/')}{settings.API_STR}"
