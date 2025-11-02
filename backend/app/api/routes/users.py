@@ -68,19 +68,6 @@ def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token
         )
     )
 
-@router.get("/{user_id}", response_model=UserPublic)
-def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
-    """
-        Get User depending on the given user ID
-    """
-    user = session.exec(select(User).where(User.id == user_id)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if current_user.role == UserRole.ADMIN or user.id == current_user.id:
-        return user
-    else:
-        raise HTTPException(status_code=403, detail="You don't have permission to view this profile")
-
 @router.patch("/me/update-password", response_model=Message)
 def update_password(passwordform: UserUpdatePassword, session: SessionDep, user:CurrentUser):
     """
@@ -136,4 +123,16 @@ def update_me(*, session:SessionDep, user_in: UserUpdate, current_user:CurrentUs
     session.commit()
     session.refresh(current_user)
     return current_user
-        
+
+@router.get("/{user_id}", response_model=UserPublic)
+def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
+    """
+        Get User depending on the given user ID
+    """
+    user = session.exec(select(User).where(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if current_user.role == UserRole.ADMIN or user.id == current_user.id:
+        return user
+    else:
+        raise HTTPException(status_code=403, detail="You don't have permission to view this profile")

@@ -29,6 +29,8 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
     if role_value == "organizer":
         data.organizer_id = user.id
     event = EventDB(**data.model_dump())
+    if event.date_created is None:
+        event.date_created = datetime.utcnow()
 
     session.add(event)
     session.commit()

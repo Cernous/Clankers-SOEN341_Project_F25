@@ -168,6 +168,7 @@ def create_event_record(db_session: Session):
             count_attendees=overrides.pop("count_attendees", 0),
             tickets_left=overrides.pop("tickets_left", 50),
             pictures=overrides.pop("pictures", None),
+            date_created=overrides.pop("date_created", now),
         )
         for field, value in overrides.items():
             setattr(event, field, value)
@@ -446,10 +447,10 @@ def test_delete_event_admin(
     create_event_record,
 ) -> None:
     event = create_event_record()
-    response = client.delete(
+    response = client.request("DELETE",
         api_url(f"/events/{event.id}"),
-        json={"visibility": "public", "state": "upcoming"},
         headers=admin_headers,
+        json={"visibility": "public", "state": "upcoming"},
     )
     assert response.status_code == 200
 
