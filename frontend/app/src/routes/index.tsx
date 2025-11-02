@@ -1,39 +1,60 @@
-import { createFileRoute } from '@tanstack/react-router'
-import logo from '../logo.svg'
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
-export const Route = createFileRoute('/')({
-  component: App,
-})
+import Hero from "../components/Hero";
+import EventsList from "../components/events/EventsList";
+import EventPreviewModal from "../components/events/EventPreviewModal";
+import { useAuth } from "../hooks/AuthContext";
 
-function App() {
+// shared sample data (future: replace with API)
+import { sampleEvents, type SimpleEvent } from "../data/events.sample";
+
+export const Route = createFileRoute("/")({
+  component: HomePage,
+});
+
+function HomePage() {
+  const { isLoggedIn } = useAuth();
+
+  // take the first 3 as “upcoming”
+  const upcoming: SimpleEvent[] = sampleEvents.slice(0, 3);
+
+  const [selected, setSelected] = useState<SimpleEvent | null>(null);
+
+  const handleRegister = (ev: { id: string; title: string }) => {
+    // later: call backend to create/claim ticket, then show success
+    alert(`Registered for: ${ev.title}`);
+  };
+
   return (
-    <div className="text-center">
-      <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-        <img
-          src={logo}
-          className="h-[40vmin] pointer-events-none animate-[spin_20s_linear_infinite]"
-          alt="logo"
-        />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
+    <div style={{ padding: "32px 0" }}>
+      {/* HERO */}
+      <Hero />
+
+      {/* UPCOMING (top 3) */}
+      <section id="events" className="mx-auto max-w-3xl px-4 pt-6 pb-20">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-2xl font-extrabold">Upcoming Events</h2>
+          <Link to="/events" className="text-sm font-semibold hover:underline">
+            See all
+          </Link>
+        </div>
+        <p className="mb-4 text-neutral-600">
+          A quick look at what’s next on campus.
         </p>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn TanStack
-        </a>
-      </header>
+
+        <EventsList
+          events={upcoming}
+          onSelect={(ev) => setSelected(ev)}
+        />
+
+        <EventPreviewModal
+          event={selected}
+          isLoggedIn={isLoggedIn}
+          onRegister={handleRegister}
+          onClose={() => setSelected(null)}
+        />
+      </section>
     </div>
-  )
+  );
 }
