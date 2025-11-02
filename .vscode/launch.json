@@ -12,6 +12,17 @@
         ],
         "cwd": "${workspaceFolder}/frontend/app",
         "console": "integratedTerminal"
-      }
+      },
+      {
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastapi",
+            "args": [
+                "dev",
+            ],
+            "cwd": "${workspaceFolder}/backend"
+            // "jinja": true
+        }
     ]
   }

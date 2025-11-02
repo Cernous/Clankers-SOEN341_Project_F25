@@ -1,27 +1,25 @@
 from sqlalchemy import Engine
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
-import uvicorn
+import uvicorn, json
 
 from api.router import api_router
 from core.config import settings
-from core.sqlite_manager import engine, init_db
+from core.sqlite_manager import engine, db_create, db_init
 
 def custom_generate_unique_id(route: APIRoute):
     return f'{route.tags[0]}-{route.name}'
 
-def init(db_engine: Engine) -> None:
-    '''
-        Checks if db is awake
-    '''
-    with Session(db_engine) as session:
-        session.exec(select(1))
-        # init_db(session)
+def generate_openapi_client():
+    f = open("openapi.json", "w")
+    f.write(json.dumps(app.openapi()))
+    f.close()
 
-init(engine)
+db_create(engine) #only runs on the first dry run without DB
+db_init(engine) #sets up superuser if not already there
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -37,3 +35,5 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_STR)
+
+generate_openapi_client()
