@@ -1,4 +1,5 @@
 fastapi[standard]
+
 pydantic_settings
 pyjwt
 passlib
