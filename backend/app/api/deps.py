@@ -13,7 +13,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from pydantic import ValidationError
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from models import User, TokenPayload
 from core import security
@@ -43,7 +43,9 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             detail="Could not validate credentials"
         )
 
-    user = session.get(User, token_Data.sub)
+    user = session.exec(
+        select(User).where(User.id == token_Data.sub)
+    ).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
@@ -51,6 +53,6 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if not current_user.role != "admin":
+    if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Does not have enough privileges")
     return current_user
