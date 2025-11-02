@@ -1,25 +1,31 @@
 // src/client/tokenStore.ts
-const KEY = 'auth:token'
 
+const TOKEN_KEY = 'auth:token'
+
+// SSR-safe getter
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null // SSR guard
+  if (typeof window === 'undefined') return null
   try {
-    return localStorage.getItem(KEY)
+    return localStorage.getItem(TOKEN_KEY)
   } catch {
     return null
   }
 }
 
 export function setToken(token: string) {
-  if (typeof window === 'undefined') return // SSR guard
+  if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(KEY, token)
-  } catch {}
+    localStorage.setItem(TOKEN_KEY, token)
+  } catch {
+    // ignore
+  }
 }
 
 export function clearToken() {
-  if (typeof window === 'undefined') return // SSR guard
+  if (typeof window === 'undefined') return
   try {
-    localStorage.removeItem(KEY)
-  } catch {}
+    localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    // ignore
+  }
 }

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import * as React from "react";
 import EventsList from "../components/events/EventsList";
 import FilterBar from "../components/events/FilterBar";
 import EventPreviewModal from "../components/events/EventPreviewModal";
 import { useAuth } from "../hooks/AuthContext";
-import { sampleEvents, type SimpleEvent } from "../data/events.sample"; //  import the type
+import type { SimpleEvent } from "../data/events.sample"; // keep the type for UI
+import { EventsService } from "../client";
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
@@ -13,38 +14,78 @@ export const Route = createFileRoute("/events")({
 function EventsPage() {
   const { isLoggedIn } = useAuth();
 
-  //  selected must be a SimpleEvent (or null)
-  const [selected, setSelected] = useState<SimpleEvent | null>(null);
+  const [all, setAll] = React.useState<SimpleEvent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // search + filters
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState(""); // exact match, '' = any
-  const [date, setDate] = useState("");         // exact match (YYYY-MM-DD), '' = any
+  const [selected, setSelected] = React.useState<SimpleEvent | null>(null);
 
-  const filtered = useMemo(() => {
+  // filters
+  const [query, setQuery] = React.useState("");
+  const [category, setCategory] = React.useState("");   // exact match, '' = any
+  const [date, setDate] = React.useState("");           // YYYY-MM-DD, '' = any
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const toMonthDay = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}`;
+    };
+    const toDateOnly = (iso: string) => iso.slice(0, 10);
+    const toCategory = (tags?: string | null): SimpleEvent["category"] => {
+      const t = (tags ?? "").toLowerCase();
+      if (t.includes("workshop")) return "Workshop";
+      if (t.includes("music")) return "Music";
+      if (t.includes("sport")) return "Sports";
+      if (t.includes("film") || t.includes("movie")) return "Film";
+      if (t.includes("art")) return "Arts";
+      return "Other";
+    };
+
+    (async () => {
+      try {
+        const list = await EventsService.listEvents(); // GET /clank/events/list
+        const mapped: SimpleEvent[] = list.map((e: any, i: number) => ({
+          id: `evt-${i}-${toDateOnly(e.start_time)}`, // list doesn’t include id
+          title: e.name,
+          date: toMonthDay(e.start_time),
+          dateISO: toDateOnly(e.start_time),
+          org: "Organizer",
+          where: e.location ?? "TBD",
+          category: toCategory(e.tags),
+        }));
+        if (mounted) setAll(mapped);
+      } catch (err: any) {
+        if (mounted) setError(err?.message ?? "Failed to load events");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-
-    return sampleEvents.filter((e) => {
-      // title-only search
+    return all.filter((e) => {
       if (q && !e.title.toLowerCase().includes(q)) return false;
-
-      // exact category match
       if (category && e.category !== category) return false;
-
-      // exact date match
       if (date && e.dateISO !== date) return false;
-
       return true;
     });
-  }, [query, category, date]);
+  }, [all, query, category, date]);
 
   const handleLucky = () => {
     if (!filtered.length) return;
     const i = Math.floor(Math.random() * filtered.length);
-    setSelected(filtered[i]); // filtered[i] is SimpleEvent
+    setSelected(filtered[i]);
   };
 
   const handleRegister = (ev: { id: string; title: string }) => {
+    // later: call POST /clank/{event_id}/add_ticket
     alert(`Registered for: ${ev.title}`);
   };
 
@@ -67,14 +108,19 @@ function EventsPage() {
         onFeelingLucky={handleLucky}
       />
 
-      <EventsList events={filtered} onSelect={(ev) => setSelected(ev)} />
-
-      <EventPreviewModal
-        event={selected}
-        isLoggedIn={isLoggedIn}
-        onRegister={handleRegister}
-        onClose={() => setSelected(null)}
-      />
+      {loading && <p>Loading events…</p>}
+      {error && <p className="text-red-600">{error}</p>}
+      {!loading && !error && (
+        <>
+          <EventsList events={filtered} onSelect={(ev) => setSelected(ev)} />
+          <EventPreviewModal
+            event={selected}
+            isLoggedIn={isLoggedIn}
+            onRegister={handleRegister}
+            onClose={() => setSelected(null)}
+          />
+        </>
+      )}
     </main>
   );
 }

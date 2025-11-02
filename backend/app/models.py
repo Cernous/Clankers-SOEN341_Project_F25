@@ -107,7 +107,7 @@ class EventPublicRead(EventBase):
 #not just for organizers, also for admins!
 class EventOrganizerRead(EventBase):
     id: int
-    organizer_id: int
+    organizer_id: str
     visibility: str
     state: str
     count_attendees: int
@@ -120,7 +120,7 @@ class EventOrganizerRead(EventBase):
 
 class EventDB(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    organizer_id: int
+    organizer_id: str
     tags: Optional[str] = None
     visibility: str = "public"
     state: str = "upcoming"

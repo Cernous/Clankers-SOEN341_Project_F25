@@ -57,7 +57,78 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
-export const EventCreateSchema = {
+export const EventAdminCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        description: {
+            type: 'string',
+            title: 'Description'
+        },
+        price: {
+            type: 'number',
+            title: 'Price'
+        },
+        location: {
+            type: 'string',
+            title: 'Location'
+        },
+        start_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Start Time'
+        },
+        end_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'End Time'
+        },
+        tags: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tags'
+        },
+        pictures: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pictures'
+        },
+        visibility: {
+            type: 'string',
+            title: 'Visibility'
+        },
+        organizer_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Organizer Id'
+        }
+    },
+    type: 'object',
+    required: ['name', 'description', 'price', 'location', 'start_time', 'end_time', 'visibility'],
+    title: 'EventAdminCreate'
+} as const;
+
+export const EventListSchema = {
     properties: {
         name: {
             type: 'string',
@@ -110,7 +181,7 @@ export const EventCreateSchema = {
     },
     type: 'object',
     required: ['name', 'description', 'price', 'location', 'start_time', 'end_time'],
-    title: 'EventCreate'
+    title: 'EventList'
 } as const;
 
 export const EventUpdateSchema = {
@@ -233,6 +304,18 @@ export const HTTPValidationErrorSchema = {
     title: 'HTTPValidationError'
 } as const;
 
+export const MessageSchema = {
+    properties: {
+        message: {
+            type: 'string',
+            title: 'Message'
+        }
+    },
+    type: 'object',
+    required: ['message'],
+    title: 'Message'
+} as const;
+
 export const TokenSchema = {
     properties: {
         access_token: {
@@ -293,7 +376,20 @@ export const UserPublicSchema = {
         },
         username: {
             type: 'string',
+            maxLength: 255,
             title: 'Username'
+        },
+        date_of_birth: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Date Of Birth'
         },
         role: {
             '$ref': '#/components/schemas/UserRole',
@@ -309,10 +405,142 @@ export const UserPublicSchema = {
     title: 'UserPublic'
 } as const;
 
+export const UserRegisterSchema = {
+    properties: {
+        username: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Username'
+        },
+        email: {
+            type: 'string',
+            maxLength: 255,
+            format: 'email',
+            title: 'Email'
+        },
+        password: {
+            type: 'string',
+            maxLength: 40,
+            minLength: 8,
+            title: 'Password'
+        },
+        first_name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'First Name'
+        },
+        last_name: {
+            type: 'string',
+            maxLength: 255,
+            title: 'Last Name'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns'
+        },
+        date_of_birth: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Date Of Birth'
+        }
+    },
+    type: 'object',
+    required: ['username', 'email', 'password'],
+    title: 'UserRegister'
+} as const;
+
 export const UserRoleSchema = {
     type: 'string',
     enum: ['admin', 'student', 'organizer'],
     title: 'UserRole'
+} as const;
+
+export const UserUpdateSchema = {
+    properties: {
+        email: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 255,
+                    format: 'email'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Email'
+        },
+        first_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'First Name'
+        },
+        last_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Name'
+        },
+        pronouns: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Pronouns'
+        }
+    },
+    type: 'object',
+    required: ['email'],
+    title: 'UserUpdate'
+} as const;
+
+export const UserUpdatePasswordSchema = {
+    properties: {
+        current_password: {
+            type: 'string',
+            maxLength: 40,
+            minLength: 8,
+            title: 'Current Password'
+        },
+        new_password: {
+            type: 'string',
+            maxLength: 40,
+            minLength: 8,
+            title: 'New Password'
+        }
+    },
+    type: 'object',
+    required: ['current_password', 'new_password'],
+    title: 'UserUpdatePassword'
 } as const;
 
 export const ValidationErrorSchema = {
