@@ -11,10 +11,11 @@ from models import (
     EventAdminCreate, 
     EventUpdate, 
     EventPublicRead, 
-    EventOrganizerRead, 
-    EventList, 
+    EventOrganizerRead,
+    EventList,
     User,
-    Attendees
+    Attendees,
+    UserRole,
 )
 
 router = APIRouter(tags=['events'])
@@ -22,9 +23,10 @@ router = APIRouter(tags=['events'])
 ########################### CRUD operations #####################################
 @router.post("/events")
 def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depends(get_current_user)):
-    if user.role != "organizer" or user.role != "admin":
+    role_value = user.role.value if isinstance(user.role, UserRole) else user.role
+    if role_value not in {"organizer", "admin"}:
         raise HTTPException(status_code=403, detail="Only organizers can create events")
-    if user.role == "organizer":
+    if role_value == "organizer":
         data.organizer_id = user.id
     event = EventDB(**data.model_dump())
 

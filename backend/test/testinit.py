@@ -343,10 +343,11 @@ def test_list_events_public(client: requests.Session, create_event_record) -> No
     assert isinstance(response.json(), list)
 
 
-def test_create_event_as_admin(client: requests.Session, admin_headers: dict[str, str]) -> None:
+def test_create_event_as_organizer(client: requests.Session, create_user) -> None:
+    organizer = create_user(role="organizer")
     payload = make_event_payload()
-    response = client.post(api_url("/events"), json=payload, headers=admin_headers)
-    assert response.status_code == 200
+    response = client.post(api_url("/events"), json=payload, headers=organizer["headers"])
+    assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == payload["name"]
 
@@ -378,7 +379,7 @@ def test_update_event_put_admin(
         json=payload,
         headers=admin_headers,
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     assert response.json()["description"] == payload["description"]
 
 
@@ -397,7 +398,7 @@ def test_patch_event_admin(
         },
         headers=admin_headers,
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     assert response.json()["description"] == "Patched description"
 
 
