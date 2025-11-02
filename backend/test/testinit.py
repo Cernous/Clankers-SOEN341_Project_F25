@@ -6,7 +6,7 @@ import importlib
 import time
 
 import pytest
-import requests
+from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 ROOT_PATH = Path(__file__).resolve().parents[1]
@@ -21,13 +21,13 @@ from core.config import settings
 from core.sqlite_manager import engine
 from core import security
 import jwt
+from app.main import app
 
 Attendees = models.Attendees
 EventDB = models.EventDB
 UserRole = models.UserRole
 
-URL = "http://localhost:8000/"
-BASE_URL = f"{URL.rstrip('/')}{settings.API_STR}"
+BASE_URL = settings.API_STR
 
 
 def api_url(path: str) -> str:
@@ -37,7 +37,7 @@ def api_url(path: str) -> str:
 
 
 def wait_for_profile(
-    client: requests.Session,
+    client: TestClient,
     headers: dict[str, str],
     attempts: int = 20,
     delay: float = 0.3,
@@ -51,10 +51,10 @@ def wait_for_profile(
     return response
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client():
-    session = requests.Session()
-    return session
+    with TestClient(app) as _client:
+        yield _client
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def db_session():
 
 
 @pytest.fixture
-def admin_headers(client: requests.Session) -> dict[str, str]:
+def admin_headers(client: TestClient) -> dict[str, str]:
     response = client.post(
         api_url("/login/access-token"),
         data={
@@ -78,7 +78,7 @@ def admin_headers(client: requests.Session) -> dict[str, str]:
 
 
 @pytest.fixture
-def create_user(client: requests.Session):
+def create_user(client: TestClient):
     def _create(role: str = "student", **overrides):
         unique = uuid.uuid4().hex[:8]
         payload = {
@@ -127,10 +127,6 @@ def create_user(client: requests.Session):
             algorithms=[security.ALGORITHM],
         )
         subject = payload_data.get("sub")
-        Path("temp_output.txt").write_text(
-            f"token:{token}\nsubject:{subject}\ndb_id:{user_record.id}\n",
-            encoding="utf-8",
-        )
         assert subject in {user_record.id, user_record.username}
 
         profile_response = wait_for_profile(client, headers)
@@ -219,7 +215,7 @@ def make_event_update_payload(**overrides) -> dict[str, object]:
     return payload
 
 
-def test_seed_database(client: requests.Session, admin_headers: dict[str, str]) -> None:
+def test_seed_database(client: TestClient, admin_headers: dict[str, str]) -> None:
     response = client.post(api_url("/seed-database"), headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["message"].startswith("Dummy users and events")
@@ -237,7 +233,7 @@ def test_signup_organizer_returns_token(create_user) -> None:
     assert organizer["profile"]["role"] == "organizer"
 
 
-def test_login_access_token(client: requests.Session, create_user) -> None:
+def test_login_access_token(client: TestClient, create_user) -> None:
     user = create_user(role="student")
     response = client.post(
         api_url("/login/access-token"),
@@ -250,14 +246,14 @@ def test_login_access_token(client: requests.Session, create_user) -> None:
     assert "access_token" in response.json()
 
 
-def test_get_me_returns_current_user(client: requests.Session, create_user) -> None:
+def test_get_me_returns_current_user(client: TestClient, create_user) -> None:
     user = create_user()
     response = wait_for_profile(client, user["headers"])
     assert response.status_code == 200
     assert response.json()["id"] == user["id"]
 
 
-def test_update_me_allows_profile_changes(client: requests.Session, create_user) -> None:
+def test_update_me_allows_profile_changes(client: TestClient, create_user) -> None:
     user = create_user()
     response = client.patch(
         api_url("/users/me/update"),
@@ -276,7 +272,7 @@ def test_update_me_allows_profile_changes(client: requests.Session, create_user)
     assert refreshed_data["pronouns"] == "she/her"
 
 
-def test_update_password_changes_credentials(client: requests.Session, create_user) -> None:
+def test_update_password_changes_credentials(client: TestClient, create_user) -> None:
     user = create_user(password="Password123!")
     response = client.patch(
         api_url("/users/me/update-password"),
@@ -298,7 +294,7 @@ def test_update_password_changes_credentials(client: requests.Session, create_us
     assert login_response.status_code == 200
 
 
-def test_delete_me_removes_user(client: requests.Session, create_user) -> None:
+def test_delete_me_removes_user(client: TestClient, create_user) -> None:
     user = create_user()
     response = client.delete(api_url("/users/me"), headers=user["headers"])
     assert response.status_code == 200
@@ -314,7 +310,7 @@ def test_delete_me_removes_user(client: requests.Session, create_user) -> None:
 
 
 def test_admin_can_retrieve_user_by_id(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -328,7 +324,7 @@ def test_admin_can_retrieve_user_by_id(
 
 
 def test_admin_can_get_all_users(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -341,7 +337,7 @@ def test_admin_can_get_all_users(
 
 
 def test_admin_can_get_all_organizers(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -356,7 +352,7 @@ def test_admin_can_get_all_organizers(
 
 
 def test_admin_can_delete_user(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -377,14 +373,14 @@ def test_admin_can_delete_user(
     assert login_response.status_code == 400
 
 
-def test_list_events_public(client: requests.Session, create_event_record) -> None:
+def test_list_events_public(client: TestClient, create_event_record) -> None:
     create_event_record()
     response = client.get(api_url("/events/list"))
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
-def test_create_event_as_organizer(client: requests.Session, create_user) -> None:
+def test_create_event_as_organizer(client: TestClient, create_user) -> None:
     organizer = create_user(role="organizer")
     payload = make_event_payload()
     response = client.post(api_url("/events"), json=payload, headers=organizer["headers"])
@@ -395,7 +391,7 @@ def test_create_event_as_organizer(client: requests.Session, create_user) -> Non
 
 
 def test_read_event_as_student(
-    client: requests.Session,
+    client: TestClient,
     create_user,
     create_event_record,
 ) -> None:
@@ -410,7 +406,7 @@ def test_read_event_as_student(
 
 
 def test_update_event_put_admin(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_event_record,
 ) -> None:
@@ -426,7 +422,7 @@ def test_update_event_put_admin(
 
 
 def test_patch_event_admin(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_event_record,
 ) -> None:
@@ -445,7 +441,7 @@ def test_patch_event_admin(
 
 
 def test_delete_event_admin(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_event_record,
 ) -> None:
@@ -462,7 +458,7 @@ def test_delete_event_admin(
 
 
 def test_add_and_remove_ticket_flow(
-    client: requests.Session,
+    client: TestClient,
     create_user,
     create_event_record,
 ) -> None:
@@ -496,7 +492,7 @@ def test_add_and_remove_ticket_flow(
 
 
 def test_event_average_age_requires_attendees(
-    client: requests.Session,
+    client: TestClient,
     create_user,
     create_event_record,
 ) -> None:
@@ -519,7 +515,7 @@ def test_event_average_age_requires_attendees(
 
 
 def test_get_all_events_detail_admin(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_event_record,
 ) -> None:
@@ -533,7 +529,7 @@ def test_get_all_events_detail_admin(
 
 
 def test_analytics_user_count(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -547,7 +543,7 @@ def test_analytics_user_count(
 
 
 def test_analytics_organizer_count(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -561,7 +557,7 @@ def test_analytics_organizer_count(
 
 
 def test_analytics_pronoun_count(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -577,7 +573,7 @@ def test_analytics_pronoun_count(
 
 
 def test_analytics_average_age(
-    client: requests.Session,
+    client: TestClient,
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
@@ -588,3 +584,4 @@ def test_analytics_average_age(
     )
     assert response.status_code == 200
     assert "average_age" in response.json()
+
