@@ -37,13 +37,18 @@ def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token
     '''
         Registers an user into the database as student
     '''
-    user_sesh = session.exec(select(User).where(user.email == User.email or user.username == User.username)).all()
+    user_sesh = session.exec(
+        select(User).where((func.lower(User.email) == func.lower(user.email)) | (func.lower(User.username) == func.lower(user.username)))
+    ).all()
     if user_sesh:
         raise HTTPException(status_code=403, 
                             detail="Username or Email has been previously used. Please try again")
-    if userRole.lower() not in ["student", "organizer"]:
-        raise HTTPException(status_code=400, 
-                            details="Role not specified or does not exist")
+    normalized_role = userRole.lower()
+    try:
+        role_enum = UserRole(normalized_role)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Role not specified or does not exist")
+
     user_in = UserCreate(
         email=user.email,
         username=user.username,
@@ -52,7 +57,7 @@ def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token
         pronouns=user.pronouns,
         password=user.password,
         date_of_birth=user.date_of_birth,
-        role=userRole
+        role=role_enum
     )
     user_out = crud.create_user(session=session, user_create=user_in)
     # generate an access token
@@ -68,14 +73,13 @@ def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
     """
         Get User depending on the given user ID
     """
-    usersTable = select(User)
-    user = session.exec(usersTable.filter(User.id == user_id)).first()
+    user = session.exec(select(User).where(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if user.role == UserRole.ADMIN or user == current_user:
+    if current_user.role == UserRole.ADMIN or user.id == current_user.id:
         return user
     else:
-        raise HTTPException(status_code=403, details = "You don't have permission to view this profile")
+        raise HTTPException(status_code=403, detail="You don't have permission to view this profile")
 
 @router.patch("/me/update-password", response_model=Message)
 def update_password(passwordform: UserUpdatePassword, session: SessionDep, user:CurrentUser):

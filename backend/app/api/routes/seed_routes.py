@@ -62,6 +62,8 @@ def seed_database(session: SessionDep):
         )
     ]
 
+    organizer_user_id = next((user.id for user in users if user.role == UserRole.ORGANIZER), None)
+
     #event dummy data
     now = datetime.now(timezone.utc)
     events = [
@@ -72,7 +74,7 @@ def seed_database(session: SessionDep):
             location="Montreal Convention Centre",
             start_time=now + timedelta(days=7),
             end_time=now + timedelta(days=7, hours=4),
-            organizer_id=3,
+            organizer_id=organizer_user_id or str(uuid.uuid4()),
             tags="tech,expo,student",
             visibility="public",
             state="upcoming",
@@ -86,7 +88,7 @@ def seed_database(session: SessionDep):
             location="McGill Engineering Building",
             start_time=now + timedelta(days=14),
             end_time=now + timedelta(days=14, hours=6),
-            organizer_id=3,
+            organizer_id=organizer_user_id or str(uuid.uuid4()),
             tags="cybersecurity,hacking,infosec",
             visibility="public",
             state="upcoming",
@@ -100,7 +102,7 @@ def seed_database(session: SessionDep):
             location="Concordia Hall",
             start_time=now + timedelta(days=21),
             end_time=now + timedelta(days=21, hours=3),
-            organizer_id=3,
+            organizer_id=organizer_user_id or str(uuid.uuid4()),
             tags="AI,ethics,forum",
             visibility="public",
             state="upcoming",

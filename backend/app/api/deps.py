@@ -15,7 +15,7 @@ from pydantic import ValidationError
 
 from sqlmodel import Session, select
 
-from models import User, TokenPayload
+from models import User, TokenPayload, UserRole
 from core import security
 from core import config
 from core.sqlite_manager import engine
@@ -53,6 +53,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if current_user.role != "admin":
+    role_value = current_user.role.value if isinstance(current_user.role, UserRole) else current_user.role
+    if role_value != UserRole.ADMIN.value:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Does not have enough privileges")
     return current_user

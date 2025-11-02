@@ -37,7 +37,7 @@ class UserRegister(SQLModel):
     date_of_birth: Optional[date] = Field(default=None)
 
 class UserUpdate(SQLModel):
-    email: EmailStr | None = Field(unique=True, index=True, max_length=255)
+    email: EmailStr | None = Field(default=None, unique=True, index=True, max_length=255)
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
@@ -107,7 +107,7 @@ class EventPublicRead(EventBase):
 #not just for organizers, also for admins!
 class EventOrganizerRead(EventBase):
     id: int
-    organizer_id: int
+    organizer_id: str
     visibility: str
     state: str
     count_attendees: int
@@ -119,7 +119,7 @@ class EventOrganizerRead(EventBase):
 
 class EventDB(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    organizer_id: int
+    organizer_id: str
     tags: Optional[str] = None
     visibility: str = "public"
     state: str = "upcoming"

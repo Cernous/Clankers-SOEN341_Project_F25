@@ -43,8 +43,7 @@ def get_all_organizers(session: SessionDep, user: User = Depends(get_current_use
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
-    usersTable = select(User)
-    return session.exec(usersTable.where(UserRole.ORGANIZER == User.role)).all()
+    return session.exec(select(User).where(User.role == UserRole.ORGANIZER)).all()
 
 @router.delete("/users/delete/{user_id}", tags=["Users"])
 def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_current_user)):
@@ -54,8 +53,7 @@ def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_curr
     """
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role used")
-    usersTable = select(User)
-    user = session.exec(usersTable.filter(User.id == user_id)).first()
+    user = session.exec(select(User).where(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user)

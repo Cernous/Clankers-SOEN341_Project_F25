@@ -22,6 +22,7 @@ from core.sqlite_manager import engine
 
 Attendees = models.Attendees
 EventDB = models.EventDB
+UserRole = models.UserRole
 
 URL = "http://localhost:8000/"
 BASE_URL = f"{URL.rstrip('/')}{settings.API_STR}"
@@ -31,6 +32,21 @@ def api_url(path: str) -> str:
     if not path.startswith("/"):
         path = f"/{path}"
     return f"{BASE_URL}{path}"
+
+
+def wait_for_profile(
+    client: requests.Session,
+    headers: dict[str, str],
+    attempts: int = 20,
+    delay: float = 0.3,
+):
+    response = None
+    for _ in range(attempts):
+        response = client.get(api_url("/users/me"), headers=headers)
+        if response.status_code == 200:
+            return response
+        time.sleep(delay)
+    return response
 
 
 @pytest.fixture
@@ -79,6 +95,8 @@ def create_user(client: requests.Session):
             json=payload,
         )
         assert response.status_code == 200, response.text
+        signup_token = response.json().get("access_token")
+
         login_response = client.post(
             api_url("/login/access-token"),
             data={
@@ -87,7 +105,7 @@ def create_user(client: requests.Session):
             },
         )
         assert login_response.status_code == 200, login_response.text
-        token = login_response.json()["access_token"]
+        token = login_response.json().get("access_token") or signup_token
         headers = {"Authorization": f"Bearer {token}"}
 
         user_record = None
@@ -101,12 +119,23 @@ def create_user(client: requests.Session):
             time.sleep(0.1)
         assert user_record is not None, "User not persisted in database"
 
-        profile_response = None
+        profile_response = wait_for_profile(client, headers)
+        assert profile_response is not None and profile_response.status_code == 200, (
+            profile_response.text if profile_response else "Profile lookup failed"
+        )
+        profile = profile_response.json()
+
+        role_value = (
+            user_record.role.value if isinstance(user_record.role, UserRole) else user_record.role
+        )
+
         return {
             "token": token,
             "headers": headers,
             "payload": payload,
             "id": user_record.id,
+            "profile": profile,
+            "role": role_value,
         }
 
     return _create
@@ -123,7 +152,7 @@ def create_event_record(db_session: Session):
             location=overrides.pop("location", "Campus Hall"),
             start_time=overrides.pop("start_time", now + timedelta(days=2)),
             end_time=overrides.pop("end_time", now + timedelta(days=2, hours=2)),
-            organizer_id=overrides.pop("organizer_id", 9999),
+            organizer_id=overrides.pop("organizer_id", str(uuid.uuid4())),
             tags=overrides.pop("tags", "integration"),
             visibility=overrides.pop("visibility", "public"),
             state=overrides.pop("state", "upcoming"),
@@ -210,7 +239,7 @@ def test_login_access_token(client: requests.Session, create_user) -> None:
 
 def test_get_me_returns_current_user(client: requests.Session, create_user) -> None:
     user = create_user()
-    response = client.get(api_url("/users/me"), headers=user["headers"])
+    response = wait_for_profile(client, user["headers"])
     assert response.status_code == 200
     assert response.json()["id"] == user["id"]
 
@@ -222,10 +251,16 @@ def test_update_me_allows_profile_changes(client: requests.Session, create_user)
         json={"first_name": "Updated", "pronouns": "she/her"},
         headers=user["headers"],
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     data = response.json()
     assert data["first_name"] == "Updated"
     assert data["pronouns"] == "she/her"
+
+    refreshed = wait_for_profile(client, user["headers"])
+    assert refreshed.status_code == 200
+    refreshed_data = refreshed.json()
+    assert refreshed_data["first_name"] == "Updated"
+    assert refreshed_data["pronouns"] == "she/her"
 
 
 def test_update_password_changes_credentials(client: requests.Session, create_user) -> None:
@@ -284,11 +319,12 @@ def test_admin_can_get_all_users(
     admin_headers: dict[str, str],
     create_user,
 ) -> None:
-    create_user()
+    user = create_user()
     response = client.get(api_url("/tools/users/get-all-users"), headers=admin_headers)
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
-    assert response.json()
+    users = response.json()
+    assert isinstance(users, list)
+    assert any(entry["id"] == user["id"] for entry in users)
 
 
 def test_admin_can_get_all_organizers(
@@ -303,7 +339,7 @@ def test_admin_can_get_all_organizers(
     )
     assert response.status_code == 200
     organizers = response.json()
-    assert any(entry["id"] == organizer["profile"]["id"] for entry in organizers)
+    assert any(entry["id"] == organizer["id"] for entry in organizers)
 
 
 def test_admin_can_delete_user(
@@ -341,6 +377,7 @@ def test_create_event_as_organizer(client: requests.Session, create_user) -> Non
     response = client.post(api_url("/events"), json=payload, headers=organizer["headers"])
     assert response.status_code == 200, response.text
     data = response.json()
+    assert data["organizer_id"] == organizer["id"]
     assert data["name"] == payload["name"]
 
 
