@@ -156,6 +156,10 @@ export const EventListSchema = {
             format: 'date-time',
             title: 'End Time'
         },
+        id: {
+            type: 'integer',
+            title: 'Id'
+        },
         tags: {
             anyOf: [
                 {
@@ -180,7 +184,7 @@ export const EventListSchema = {
         }
     },
     type: 'object',
-    required: ['name', 'description', 'price', 'location', 'start_time', 'end_time'],
+    required: ['name', 'description', 'price', 'location', 'start_time', 'end_time', 'id'],
     title: 'EventList'
 } as const;
 

@@ -29,6 +29,7 @@ export type EventList = {
     location: string;
     start_time: string;
     end_time: string;
+    id: number;
     tags?: (string | null);
     pictures?: (string | null);
 };

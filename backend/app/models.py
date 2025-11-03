@@ -135,6 +135,7 @@ class EventDB(EventBase, table=True):
 
 #to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
 class EventList(EventBase):
+    id: int   
     tags: Optional[str] = None
     pictures: Optional[str] = None
 

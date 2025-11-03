@@ -1,11 +1,4 @@
-// routes/route.tsx (very top)
-import { OpenAPI } from '../client'
-import { getToken } from '../client/tokenStore'
-
-OpenAPI.BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
-OpenAPI.TOKEN = async () => getToken() ?? ''
-
-
+import '../setupApi'
 
 import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { UserDataProvider } from '../hooks/UserDataContext'

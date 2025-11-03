@@ -38,7 +38,7 @@ function HomePage() {
 
         // Map backend -> SimpleEvent (id not in list payload, so synthesize)
         const mapped: SimpleEvent[] = list.map((e: any, i: number) => ({
-          id: `evt-${i}-${toDateOnly(e.start_time)}`,
+          id: String(e.id),
           title: e.name,
           date: toMonthDay(e.start_time),
           dateISO: toDateOnly(e.start_time),

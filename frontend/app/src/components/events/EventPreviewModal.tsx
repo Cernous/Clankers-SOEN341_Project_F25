@@ -2,6 +2,7 @@
 import { useAuth } from "../../hooks/AuthContext"
 import { useUserData } from "../../hooks/UserDataContext"
 import type { SimpleEvent } from "../../data/events.sample"
+import { Link } from '@tanstack/react-router'
 
 type Props = {
   event: SimpleEvent | null
@@ -81,12 +82,14 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
             </button>
 
             {/* View details */}
-            <a
-              href={`/events/${event.id}`}
+            <Link
+              to="/events/$eventId"
+              params={{ eventId: event.id }}                 // if your id is a number, do String(event.id)
               className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
+              onClick={onClose}                              // optional: close the modal as you navigate
             >
               View details
-            </a>
+            </Link>
           </div>
         </div>
 

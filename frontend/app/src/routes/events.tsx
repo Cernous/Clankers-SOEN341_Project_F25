@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import EventsList from "../components/events/EventsList";
 import FilterBar from "../components/events/FilterBar";
@@ -6,12 +5,17 @@ import EventPreviewModal from "../components/events/EventPreviewModal";
 import { useAuth } from "../hooks/AuthContext";
 import type { SimpleEvent } from "../data/events.sample"; // keep the type for UI
 import { EventsService } from "../client";
+import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router' // add useLocation
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
 });
 
 function EventsPage() {
+
+  const location = useLocation()
+  const isDetail = location.pathname.startsWith('/events/') && location.pathname !== '/events'
+
   const { isLoggedIn } = useAuth();
 
   const [all, setAll] = React.useState<SimpleEvent[]>([]);
@@ -47,7 +51,7 @@ function EventsPage() {
       try {
         const list = await EventsService.listEvents(); // GET /clank/events/list
         const mapped: SimpleEvent[] = list.map((e: any, i: number) => ({
-          id: `evt-${i}-${toDateOnly(e.start_time)}`, // list doesn’t include id
+          id: String(e.id), 
           title: e.name,
           date: toMonthDay(e.start_time),
           dateISO: toDateOnly(e.start_time),
@@ -89,38 +93,43 @@ function EventsPage() {
     alert(`Registered for: ${ev.title}`);
   };
 
-  return (
+   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <header className="mb-6">
         <h1 className="text-3xl font-extrabold">All Events</h1>
-        <p className="mt-1 text-neutral-600">
-          Browse and filter events. Click an event to preview.
-        </p>
+        <p className="mt-1 text-neutral-600">Browse and filter events. Click an event to preview.</p>
       </header>
 
-      <FilterBar
-        query={query}
-        category={category}
-        date={date}
-        onQueryChange={setQuery}
-        onCategoryChange={setCategory}
-        onDateChange={setDate}
-        onFeelingLucky={handleLucky}
-      />
-
-      {loading && <p>Loading events…</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {!loading && !error && (
+      {/* Only show filters/list when not in a child route */}
+      {!isDetail && (
         <>
-          <EventsList events={filtered} onSelect={(ev) => setSelected(ev)} />
-          <EventPreviewModal
-            event={selected}
-            isLoggedIn={isLoggedIn}
-            onRegister={handleRegister}
-            onClose={() => setSelected(null)}
+          <FilterBar
+            query={query}
+            category={category}
+            date={date}
+            onQueryChange={setQuery}
+            onCategoryChange={setCategory}
+            onDateChange={setDate}
+            onFeelingLucky={handleLucky}
           />
+
+          {loading && <p>Loading events…</p>}
+          {error && <p className="text-red-600">{error}</p>}
+          {!loading && !error && (
+            <>
+              <EventsList events={filtered} onSelect={(ev) => setSelected(ev)} />
+              <EventPreviewModal
+                event={selected}
+                isLoggedIn={isLoggedIn}
+                onClose={() => setSelected(null)}
+              />
+            </>
+          )}
         </>
       )}
+
+      {/* Child (/events/$eventId) renders here */}
+      <Outlet />
     </main>
-  );
+  )
 }
