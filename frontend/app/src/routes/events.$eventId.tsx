@@ -1,6 +1,6 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { EventsService } from '../client'
 import { useAuth } from '../hooks/AuthContext'
 
@@ -19,6 +19,7 @@ type ReviewItem = {
 
 function EventDetailPage() {
   const { eventId } = Route.useParams()
+  const navigate = useNavigate()
   const { isLoggedIn, user } = useAuth()
 
   const [data, setData] = React.useState<any | null>(null)
@@ -34,6 +35,10 @@ function EventDetailPage() {
   const [reviewText, setReviewText] = React.useState('')
   const [reviewStar, setReviewStar] = React.useState<number>(5)
   const [submitting, setSubmitting] = React.useState(false)
+
+  // --- delete state ---
+  const [deleting, setDeleting] = React.useState(false)
+  const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     let mounted = true
@@ -58,7 +63,6 @@ function EventDetailPage() {
     setReviewErr(null)
     try {
       const res = await EventsService.getEventReviews({ eventId: Number(eventId) })
-      // Accept array or {reviews:[...]}
       const list: ReviewItem[] = Array.isArray(res) ? (res as any) : ((res as any)?.reviews ?? [])
       setReviews(list ?? [])
     } catch (e: any) {
@@ -82,6 +86,50 @@ function EventDetailPage() {
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
 
+  // ---- admin-only check ----
+  const isAdmin =
+    isLoggedIn &&
+    (user?.role === 'admin')
+
+  // ---- delete handler (admin only) ----
+async function handleDelete() {
+  if (!isAdmin) return
+  if (!window.confirm('Delete this event? This cannot be undone.')) return
+  setDeleting(true)
+  setDeleteErr(null)
+
+  try {
+    await EventsService.deleteEvent({
+      eventId: Number(eventId),
+      requestBody: {
+        name: data.name ?? '',
+        description: data.description ?? '',
+        price: Number(data.price ?? 0),
+        location: data.location ?? '',
+        start_time: data.start_time ?? new Date().toISOString(),
+        end_time: data.end_time ?? new Date().toISOString(),
+        tags: data.tags ?? '',
+        pictures: data.pictures ?? '',
+        visibility: data.visibility ?? 'public',
+        state: data.state ?? 'active',
+      },
+    } as any)
+
+    navigate({ to: '/events' })
+  } catch (e: any) {
+    console.error('Delete error', e?.status, e?.body || e)
+    const maybeDetail =
+      e?.body && typeof e.body === 'object' && e.body.detail
+        ? JSON.stringify(e.body.detail)
+        : e?.message
+    setDeleteErr(maybeDetail ?? 'Failed to delete event')
+  } finally {
+    setDeleting(false)
+  }
+}
+
+
+
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!isLoggedIn || !user?.id) {
@@ -100,11 +148,10 @@ function EventDetailPage() {
           desc: reviewText.trim(),
           star: Math.max(1, Math.min(5, Number(reviewStar))),
           date_created: new Date().toISOString(),
-          user_id: String(user.username),
+          user_id: String(user.username ?? user.id),
           event_id: Number(eventId),
         },
       })
-      // clear + reload
       setReviewText('')
       setReviewStar(5)
       await loadReviews()
@@ -122,13 +169,28 @@ function EventDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <a
           href="/events"
           className="inline-flex items-center text-sm font-semibold text-neutral-600 hover:text-neutral-900"
         >
           ← Back to all events
         </a>
+
+        {/* Admin-only delete button */}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            {deleteErr && <span className="text-sm text-red-600">{deleteErr}</span>}
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              title="Delete this event"
+            >
+              {deleting ? 'Deleting…' : 'Delete Event'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-8 md:grid-cols-[2fr,1fr]">
@@ -176,7 +238,6 @@ function EventDetailPage() {
               <li><span className="font-medium">Price:</span> {fmtPrice(unitPrice)}</li>
             </ul>
 
-            {/* Redirect to /purchase with search params */}
             <Link
               to="/purchase"
               search={{
@@ -212,7 +273,6 @@ function EventDetailPage() {
           </button>
         </div>
 
-        {/* list */}
         <div className="mt-4 space-y-5">
           {reviewsLoading && <div className="text-sm text-neutral-600">Loading…</div>}
           {reviewErr && <div className="text-sm text-red-600">{reviewErr}</div>}
@@ -227,7 +287,9 @@ function EventDetailPage() {
                   <span className="font-semibold">{maskUser(r.user_id)}</span>{' '}
                   <span className="text-neutral-500">· {fmtDateTime(r.date_created)}</span>{' '}
                   {typeof r.star === 'number' && (
-                    <span className="ml-1 text-yellow-600">{'★'.repeat(Math.max(1, Math.min(5, r.star)))}</span>
+                    <span className="ml-1 text-yellow-600">
+                      {'★'.repeat(Math.max(1, Math.min(5, r.star)))}
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-neutral-800">{r.desc}</p>
@@ -236,7 +298,6 @@ function EventDetailPage() {
           ))}
         </div>
 
-        {/* form */}
         <form onSubmit={submitReview} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             type="text"
