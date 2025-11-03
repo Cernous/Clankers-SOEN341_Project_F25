@@ -1,17 +1,39 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'  // <-- add Link
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { EventsService } from '../client'
+import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createFileRoute('/events/$eventId')({
   component: EventDetailPage,
 })
 
+type ReviewItem = {
+  id?: number | string
+  desc?: string
+  star?: number
+  date_created?: string
+  user_id?: string
+  event_id?: number
+}
+
 function EventDetailPage() {
   const { eventId } = Route.useParams()
+  const { isLoggedIn, user } = useAuth()
+
   const [data, setData] = React.useState<any | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(true)
+
+  // --- reviews state ---
+  const [reviews, setReviews] = React.useState<ReviewItem[]>([])
+  const [reviewsLoading, setReviewsLoading] = React.useState(true)
+  const [reviewErr, setReviewErr] = React.useState<string | null>(null)
+
+  // --- new review form ---
+  const [reviewText, setReviewText] = React.useState('')
+  const [reviewStar, setReviewStar] = React.useState<number>(5)
+  const [submitting, setSubmitting] = React.useState(false)
 
   React.useEffect(() => {
     let mounted = true
@@ -25,19 +47,78 @@ function EventDetailPage() {
         if (mounted) setLoading(false)
       }
     })()
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [eventId])
+
+  // fetch reviews for this event
+  const loadReviews = React.useCallback(async () => {
+    setReviewsLoading(true)
+    setReviewErr(null)
+    try {
+      const res = await EventsService.getEventReviews({ eventId: Number(eventId) })
+      // Accept array or {reviews:[...]}
+      const list: ReviewItem[] = Array.isArray(res) ? (res as any) : ((res as any)?.reviews ?? [])
+      setReviews(list ?? [])
+    } catch (e: any) {
+      setReviewErr(e?.message ?? 'Failed to load reviews')
+      setReviews([])
+    } finally {
+      setReviewsLoading(false)
+    }
+  }, [eventId])
+
+  React.useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
 
   if (loading) return <main className="p-6">Loading…</main>
   if (err) return <main className="p-6 text-red-600">{err}</main>
   if (!data) return <main className="p-6">Not found.</main>
 
-  const fmtDateTime = (iso?: string) =>
-    iso ? new Date(iso).toLocaleString() : '—'
+  const fmtDateTime = (iso?: string) => (iso ? new Date(iso).toLocaleString() : '—')
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
-
   const unitPrice = Number(data.price || 0)
+
+  async function submitReview(e: React.FormEvent) {
+    e.preventDefault()
+    if (!isLoggedIn || !user?.id) {
+      setReviewErr('You must be signed in to post a review.')
+      return
+    }
+    if (!reviewText.trim()) {
+      setReviewErr('Please write a comment.')
+      return
+    }
+    setSubmitting(true)
+    setReviewErr(null)
+    try {
+      await EventsService.addReview({
+        requestBody: {
+          desc: reviewText.trim(),
+          star: Math.max(1, Math.min(5, Number(reviewStar))),
+          date_created: new Date().toISOString(),
+          user_id: String(user.username),
+          event_id: Number(eventId),
+        },
+      })
+      // clear + reload
+      setReviewText('')
+      setReviewStar(5)
+      await loadReviews()
+    } catch (e: any) {
+      setReviewErr(e?.message ?? 'Failed to post review')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const maskUser = (uid?: string) => {
+    if (!uid) return 'Anonymous'
+    return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -100,8 +181,8 @@ function EventDetailPage() {
               to="/purchase"
               search={{
                 eventId: String(data.id ?? eventId),
-                title: String(data.name),              // ← use 'title' to match purchase.tsx
-                price: unitPrice,   // 0 means free; customize in purchase screen later
+                title: String(data.name),
+                price: unitPrice,
                 qty: 1,
               }}
               className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
@@ -118,47 +199,67 @@ function EventDetailPage() {
         </aside>
       </div>
 
-      {/* Comments (visuals only) */}
+      {/* Reviews */}
       <section className="mt-8 rounded-2xl border border-neutral-200 bg-white p-6">
-        <h3 className="text-lg font-semibold">Comments</h3>
-        <div className="mt-4 space-y-5">
-          <div className="flex gap-3">
-            <div className="h-9 w-9 shrink-0 rounded-full bg-neutral-200" />
-            <div className="flex-1">
-              <div className="text-sm">
-                <span className="font-semibold">Alex</span>{' '}
-                <span className="text-neutral-500">· 2h ago</span>
-              </div>
-              <p className="mt-1 text-sm text-neutral-800">
-                Super excited for this! Will there be a Q&amp;A at the end?
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="h-9 w-9 shrink-0 rounded-full bg-neutral-200" />
-            <div className="flex-1">
-              <div className="text-sm">
-                <span className="font-semibold">Jamie</span>{' '}
-                <span className="text-neutral-500">· 1d ago</span>
-              </div>
-              <p className="mt-1 text-sm text-neutral-800">
-                Last year’s expo was fantastic—looking forward to this one!
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Comments</h3>
+          <button
+            onClick={loadReviews}
+            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-50"
+            title="Refresh comments"
+          >
+            Refresh
+          </button>
         </div>
 
-        <form className="mt-6 flex gap-3">
+        {/* list */}
+        <div className="mt-4 space-y-5">
+          {reviewsLoading && <div className="text-sm text-neutral-600">Loading…</div>}
+          {reviewErr && <div className="text-sm text-red-600">{reviewErr}</div>}
+          {!reviewsLoading && !reviews.length && !reviewErr && (
+            <div className="text-sm text-neutral-600">No comments yet.</div>
+          )}
+          {reviews.map((r, idx) => (
+            <div key={String(r.id ?? idx)} className="flex gap-3">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-neutral-200" />
+              <div className="flex-1">
+                <div className="text-sm">
+                  <span className="font-semibold">{maskUser(r.user_id)}</span>{' '}
+                  <span className="text-neutral-500">· {fmtDateTime(r.date_created)}</span>{' '}
+                  {typeof r.star === 'number' && (
+                    <span className="ml-1 text-yellow-600">{'★'.repeat(Math.max(1, Math.min(5, r.star)))}</span>
+                  )}
+                </div>
+                <p className="mt-1 text-sm text-neutral-800">{r.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* form */}
+        <form onSubmit={submitReview} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             type="text"
-            placeholder="Write a comment…"
-            className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
+            placeholder={isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'}
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            disabled={!isLoggedIn || submitting}
+            className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
           />
-          <button
-            type="button"
-            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900"
+          <select
+            value={reviewStar}
+            onChange={(e) => setReviewStar(Number(e.target.value))}
+            disabled={!isLoggedIn || submitting}
+            className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100"
           >
-            Post
+            {[5,4,3,2,1].map(s => <option key={s} value={s}>{s}★</option>)}
+          </select>
+          <button
+            type="submit"
+            disabled={!isLoggedIn || submitting}
+            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60"
+          >
+            {submitting ? 'Posting…' : 'Post'}
           </button>
         </form>
       </section>

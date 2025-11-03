@@ -320,6 +320,49 @@ export const MessageSchema = {
     title: 'Message'
 } as const;
 
+export const ReviewAddSchema = {
+    properties: {
+        desc: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Desc'
+        },
+        star: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Star'
+        },
+        date_created: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Date Created'
+        },
+        user_id: {
+            type: 'string',
+            title: 'User Id'
+        },
+        event_id: {
+            type: 'integer',
+            title: 'Event Id'
+        }
+    },
+    type: 'object',
+    required: ['date_created', 'user_id', 'event_id'],
+    title: 'ReviewAdd'
+} as const;
+
 export const TokenSchema = {
     properties: {
         access_token: {
@@ -479,7 +522,6 @@ export const UserUpdateSchema = {
             anyOf: [
                 {
                     type: 'string',
-                    maxLength: 255,
                     format: 'email'
                 },
                 {
@@ -523,7 +565,6 @@ export const UserUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['email'],
     title: 'UserUpdate'
 } as const;
 
