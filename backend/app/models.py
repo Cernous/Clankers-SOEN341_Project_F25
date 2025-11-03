@@ -37,7 +37,7 @@ class UserRegister(SQLModel):
     date_of_birth: Optional[date] = Field(default=None)
 
 class UserUpdate(SQLModel):
-    email: EmailStr | None = Field(unique=True, index=True, max_length=255)
+    email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
@@ -165,6 +165,10 @@ class ReviewRead(ReviewBase):
     desc: str | None = None
     star: int | None = None
     date_created: Optional[datetime] = Field(default=None)
+
+class ReviewAdd(ReviewBase):
+    user_id: str
+    event_id: int
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
