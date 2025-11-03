@@ -14,6 +14,16 @@
             ],
             "cwd": "${workspaceFolder}/backend"
             // "jinja": true
+        },
+        {
+            "name": "Python Debugger: Pytest testinit.py",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "test/testinit.py"
+            ],
+            "cwd": "${workspaceFolder}/backend"
         }
     ]
 }
