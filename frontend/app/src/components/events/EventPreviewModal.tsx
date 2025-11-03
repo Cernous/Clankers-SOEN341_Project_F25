@@ -1,7 +1,7 @@
 // src/components/events/EventPreviewModal.tsx
-import { useAuth } from "../../hooks/AuthContext"
-import { useUserData } from "../../hooks/UserDataContext"
-import type { SimpleEvent } from "../../data/events.sample"
+import { useAuth } from '../../hooks/AuthContext'
+import { useUserData } from '../../hooks/UserDataContext'
+import type { SimpleEvent } from '../../data/events.sample'
 
 type Props = {
   event: SimpleEvent | null
@@ -11,7 +11,11 @@ type Props = {
   onRegister?: (ev: SimpleEvent) => void
 }
 
-export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props) {
+export default function EventPreviewModal({
+  event,
+  isLoggedIn,
+  onClose,
+}: Props) {
   const { user } = useAuth()
   const { isSaved, toggleSave, claimTicket } = useUserData()
 
@@ -26,9 +30,11 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
 
   const handleClaim = () => {
     if (!isLoggedIn || !user) return
-    const owner = user.username || user.email || "me"
-    const t = claimTicket(event, owner, "free")
-    alert(`Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`)
+    const owner = user.username || user.email || 'me'
+    const t = claimTicket(event, owner, 'free')
+    alert(
+      `Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`,
+    )
   }
 
   return (
@@ -43,8 +49,8 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl"
       >
-        {/* image placeholder */}
-        <div className="h-40 bg-neutral-100" />
+        {/* image placeholder with subtle improvement */}
+        <div className="h-40 bg-gradient-to-r from-neutral-100 to-neutral-200" />
 
         <div className="p-5">
           <h3 className="m-0 text-xl font-bold">{event.title}</h3>
@@ -59,12 +65,16 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
               onClick={handleSave}
               disabled={!isLoggedIn}
               className={[
-                "rounded-full px-4 py-2 text-sm font-semibold",
-                isLoggedIn ? "border border-neutral-300 hover:bg-neutral-50" : "bg-neutral-300 cursor-not-allowed text-white",
-              ].join(" ")}
-              title={isLoggedIn ? "" : "Log in to save"}
+                'rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+                isLoggedIn
+                  ? saved
+                    ? 'bg-red-50 text-[#7A0019] border border-red-200'
+                    : 'border border-neutral-300 hover:bg-neutral-50'
+                  : 'bg-neutral-300 cursor-not-allowed text-white',
+              ].join(' ')}
+              title={isLoggedIn ? '' : 'Log in to save'}
             >
-              {saved ? "Unsave" : "Save to Calendar"}
+              {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
 
             {/* Claim ticket */}
@@ -72,10 +82,12 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
               onClick={handleClaim}
               disabled={!isLoggedIn}
               className={[
-                "rounded-full px-4 py-2 text-sm font-semibold text-white",
-                isLoggedIn ? "bg-black hover:bg-neutral-900" : "bg-neutral-400 cursor-not-allowed",
-              ].join(" ")}
-              title={isLoggedIn ? "" : "Log in to claim tickets"}
+                'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
+                isLoggedIn
+                  ? 'bg-[#7A0019] hover:bg-[#600013]'
+                  : 'bg-neutral-400 cursor-not-allowed',
+              ].join(' ')}
+              title={isLoggedIn ? '' : 'Log in to claim tickets'}
             >
               Claim Free Ticket
             </button>
@@ -83,7 +95,7 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
             {/* View details */}
             <a
               href={`/events/${event.id}`}
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
+              className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50 transition-colors duration-200"
             >
               View details
             </a>
@@ -93,7 +105,7 @@ export default function EventPreviewModal({ event, isLoggedIn, onClose }: Props)
         <div className="flex justify-end gap-2 border-t border-neutral-200 p-3">
           <button
             onClick={onClose}
-            className="rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-semibold hover:bg-neutral-50"
+            className="rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-semibold hover:bg-neutral-50 transition-colors duration-200"
           >
             Close
           </button>
