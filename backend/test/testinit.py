@@ -17,9 +17,9 @@ if str(APP_PATH) not in sys.path:
 models = importlib.import_module("models")
 sys.modules.setdefault("app.models", models)
 
-from core.config import settings
-from core.sqlite_manager import engine
-from core import security
+from app.core.config import settings
+from app.core.sqlite_manager import engine
+from app.core import security
 import jwt
 from app.main import app
 
