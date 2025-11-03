@@ -177,6 +177,11 @@ def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser)
     if not event or not attendee:
         raise HTTPException(status_code=404, detail="Event or Attendee not found")
     event.tickets_left += 1 
+    if current_user.tickets:
+        tickets_list = current_user.tickets.split(',')
+        filtered_tickets = [t for t in tickets_list if not t.startswith(f"{event_id}:")]
+        current_user.tickets = ','.join(filtered_tickets) if filtered_tickets else None
+
     session.delete(attendee)
     session.commit()
     return {"message": "Ticket removed and user removed from attendees"}
