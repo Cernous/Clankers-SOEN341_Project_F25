@@ -1,3 +1,6 @@
+"""
+    Write your sqlite handlers here 
+"""
 from sqlmodel import Session, create_engine, select, SQLModel, func
 import crud
 from core.config import settings
