@@ -107,7 +107,7 @@ class EventPublicRead(EventBase):
 #not just for organizers, also for admins!
 class EventOrganizerRead(EventBase):
     id: int
-    organizer_id: int
+    organizer_id: str
     visibility: str
     state: str
     count_attendees: int
@@ -120,7 +120,7 @@ class EventOrganizerRead(EventBase):
 
 class EventDB(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    organizer_id: int
+    organizer_id: str
     tags: Optional[str] = None
     visibility: str = "public"
     state: str = "upcoming"
@@ -135,6 +135,7 @@ class EventDB(EventBase, table=True):
 
 #to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
 class EventList(EventBase):
+    id: int   
     tags: Optional[str] = None
     pictures: Optional[str] = None
 

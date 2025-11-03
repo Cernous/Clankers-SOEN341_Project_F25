@@ -63,6 +63,14 @@ def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token
         )
     )
 
+@router.get("/me", response_model=UserPublic)
+def get_me_user(current_user: CurrentUser):
+    """
+        Get me info
+    """
+    return current_user
+
+
 @router.get("/{user_id}", response_model=UserPublic)
 def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
     """
@@ -92,13 +100,6 @@ def update_password(passwordform: UserUpdatePassword, session: SessionDep, user:
     session.add(user)
     session.commit()
     return Message(message="Password Updated Successfully")
-
-@router.get("/me", response_model=UserPublic)
-def get_me_user(current_user: CurrentUser):
-    """
-        Get me info
-    """
-    return current_user
 
 @router.delete("/me", response_model=Message)
 def delete_me(session: SessionDep, current_user:CurrentUser):

@@ -6,6 +6,7 @@ import uuid
 from models import User, EventDB, UserRole
 from api.deps import SessionDep
 
+from core.security import get_password_hash, verify_password
 router = APIRouter()
 
 @router.post("/seed-database", tags=["Admin Utilities"])
@@ -19,7 +20,7 @@ def seed_database(session: SessionDep):
             last_name="Nguyen",
             pronouns="she/her",
             username="alice",
-            hashed_password="hashed_pw1",
+            hashed_password=get_password_hash("alice123"),
             role=UserRole.STUDENT,
             date_of_birth=date(2001, 5, 14),
             tickets=None
@@ -31,7 +32,7 @@ def seed_database(session: SessionDep):
             last_name="Martinez",
             pronouns="he/him",
             username="bob",
-            hashed_password="hashed_pw2",
+            hashed_password=get_password_hash("bob123"),
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 8, 22),
             tickets=None
@@ -43,7 +44,7 @@ def seed_database(session: SessionDep):
             last_name="Lee",
             pronouns="they/them",
             username="jordan",
-            hashed_password="hashed_pw3",
+            hashed_password=get_password_hash("jordan123"),
             role=UserRole.ORGANIZER,
             date_of_birth=date(1995, 2, 10),
             tickets=None
@@ -55,7 +56,7 @@ def seed_database(session: SessionDep):
             last_name="Blake",
             pronouns="he/him",
             username="admin",
-            hashed_password="hashed_admin_pw",
+            hashed_password=get_password_hash("admin123"),
             role=UserRole.ADMIN,
             date_of_birth=date(1990, 1, 1),
             tickets=None
