@@ -55,6 +55,14 @@ export type Message = {
     message: string;
 };
 
+export type ReviewAdd = {
+    desc?: (string | null);
+    star?: (number | null);
+    date_created: string;
+    user_id: string;
+    event_id: number;
+};
+
 export type Token = {
     access_token: string;
     token_type?: string;
@@ -84,7 +92,7 @@ export type UserRegister = {
 export type UserRole = 'admin' | 'student' | 'organizer';
 
 export type UserUpdate = {
-    email: (string | null);
+    email?: (string | null);
     first_name?: (string | null);
     last_name?: (string | null);
     pronouns?: (string | null);
@@ -166,6 +174,24 @@ export type EventsRemoveTicketData = {
 };
 
 export type EventsRemoveTicketResponse = (unknown);
+
+export type EventsAddReviewData = {
+    requestBody: ReviewAdd;
+};
+
+export type EventsAddReviewResponse = (unknown);
+
+export type EventsRemoveReviewData = {
+    reviewId: number;
+};
+
+export type EventsRemoveReviewResponse = (unknown);
+
+export type EventsGetEventReviewsData = {
+    eventId: number;
+};
+
+export type EventsGetEventReviewsResponse = (unknown);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;

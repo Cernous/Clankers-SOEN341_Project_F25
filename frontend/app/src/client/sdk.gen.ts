@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AdminUtilitiesSeedDatabaseResponse, ToolsGetNumUsersResponse, ToolsGetNumOrganizersResponse, ToolsGetPronounCountResponse, ToolsGetAverageAgeResponse, ToolsGetEventAverageAgeData, ToolsGetEventAverageAgeResponse, ToolsGetAllEventsResponse, EventsCreateEventData, EventsCreateEventResponse, EventsListEventsResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, EventsAddTicketData, EventsAddTicketResponse, EventsRemoveTicketData, EventsRemoveTicketResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, ToolsGetAllUsersResponse, ToolsGetAllOrganizersResponse, ToolsDeleteUserData, ToolsDeleteUserResponse, UsersCreateUserData, UsersCreateUserResponse, UsersGetMeUserResponse, UsersDeleteMeResponse, UsersGetUserData, UsersGetUserResponse, UsersUpdatePasswordData, UsersUpdatePasswordResponse, UsersUpdateMeData, UsersUpdateMeResponse } from './types.gen';
+import type { AdminUtilitiesSeedDatabaseResponse, ToolsGetNumUsersResponse, ToolsGetNumOrganizersResponse, ToolsGetPronounCountResponse, ToolsGetAverageAgeResponse, ToolsGetEventAverageAgeData, ToolsGetEventAverageAgeResponse, ToolsGetAllEventsResponse, EventsCreateEventData, EventsCreateEventResponse, EventsListEventsResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, EventsAddTicketData, EventsAddTicketResponse, EventsRemoveTicketData, EventsRemoveTicketResponse, EventsAddReviewData, EventsAddReviewResponse, EventsRemoveReviewData, EventsRemoveReviewResponse, EventsGetEventReviewsData, EventsGetEventReviewsResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, ToolsGetAllUsersResponse, ToolsGetAllOrganizersResponse, ToolsDeleteUserData, ToolsDeleteUserResponse, UsersCreateUserData, UsersCreateUserResponse, UsersGetMeUserResponse, UsersDeleteMeResponse, UsersGetUserData, UsersGetUserResponse, UsersUpdatePasswordData, UsersUpdatePasswordResponse, UsersUpdateMeData, UsersUpdateMeResponse } from './types.gen';
 
 export class AdminUtilitiesService {
     /**
@@ -269,6 +269,65 @@ export class EventsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/clank/{event_id}/remove_ticket',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Add Review
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static addReview(data: EventsAddReviewData): CancelablePromise<EventsAddReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/reviews/add',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Remove Review
+     * @param data The data for the request.
+     * @param data.reviewId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static removeReview(data: EventsRemoveReviewData): CancelablePromise<EventsRemoveReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/reviews/{review_id}',
+            path: {
+                review_id: data.reviewId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Event Reviews
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getEventReviews(data: EventsGetEventReviewsData): CancelablePromise<EventsGetEventReviewsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/reviews/event/{event_id}',
             path: {
                 event_id: data.eventId
             },

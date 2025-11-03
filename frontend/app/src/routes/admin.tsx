@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
-import { EventsService } from '../client'
+import { EventsService,ToolsService } from '../client'
 
 export const Route = createFileRoute('/admin')({
   component: AdminDashboard,
@@ -34,6 +34,16 @@ type EventDetail = Partial<{
   tags: string | null
 }>
 
+// minimal shape for admin users
+type AdminUser = {
+  id: string
+  username?: string
+  email?: string
+  role?: string
+  first_name?: string | null
+  last_name?: string | null
+}
+
 function AdminDashboard() {
   const { isLoggedIn, user } = useAuth()
   const navigate = useNavigate()
@@ -41,6 +51,13 @@ function AdminDashboard() {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [events, setEvents] = React.useState<AdminEvent[]>([])
+
+  // users state
+  const [users, setUsers] = React.useState<AdminUser[]>([])
+  const [usersLoading, setUsersLoading] = React.useState(true)
+  const [usersError, setUsersError] = React.useState<string | null>(null)
+
+  // analytics (average age)
   const [avgAgeEventId, setAvgAgeEventId] = React.useState<string>('') // dropdown
   const [avgAgeValue, setAvgAgeValue] = React.useState<string>('—')
   const [avgAgeLoading, setAvgAgeLoading] = React.useState(false)
@@ -51,76 +68,86 @@ function AdminDashboard() {
     }
   }, [isLoggedIn, user, navigate])
 
- React.useEffect(() => {
-  let mounted = true;
-  (async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // 1) get the simple list (IDs come from here)
-      const base = await EventsService.listEvents();
-      const baseList = Array.isArray(base) ? (base as any[]) : [];
+  React.useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      setUsersLoading(true)
+      setUsersError(null)
 
-      // 2) read live detail for each id to grab fresh count_attendees
-      const enriched = await Promise.all(
-        baseList.map(async (e) => {
-          const id = Number(e.id ?? e.event_id);
-          try {
-            const detail = (await EventsService.readEvent({ eventId: id })) as Partial<{
-              id: number | string;
-              name: string;
-              location: string | null;
-              start_time: string;
-              end_time: string;
-              organizer_id: number | string | null;
-              count_attendees: number | null;
-              tickets_left: number | null;
-              price: number | null;
-              tags: string | null;
-            }>;
+      try {
+        // ------- EVENTS -------
+        const base = await EventsService.listEvents()
+        const baseList = Array.isArray(base) ? (base as any[]) : []
 
-            return {
-              id,
-              name: detail?.name ?? e.name ?? 'Untitled',
-              location: detail?.location ?? e.location ?? null,
-              start_time: detail?.start_time ?? e.start_time,
-              end_time: detail?.end_time ?? e.end_time,
-              organizer_id: detail?.organizer_id ?? e.organizer_id ?? null,
-              count_attendees: Number(detail?.count_attendees ?? 0),
-              tickets_left: Number(detail?.tickets_left ?? 0),
-              price: detail?.price ?? e.price ?? null,
-              tags: detail?.tags ?? e.tags ?? null,
-            } as AdminEvent;
-          } catch {
-            // fallback if detail fails
-            return {
-              id,
-              name: e.name ?? 'Untitled',
-              location: e.location ?? null,
-              start_time: e.start_time,
-              end_time: e.end_time,
-              organizer_id: e.organizer_id ?? null,
-              count_attendees: Number(e.count_attendees ?? 0),
-              tickets_left: Number(e.tickets_left ?? 0),
-              price: e.price ?? null,
-              tags: e.tags ?? null,
-            } as AdminEvent;
-          }
-        })
-      );
+        const enriched = await Promise.all(
+          baseList.map(async (e) => {
+            const id = Number(e.id ?? e.event_id)
+            try {
+              const detail = (await EventsService.readEvent({ eventId: id })) as EventDetail
+              return {
+                id,
+                name: detail?.name ?? e.name ?? 'Untitled',
+                location: detail?.location ?? e.location ?? null,
+                start_time: detail?.start_time ?? e.start_time,
+                end_time: detail?.end_time ?? e.end_time,
+                organizer_id: detail?.organizer_id ?? e.organizer_id ?? null,
+                count_attendees: Number(detail?.count_attendees ?? 0),
+                tickets_left: Number(detail?.tickets_left ?? 0),
+                price: detail?.price ?? e.price ?? null,
+                tags: detail?.tags ?? e.tags ?? null,
+              } as AdminEvent
+            } catch {
+              return {
+                id,
+                name: e.name ?? 'Untitled',
+                location: e.location ?? null,
+                start_time: e.start_time,
+                end_time: e.end_time,
+                organizer_id: e.organizer_id ?? null,
+                count_attendees: Number(e.count_attendees ?? 0),
+                tickets_left: Number(e.tickets_left ?? 0),
+                price: e.price ?? null,
+                tags: e.tags ?? null,
+              } as AdminEvent
+            }
+          })
+        )
+        if (mounted) setEvents(enriched)
 
-      if (mounted) setEvents(enriched);
-    } catch (err: any) {
-      if (mounted) setError(err?.message ?? 'Failed to load admin data');
-    } finally {
-      if (mounted) setLoading(false);
+        // ------- USERS -------
+        try {
+          const res = await ToolsService.getAllUsers()
+          const list: any[] = Array.isArray(res)
+            ? res as any[]
+            : (res as any)?.users ?? (res as any)?.data ?? []
+          const normalized: AdminUser[] = (list || []).map((u: any) => ({
+            id: String(u?.id ?? u?.user_id ?? ''),
+            username: u?.username ?? '',
+            email: u?.email ?? '',
+            role: u?.role ?? u?.user_type ?? '',
+            first_name: u?.first_name ?? null,
+            last_name: u?.last_name ?? null,
+          })).filter(u => !!u.id)
+          if (mounted) setUsers(normalized)
+        } catch (e: any) {
+          if (mounted) setUsersError(e?.message ?? 'Failed to load users')
+        } finally {
+          if (mounted) setUsersLoading(false)
+        }
+
+      } catch (err: any) {
+        if (mounted) setError(err?.message ?? 'Failed to load admin data')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
+    return () => {
+      mounted = false
     }
-  })();
-
-  return () => {
-    mounted = false;
-  };
-}, []);
+  }, [])
 
   if (!isLoggedIn || user?.role !== 'admin') {
     return <div className="mx-auto max-w-4xl px-4 py-10">Checking permissions…</div>
@@ -135,6 +162,8 @@ function AdminDashboard() {
   const activeOrganizers = new Set(
     events.map((e) => String(e.organizer_id ?? '')).filter(Boolean)
   ).size
+
+  const totalUsers = users.length
 
   async function fetchAverageAge() {
     if (!avgAgeEventId) return
@@ -157,6 +186,22 @@ function AdminDashboard() {
     }
   }
 
+  async function handleDeleteUser(uid: string) {
+    if (!uid) return
+    if (!window.confirm('Delete this user? This cannot be undone.')) return
+    try {
+      await ToolsService.deleteUser({ userId: uid } as any)
+      // optimistic remove
+      setUsers((prev) => prev.filter((u) => String(u.id) !== String(uid)))
+    } catch (e: any) {
+      const msg =
+        e?.body?.detail
+          ? JSON.stringify(e.body.detail)
+          : e?.message ?? 'Failed to delete user'
+      alert(msg)
+    }
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <header className="mb-6">
@@ -170,10 +215,11 @@ function AdminDashboard() {
       {!loading && !error && (
         <>
           {/* KPI Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card title="Total Events" value={String(totalEvents)} />
             <Card title="Tickets Issued" value={String(totalIssued)} />
             <Card title="Active Organizers" value={String(activeOrganizers)} />
+            <Card title="Total Users" value={String(totalUsers)} />
           </div>
 
           {/* Analytics */}
@@ -238,6 +284,67 @@ function AdminDashboard() {
                     <tr>
                       <td className="px-4 py-4 text-neutral-500" colSpan={5}>
                         No events found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Users Table */}
+          <section className="mt-8">
+            <h2 className="text-lg font-semibold mb-3">Users</h2>
+            <div className="overflow-hidden rounded-xl border bg-white">
+              <table className="w-full text-sm">
+                <thead className="bg-neutral-50 text-neutral-600">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Username</th>
+                    <th className="px-4 py-2 text-left">Email</th>
+                    <th className="px-4 py-2 text-left">Role</th>
+                    <th className="px-4 py-2 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersLoading && (
+                    <tr>
+                      <td className="px-4 py-4" colSpan={4}>Loading…</td>
+                    </tr>
+                  )}
+                  {usersError && !usersLoading && (
+                    <tr>
+                      <td className="px-4 py-4 text-red-600" colSpan={4}>
+                        {usersError}
+                      </td>
+                    </tr>
+                  )}
+                  {!usersLoading && !usersError && users.map((u, i) => (
+                    <tr key={u.id} className={i > 0 ? 'border-t' : ''}>
+                      <td className="px-4 py-2">
+                        {u.username || '—'}
+                      </td>
+                      <td className="px-4 py-2">
+                        {u.email || '—'}
+                      </td>
+                      <td className="px-4 py-2 capitalize">
+                        {u.role || '—'}
+                      </td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          disabled={String(u.id) === String(user?.id)}
+                          className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                          title={String(u.id) === String(user?.id) ? 'You cannot delete yourself' : 'Delete user'}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!usersLoading && !usersError && !users.length && (
+                    <tr>
+                      <td className="px-4 py-4 text-neutral-500" colSpan={4}>
+                        No users found.
                       </td>
                     </tr>
                   )}
