@@ -1,6 +1,6 @@
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import importlib
 import time
@@ -134,9 +134,7 @@ def create_user(client: TestClient):
         assert profile_response.status_code == 200, profile_response.text
         profile = profile_response.json()
 
-        role_value = (
-            user_record.role.value if isinstance(user_record.role, UserRole) else user_record.role
-        )
+        role_value = user_record.role.value if isinstance(user_record.role, UserRole) else user_record.role
 
         return {
             "token": token,
@@ -153,7 +151,7 @@ def create_user(client: TestClient):
 @pytest.fixture
 def create_event_record(db_session: Session):
     def _create(**overrides):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         event = EventDB(
             name=overrides.pop("name", f"Event-{uuid.uuid4().hex[:6]}"),
             description=overrides.pop("description", "Integration test event"),
