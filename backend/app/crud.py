@@ -4,7 +4,7 @@ from typing import Any, Dict
 from sqlmodel import Session, select, func
 from sqlalchemy import func
 from typing import List, Optional
-
+from datetime import datetime
 
 from core.security import get_password_hash, verify_password
 from models import EventDB, User, UserCreate, UserUpdate, Review, Attendees
@@ -52,9 +52,44 @@ def authenticate(*, session: Session, username: str, password: str) -> User | No
         return None
     return db_user
 
-def get_event_reviews(event_id: int, session: Session) -> List[Review]:
-    statement = select(Review).where(Review.event_id == event_id, Review.visible == True)
-    return session.exec(statement).all()
+def create_review(session: Session, user_id: str, event_id: int, desc: str, star: int) -> bool:
+    review = Review(
+        user_id=user_id,
+        event_id=event_id,
+        desc=desc,
+        star=star,
+        date_created=datetime.utcnow(),
+        visible=True
+    )
+    session.add(review)
+    session.commit()
+    session.refresh(review)
+    return True    
+
+def delete_review(session: Session, review_id: int) -> bool:
+    review = session.get(Review, review_id)
+    if review:
+        session.delete(review)
+        session.commit()
+        return True
+    return False
+
+def get_reviews_for_event(session: Session, event_id: int):
+    statement = select(Review).where(Review.event_id == event_id)
+    reviews = session.exec(statement).all()
+
+    reviews_with_names = []
+    for review in reviews:
+        reviews_with_names.append({
+            "review_id": review.id,
+            "user_id": review.user_id,
+            "first_name": review.user.first_name if review.user else None,
+            "desc": review.desc,
+            "star": review.star,
+            "date_created": review.date_created
+        })
+
+    return reviews_with_names
 
 def get_event_attendees(event_id: int, session: Session) -> List[Attendees]:
     statement = select(Attendees).where(Attendees.event_id == event_id)

@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
+from crud import create_review, delete_review, get_reviews_for_event
 from api.deps import CurrentUser, SessionDep, get_current_user
 from models import (
     EventDB, 
@@ -14,7 +15,8 @@ from models import (
     EventOrganizerRead, 
     EventList, 
     User,
-    Attendees
+    Attendees,
+    ReviewAdd
 )
 
 router = APIRouter(tags=['events'])
@@ -185,3 +187,29 @@ def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser)
     session.delete(attendee)
     session.commit()
     return {"message": "Ticket removed and user removed from attendees"}
+
+@router.post("/reviews/add")
+def add_review(review: ReviewAdd, session: SessionDep):
+    success = create_review(
+        session,
+        user_id=review.user_id,
+        event_id=int(review.event_id),
+        desc=review.desc,
+        star=review.star
+    )
+    if success == True:
+        return {"Review added"}
+    else:
+        return {"Review could not be added"}
+
+@router.delete("/reviews/{review_id}")
+def remove_review(review_id: int, session: SessionDep):
+    success = delete_review(session, review_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return {"message": "Review deleted"}
+
+@router.get("/reviews/event/{event_id}")
+def get_event_reviews(event_id: int, session: SessionDep):
+    reviews = get_reviews_for_event(session, event_id)
+    return {"reviews": reviews}

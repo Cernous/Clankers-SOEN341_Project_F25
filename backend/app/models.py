@@ -165,6 +165,10 @@ class ReviewRead(ReviewBase):
     star: int | None = None
     date_created: Optional[datetime] = Field(default=None)
 
+class ReviewAdd(ReviewBase):
+    user_id: str
+    event_id: int
+
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
     user_id: str = Field(foreign_key="user.id")
