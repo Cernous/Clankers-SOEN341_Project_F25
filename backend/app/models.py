@@ -10,6 +10,8 @@ from datetime import datetime, date, timezone
 from functools import partial
 import uuid
 
+#-----------USER MODELS-------------#
+
 class UserRole(str, Enum):
     ADMIN = "admin"
     STUDENT = "student"
@@ -70,19 +72,23 @@ class User(UserBase, table=True):
     reviews: list["Review"] = Relationship(back_populates="user")
     # insert list of events and list of saved events
 
-class EventBase(SQLModel):
-    name: str  
+
+#-----------EVENT MODELS-------------#
+
+class EventCreate(SQLModel):
+    name: str
     description: str
-    price: float  
+    price: float
     location: str
     start_time: datetime
     end_time: datetime
-
-class EventCreate(EventBase):
     tags: Optional[str] = None
     pictures: Optional[str] = None
     visibility: str
-
+    organizer_id: int
+    count_attendees: int = 0
+    capacity: int
+    ticket_count: int | None = None
 
 class EventAdminCreate(EventCreate):
     organizer_id: Optional[str] = None
@@ -100,55 +106,85 @@ class EventUpdate(SQLModel):
     visibility: str
     state: str
 
-class EventPublicRead(EventBase):
-    tags: Optional[str] = None
-    pictures: Optional[str] = None
+class EventPublicRead(SQLModel):
+    name: str
+    description: str
+    price: float
+    location: str
+    start_time: datetime
+    end_time: datetime
+    tags: str | None = None
+    pictures: str | None = None
+    reviews: list["Review"] = Relationship(back_populates="event")
 
 #not just for organizers, also for admins!
-class EventOrganizerRead(EventBase):
+class EventOrganizerRead(SQLModel):
+    name: str
+    description: str
+    price: float
+    location: str
+    start_time: datetime
+    end_time: datetime
     id: int
     organizer_id: int
-    visibility: str
+    visibility: Literal["public", "private"] = "private"
     state: str
     count_attendees: int
     date_created: Optional[datetime] = None
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
-    tags: Optional[str] = None
-    pictures: Optional[str] = None
-    tickets_left: Optional[int] = None
+    tags: str | None = None
+    pictures: str | None = None
+    capacity: int
+    ticket_count: int | None = None
+    tickets_left: int | None = None
+    reviews: list["Review"] = Relationship(back_populates="event")
+    attendees: list["Attendees"] = Relationship(back_populates="event")
 
-class EventDB(EventBase, table=True):
+class EventDB(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     organizer_id: int
-    tags: Optional[str] = None
-    visibility: str = "public"
-    state: str = "upcoming"
+    name: str
+    description: str
+    price: float
+    location: str
+    start_time: datetime
+    end_time: datetime
+    tags: Optional[str] = Field(default="private")
+    state: Optional[str] = Field(default="upcoming")
     count_attendees: int = 0
-    date_created: Optional[datetime] = None
-    date_published: Optional[datetime] = None
-    date_archived: Optional[datetime] = None
-    pictures: Optional[str] = None
-    tickets_left: Optional[int] = None
+    date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    date_published: Optional[datetime] = Field(default=None)
+    date_archived: Optional[datetime] = Field(default=None)
+    pictures: Optional[str] = Field(default=None)
+    capacity: int
+    ticket_count: Optional[int] = Field(default=None)
+    tickets_left: Optional[int] = Field(default=None)
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
 
 #to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
-class EventList(EventBase):
-    tags: Optional[str] = None
-    pictures: Optional[str] = None
+class EventList(SQLModel):
+    name: str
+    description: str
+    price: float
+    location: str
+    start_time: datetime
+    end_time: datetime
+    tags: str | None = None
+    pictures: str | None = None
+
+#-----------REVIEW MODELS-------------#
 
 #review table, one to many relationship with each event
-class ReviewBase(SQLModel):
-    desc: str | None = None
-    star: int | None = None
-    date_created: datetime = Field(default_factory=None)
-
 class Review(ReviewBase, table=True):
     id: int = Field(primary_key=True)
     user_id: str = Field(foreign_key="user.id") 
     event_id: int = Field(foreign_key="eventdb.id")
-    visible: bool = Field(default=True)
+    desc: str | None = None
+    star: int | None = None
+    date_created: datetime = Field(default_factory=None)
+    visible: str = Field(default="private")
     
     #This may cause infinite recursion we have to test it
     user: Optional["User"] = Relationship(back_populates="reviews")
@@ -156,7 +192,7 @@ class Review(ReviewBase, table=True):
    
 #lets admin hide reviews
 class ReviewModerate(SQLModel):
-    visible: bool | None = None
+    visible: Literal["public", "private"] = "private"
 
 class ReviewRead(ReviewBase):
     first_name: str | None = None
@@ -168,6 +204,11 @@ class ReviewRead(ReviewBase):
 class ReviewAdd(ReviewBase):
     user_id: str
     event_id: int
+    desc: str | None = None
+    star: int | None = None
+    date_created: datetime = Field(default_factory=None)
+
+#-----------ATTENDEES MODELS-------------#
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -175,3 +216,21 @@ class Attendees(SQLModel, table=True):
     event_id: int = Field(foreign_key="eventdb.id")
     ticket: str | None = None
     event: Optional["EventDB"] = Relationship(back_populates="attendees")
+
+#-----------ATTENDEES MODELS-------------#
+
+class ModQueue(SQLModel, table=True):
+    req: int = Field(primary_key=True)
+    user_id: str = Field(foreign_key="user.id")
+    desc: str = Field(default=None)
+    date_created: datetime = Field(default_factory=datetime.utcnow)
+
+class AddToQueue(SQLModel):
+    user_id: str
+    desc: str
+
+class GetQueue(SQLModel):
+    req: int = Field(primary_key=True)
+    user_id: str = Field(foreign_key="user.id")
+    desc: str = Field(default=None)
+    date_created: datetime
