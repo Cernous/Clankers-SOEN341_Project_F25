@@ -1,4 +1,3 @@
-//This is the general login page for all users (organizer, student and admin)
 import * as React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
@@ -13,6 +12,9 @@ function RouteComponent() {
 
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+
+  const [showResetModal, setShowResetModal] = React.useState(false)
+  const [resetEmail, setResetEmail] = React.useState('')
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -45,6 +47,14 @@ function RouteComponent() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function onResetSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    // TODO: call your real reset endpoint here
+    console.log('Reset link requested for:', resetEmail)
+    setShowResetModal(false)
+    setResetEmail('')
   }
 
   return (
@@ -115,7 +125,13 @@ function RouteComponent() {
                   {submitting ? 'Logging in…' : 'Login'}
                 </button>
                 <p>
-                  <Link to="/" id="s_l">Forgot Password?</Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetModal(true)}
+                    className="text-[#912338] underline"
+                  >
+                    Forgot Password?
+                  </button>
                 </p>
               </div>
 
@@ -133,6 +149,45 @@ function RouteComponent() {
       </div>
 
       <div className="bg-[url('/Login.jpg')] bg-cover bg-no-repeat w-full" id="image" />
+
+      {showResetModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="w-[400px] rounded-lg bg-white p-6 shadow-lg">
+      <h2 className="mb-4 text-xl font-semibold">Reset Password</h2>
+      <form onSubmit={onResetSubmit}>
+        <label
+          htmlFor="resetEmail"
+          className="mb-2 block text-sm"
+        >
+          Enter your email:
+        </label>
+        <input
+          id="resetEmail"
+          type="email"
+          required
+          value={resetEmail}
+          onChange={(e) => setResetEmail(e.target.value)}
+          className="mb-4 w-full rounded border border-gray-300 px-3 py-2"
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowResetModal(false)}
+            className="rounded bg-gray-200 px-4 py-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="rounded bg-[#912338] px-4 py-2 text-white"
+          >
+            Send Link
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   )
 }
