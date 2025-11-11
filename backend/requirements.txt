@@ -1,5 +1,6 @@
 fastapi[standard]
 pydantic_settings
-pyjwt
+PyJWT
 passlib
 sqlmodel
+bcrypt==4.3.0 # Pin bcrypt until passlib supports the latest

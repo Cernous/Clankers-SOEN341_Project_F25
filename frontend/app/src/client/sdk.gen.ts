@@ -3,7 +3,115 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { EventsCreateEventData, EventsCreateEventResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse } from './types.gen';
+import type { AdminUtilitiesSeedDatabaseResponse, ToolsGetNumUsersResponse, ToolsGetNumOrganizersResponse, ToolsGetPronounCountResponse, ToolsGetAverageAgeResponse, ToolsGetEventAverageAgeData, ToolsGetEventAverageAgeResponse, ToolsGetAllEventsResponse, EventsCreateEventData, EventsCreateEventResponse, EventsListEventsResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, EventsAddTicketData, EventsAddTicketResponse, EventsRemoveTicketData, EventsRemoveTicketResponse, EventsAddReviewData, EventsAddReviewResponse, EventsRemoveReviewData, EventsRemoveReviewResponse, EventsGetEventReviewsData, EventsGetEventReviewsResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, ToolsGetAllUsersResponse, ToolsGetAllOrganizersResponse, ToolsDeleteUserData, ToolsDeleteUserResponse, UsersCreateUserData, UsersCreateUserResponse, UsersGetMeUserResponse, UsersDeleteMeResponse, UsersGetUserData, UsersGetUserResponse, UsersUpdatePasswordData, UsersUpdatePasswordResponse, UsersUpdateMeData, UsersUpdateMeResponse } from './types.gen';
+
+export class AdminUtilitiesService {
+    /**
+     * Seed Database
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static seedDatabase(): CancelablePromise<AdminUtilitiesSeedDatabaseResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/seed-database'
+        });
+    }
+}
+
+export class AnalyticsService {
+    /**
+     * Get Num Users
+     * Retrieves the number of users on the platform without sending the whole database table
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetNumUsers(): CancelablePromise<ToolsGetNumUsersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/user_count'
+        });
+    }
+    
+    /**
+     * Get Num Organizers
+     * Retrieves the number of organizers on the platform without sending the whole database table
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetNumOrganizers(): CancelablePromise<ToolsGetNumOrganizersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/organizer_count'
+        });
+    }
+    
+    /**
+     * Get Pronoun Count
+     * Get the pronouns count from the whole user base
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetPronounCount(): CancelablePromise<ToolsGetPronounCountResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/pronoun_count'
+        });
+    }
+    
+    /**
+     * Get Average Age
+     * Get the average age of the user base
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetAverageAge(): CancelablePromise<ToolsGetAverageAgeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/average_age'
+        });
+    }
+    
+    /**
+     * Get Event Average Age
+     * Get the average age of the attendees in a given event
+     * Scope: "organizer"
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetEventAverageAge(data: ToolsGetEventAverageAgeData): CancelablePromise<ToolsGetEventAverageAgeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/average_age/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get All Events
+     * Get all events' detail
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetAllEvents(): CancelablePromise<ToolsGetAllEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/get-all-events/detail'
+        });
+    }
+}
 
 export class EventsService {
     /**
@@ -22,6 +130,18 @@ export class EventsService {
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * List Events
+     * @returns EventList Successful Response
+     * @throws ApiError
+     */
+    public static listEvents(): CancelablePromise<EventsListEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/events/list'
         });
     }
     
@@ -113,6 +233,145 @@ export class EventsService {
             }
         });
     }
+    
+    /**
+     * Add Ticket
+     * @param data The data for the request.
+     * @param data.eventId
+     * @param data.ticket
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static addTicket(data: EventsAddTicketData): CancelablePromise<EventsAddTicketResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/{event_id}/add_ticket/',
+            path: {
+                event_id: data.eventId
+            },
+            query: {
+                ticket: data.ticket
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Remove Ticket
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static removeTicket(data: EventsRemoveTicketData): CancelablePromise<EventsRemoveTicketResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/{event_id}/remove_ticket',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Add Review
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static addReview(data: EventsAddReviewData): CancelablePromise<EventsAddReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/reviews/add',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Remove Review
+     * @param data The data for the request.
+     * @param data.reviewId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static removeReview(data: EventsRemoveReviewData): CancelablePromise<EventsRemoveReviewResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/reviews/{review_id}',
+            path: {
+                review_id: data.reviewId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Event Reviews
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getEventReviews(data: EventsGetEventReviewsData): CancelablePromise<EventsGetEventReviewsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/reviews/event/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Event Average Age
+     * Get the average age of the attendees in a given event
+     * Scope: "organizer"
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetEventAverageAge(data: ToolsGetEventAverageAgeData): CancelablePromise<ToolsGetEventAverageAgeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/average_age/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get All Events
+     * Get all events' detail
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetAllEvents(): CancelablePromise<ToolsGetAllEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/get-all-events/detail'
+        });
+    }
 }
 
 export class LoginService {
@@ -135,17 +394,311 @@ export class LoginService {
             }
         });
     }
+}
+
+export class ToolsService {
+    /**
+     * Get All Users
+     * Get all users from the database and returns them (including personal detail)
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAllUsers(): CancelablePromise<ToolsGetAllUsersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/users/get-all-users'
+        });
+    }
     
     /**
-     * Test Token
-     * Test access token
+     * Get All Organizers
+     * Get all organizers from the database and returns them (including personal detail)
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAllOrganizers(): CancelablePromise<ToolsGetAllOrganizersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/users/get-all-organizers'
+        });
+    }
+    
+    /**
+     * Delete User
+     * Directly delete a user from its user_id from the database
+     * Scope: "admin"
+     * @param data The data for the request.
+     * @param data.userId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static deleteUser(data: ToolsDeleteUserData): CancelablePromise<ToolsDeleteUserResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/tools/users/delete/{user_id}',
+            path: {
+                user_id: data.userId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Num Users
+     * Retrieves the number of users on the platform without sending the whole database table
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getNumUsers(): CancelablePromise<ToolsGetNumUsersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/user_count'
+        });
+    }
+    
+    /**
+     * Get Num Organizers
+     * Retrieves the number of organizers on the platform without sending the whole database table
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getNumOrganizers(): CancelablePromise<ToolsGetNumOrganizersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/organizer_count'
+        });
+    }
+    
+    /**
+     * Get Pronoun Count
+     * Get the pronouns count from the whole user base
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getPronounCount(): CancelablePromise<ToolsGetPronounCountResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/pronoun_count'
+        });
+    }
+    
+    /**
+     * Get Average Age
+     * Get the average age of the user base
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAverageAge(): CancelablePromise<ToolsGetAverageAgeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/average_age'
+        });
+    }
+    
+    /**
+     * Get Event Average Age
+     * Get the average age of the attendees in a given event
+     * Scope: "organizer"
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getEventAverageAge(data: ToolsGetEventAverageAgeData): CancelablePromise<ToolsGetEventAverageAgeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/average_age/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get All Events
+     * Get all events' detail
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAllEvents(): CancelablePromise<ToolsGetAllEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/analytics/get-all-events/detail'
+        });
+    }
+}
+
+export class UsersService {
+    /**
+     * Create User
+     * Registers an user into the database as student
+     * @param data The data for the request.
+     * @param data.userRole
+     * @param data.requestBody
+     * @returns Token Successful Response
+     * @throws ApiError
+     */
+    public static createUser(data: UsersCreateUserData): CancelablePromise<UsersCreateUserResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/users/signup/{userRole}',
+            path: {
+                userRole: data.userRole
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Me User
+     * Get me info
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
-    public static testToken(): CancelablePromise<LoginTestTokenResponse> {
+    public static getMeUser(): CancelablePromise<UsersGetMeUserResponse> {
         return __request(OpenAPI, {
-            method: 'POST',
-            url: '/clank/login/test-token'
+            method: 'GET',
+            url: '/clank/users/me'
+        });
+    }
+    
+    /**
+     * Delete Me
+     * Delete me user and say goodbye
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteMe(): CancelablePromise<UsersDeleteMeResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/users/me'
+        });
+    }
+    
+    /**
+     * Get User
+     * Get User depending on the given user ID
+     * @param data The data for the request.
+     * @param data.userId
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static getUser(data: UsersGetUserData): CancelablePromise<UsersGetUserResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/users/{user_id}',
+            path: {
+                user_id: data.userId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Password
+     * Allows the user to update their password
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static updatePassword(data: UsersUpdatePasswordData): CancelablePromise<UsersUpdatePasswordResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/clank/users/me/update-password',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Me
+     * Update me user
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateMe(data: UsersUpdateMeData): CancelablePromise<UsersUpdateMeResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/clank/users/me/update',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get All Users
+     * Get all users from the database and returns them (including personal detail)
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetAllUsers(): CancelablePromise<ToolsGetAllUsersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/users/get-all-users'
+        });
+    }
+    
+    /**
+     * Get All Organizers
+     * Get all organizers from the database and returns them (including personal detail)
+     * Scope: "admin"
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsGetAllOrganizers(): CancelablePromise<ToolsGetAllOrganizersResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/users/get-all-organizers'
+        });
+    }
+    
+    /**
+     * Delete User
+     * Directly delete a user from its user_id from the database
+     * Scope: "admin"
+     * @param data The data for the request.
+     * @param data.userId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static toolsDeleteUser(data: ToolsDeleteUserData): CancelablePromise<ToolsDeleteUserResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/tools/users/delete/{user_id}',
+            path: {
+                user_id: data.userId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

@@ -1,60 +1,123 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, createFileRoute } from '@tanstack/react-router'
+import * as React from 'react'
 
-import Hero from "../components/Hero";
-import EventsList from "../components/events/EventsList";
-import EventPreviewModal from "../components/events/EventPreviewModal";
-import { useAuth } from "../hooks/AuthContext";
+import Hero from '../components/Hero'
+import EventsList from '../components/events/EventsList'
+import EventPreviewModal from '../components/events/EventPreviewModal'
+import { useAuth } from '../hooks/AuthContext'
 
-// shared sample data (future: replace with API)
-import { sampleEvents, type SimpleEvent } from "../data/events.sample";
+// use the typed SDK
+import { EventsService } from '../client'
+import type { SimpleEvent } from '../data/events.sample'
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute('/')({
   component: HomePage,
-});
+})
 
 function HomePage() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn } = useAuth()
 
-  // take the first 3 as “upcoming”
-  const upcoming: SimpleEvent[] = sampleEvents.slice(0, 3);
+  const [events, setEvents] = React.useState<Array<SimpleEvent>>([])
+  const [selected, setSelected] = React.useState<SimpleEvent | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
-  const [selected, setSelected] = useState<SimpleEvent | null>(null);
+  React.useEffect(() => {
+    let mounted = true
+
+    const toMonthDay = (iso: string) => {
+      const d = new Date(iso)
+      return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
+    }
+    const toDateOnly = (iso: string) => iso.slice(0, 10)
+
+    ;(async () => {
+      try {
+        // GET /clank/events/list  (public)
+        const list = await EventsService.listEvents()
+
+        // Map backend -> SimpleEvent (id not in list payload, so synthesize)
+        const mapped: Array<SimpleEvent> = list.map((e: any) => ({
+          id: String(e.id),
+          title: e.name,
+          date: toMonthDay(e.start_time),
+          dateISO: toDateOnly(e.start_time),
+          org: 'Organizer', // list payload doesn't include organizer name
+          where: e.location ?? 'TBD',
+          category: /workshop/i.test(e.tags ?? '')
+            ? 'Workshop'
+            : /music/i.test(e.tags ?? '')
+              ? 'Music'
+              : /sport/i.test(e.tags ?? '')
+                ? 'Sports'
+                : /film|movie/i.test(e.tags ?? '')
+                  ? 'Film'
+                  : /art/i.test(e.tags ?? '')
+                    ? 'Arts'
+                    : 'Other',
+        }))
+
+        if (mounted) setEvents(mapped)
+      } catch (err: any) {
+        if (mounted) setError(err?.message ?? 'Failed to load events')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const upcoming = events.slice(0, 3)
 
   const handleRegister = (ev: { id: string; title: string }) => {
-    // later: call backend to create/claim ticket, then show success
-    alert(`Registered for: ${ev.title}`);
-  };
+    // later: call backend add_ticket here
+    alert(`Registered for: ${ev.title}`)
+  }
 
   return (
-    <div style={{ padding: "32px 0" }}>
-      {/* HERO */}
+    <div style={{ padding: '32px 0' }}>
       <Hero />
 
-      {/* UPCOMING (top 3) */}
-      <section id="events" className="mx-auto max-w-3xl px-4 pt-6 pb-20">
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-2xl font-extrabold">Upcoming Events</h2>
-          <Link to="/events" className="text-sm font-semibold hover:underline">
+      <section id="events" className="mx-auto max-w-4xl px-4 pt-6 pb-20">
+        <div className="mb-6 flex items-baseline justify-between">
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            Upcoming Events
+          </h2>
+          <Link
+            to="/events"
+            className="text-sm font-semibold text-[#7A0019] hover:text-[#600013] transition-colors duration-200"
+          >
             See all
           </Link>
         </div>
-        <p className="mb-4 text-neutral-600">
-          A quick look at what’s next on campus.
+        <p className="mb-6 text-neutral-600 text-lg">
+          A quick look at what's next on campus.
         </p>
 
-        <EventsList
-          events={upcoming}
-          onSelect={(ev) => setSelected(ev)}
-        />
+        {loading && (
+          <p className="text-center py-8 text-gray-500">Loading events…</p>
+        )}
+        {error && (
+          <p className="text-center py-8 text-red-600 bg-red-50 rounded-lg px-4">
+            {error}
+          </p>
+        )}
 
-        <EventPreviewModal
-          event={selected}
-          isLoggedIn={isLoggedIn}
-          onRegister={handleRegister}
-          onClose={() => setSelected(null)}
-        />
+        {!loading && !error && (
+          <>
+            <EventsList events={upcoming} onSelect={(ev) => setSelected(ev)} />
+            <EventPreviewModal
+              event={selected}
+              isLoggedIn={isLoggedIn}
+              onRegister={handleRegister}
+              onClose={() => setSelected(null)}
+            />
+          </>
+        )}
       </section>
     </div>
-  );
+  )
 }

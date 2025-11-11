@@ -35,14 +35,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # a week 60 minutes * 24 hours * 7 days
 
-    FRONTEND_HOST: list[str] = ["http://localhost"] # NOTE: do remind me which port does react/vitejs run on?
+    FRONTEND_HOST: list[str] = ["http://localhost:3000"] # NOTE: do remind me which port does react/vitejs run on?
     ENVIRONMENT: Literal["local", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = [
         # we can leave this empty 
     ]
 
-    FIRST_SUPERUSER: str = "ClankAdmin@Clankers.com"
+    FIRST_SUPERUSER: str = "ClankAdmin@clankers.com"
     FIRST_SUPERUSER_PASSWORD: str = "password"
 
     @computed_field
@@ -63,11 +63,8 @@ class Settings(BaseSettings):
                 raise ValueError(message)
     
     @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
+    def _enforce_non_default_secrets(self):
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
-        self._check_default_secret(
-            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
-        )
         return self
-
+    
 settings = Settings()
