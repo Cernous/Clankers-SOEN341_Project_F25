@@ -55,8 +55,9 @@ def read_event(event_id: int, session: SessionDep, user: User = Depends(get_curr
 
     elif user.role == "organizer":
         if event.organizer_id != user.id:
-            raise HTTPException(status_code=403, detail="Not your event dawg")
-        return EventOrganizerRead.model_validate(event)
+            return EventPublicRead.model_validate(event)
+        else:
+            return EventOrganizerRead.model_validate(event)
 
     elif user.role == "admin":
         return EventOrganizerRead.model_validate(event)
