@@ -48,8 +48,15 @@ class UserUpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
 
+class GetUserProfile(UserBase):
+    tickets: Optional[str] = None
+    reviews: list["Review"] = Relationship(back_populates="user")
+
 class UserPublic(UserBase):
     id: str
+
+class TicketHandler(SQLModel):
+    tickets: Optional[str] = None
 
 class Message(SQLModel):
     message: str
