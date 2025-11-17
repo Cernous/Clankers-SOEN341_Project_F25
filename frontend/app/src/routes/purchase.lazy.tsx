@@ -1,116 +1,200 @@
 import * as React from 'react'
 import { useNavigate, createLazyFileRoute } from '@tanstack/react-router'
 
-/** 路由：/purchase  支持从 search 里带入 eventId、price、title 等 */
+import { EventsService } from '../client'
+
 export const Route = createLazyFileRoute('/purchase')({
-  // 演示期：宽松校验
-  validateSearch: (s: Record<string, any>) => s as any,
   component: PurchasePage,
 })
 
 type TicketTier = { id: string; name: string; price: number; limit?: number }
-type EventInfo = { id: number; title: string; date: string; venue: string; banner?: string; tiers: TicketTier[] }
-
-const MOCK_EVENT: EventInfo = {
-  id: 42,
-  title: 'ConU Tech Fest 2025',
-  date: '2025-11-20 18:00',
-  venue: 'Hall Building Theatre',
-  banner: 'https://images.unsplash.com/photo-1503428593586-e225b39bddfe?q=80&w=1600&auto=format&fit=crop',
-  tiers: [
-    { id: 'std', name: 'Student', price: 12, limit: 6 },
-    { id: 'gen', name: 'General', price: 18, limit: 6 },
-    { id: 'vip', name: 'VIP', price: 35, limit: 4 },
-  ],
+type EventInfo = {
+  id: number | string
+  title: string
+  date: string
+  venue: string
+  banner?: string
+  tiers: TicketTier[]
 }
 
-const TAX_RATE = 0.149 // 示例：GST+QST
-const CONV_FEE = 0.5   // 示例：每张票固定手续费
+const FALLBACK: EventInfo = {
+  id: 0,
+  title: 'Event',
+  date: '',
+  venue: '',
+  banner:
+    'https://images.unsplash.com/photo-1503428593586-e225b39bddfe?q=80&w=1600&auto=format&fit=crop',
+  tiers: [{ id: 'default', name: 'General Admission', price: 0 }],
+}
+
+const TAX_RATE = 0.149 // example GST+QST
+const CONV_FEE = 0.5   // example per-ticket fee
 
 export default function PurchasePage() {
-  const search = Route.useSearch() as any
-  const navigate = useNavigate()
+ const navigate = useNavigate()               
+         
 
-  // 允许从上游传入简单 event 信息；否则用 mock
-  const event: EventInfo = React.useMemo(() => {
-    if (search?.title && search?.price) {
-      return {
-        ...MOCK_EVENT,
-        id: Number(search.eventId ?? MOCK_EVENT.id),
-        title: String(search.title),
-        tiers: [{ id: 'default', name: 'Standard', price: Number(search.price) }],
-      }
+  async function createTicketAndGo({
+    eid,
+    qty,
+    total,
+    tier,
+  }: { eid: string | number; qty: number; total: number; tier: string }) {
+    const eventIdNum = Number(eid)
+    if (!Number.isFinite(eventIdNum)) {
+      alert('Invalid event id')
+      return
     }
-    return MOCK_EVENT
+
+    try {
+      // Issue ONE ticket per quantity with a unique code each time
+      for (let i = 0; i < qty; i++) {
+        const code = `ORD-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${i + 1}`
+        await EventsService.addTicket({
+          eventId: eventIdNum,
+          ticket: code,   // this goes as query param ?ticket=...
+        })
+      }
+    } catch (e) {
+      // Backend rejected (e.g. not enough tickets, auth, etc.)
+      console.error('addTicket failed', e)
+      alert('Could not issue ticket(s). Please try again.')
+      return
+    }
+
+    // Only navigate if we successfully created tickets
+    navigate({
+      to: '/payment-success',
+      search: {
+        eventId: eventIdNum,
+        qty,
+        total: total.toFixed(2),
+        tier,
+      },
+    })
+  }
+
+  const search = Route.useSearch() as {
+    eventId?: string | number
+    name?: string
+    title?: string
+    price?: number | string
+    start?: string   // ISO
+    location?: string
+    qty?: number
+  }
+  
+
+  // Build a single-tier event from search (or fallback)
+  const event: EventInfo = React.useMemo(() => {
+    const title = String(search?.name ?? search?.title ?? FALLBACK.title)
+    const priceNum = Number(search?.price ?? 0)
+    const when = search?.start
+      ? new Date(search.start).toLocaleString()
+      : FALLBACK.date
+    const venue = String(search?.location ?? FALLBACK.venue)
+
+    return {
+      id: search?.eventId ?? FALLBACK.id,
+      title,
+      date: when,
+      venue,
+      banner: FALLBACK.banner,
+      tiers: [{ id: 'general', name: 'General Admission', price: priceNum }],
+    }
   }, [search])
 
   const [tierId, setTierId] = React.useState<string>(event.tiers[0].id)
-  const [qty, setQty] = React.useState<number>(1)
+  const [qty, setQty] = React.useState<number>(Math.max(1, Number(search?.qty ?? 1)))
   const [promo, setPromo] = React.useState<string>('')
   const [showCardForm, setShowCardForm] = React.useState(false)
 
-  const activeTier = event.tiers.find(t => t.id === tierId)! // 一定存在
+  const activeTier = event.tiers.find((t) => t.id === tierId)!
+  const isFree = Number(activeTier.price) <= 0
 
   const discount = React.useMemo(() => {
-    // 简单示例：CLANKERS10 打 9 折
     return promo.trim().toUpperCase() === 'CLANKERS10' ? 0.1 : 0
   }, [promo])
 
   const subtotal = React.useMemo(() => activeTier.price * qty, [activeTier.price, qty])
   const discountAmt = React.useMemo(() => subtotal * discount, [subtotal, discount])
+
+  // If free, don’t apply taxes/fees
   const taxedBase = Math.max(0, subtotal - discountAmt)
-  const taxes = +(taxedBase * TAX_RATE).toFixed(2)
-  const fees = +(CONV_FEE * qty).toFixed(2)
+  const taxes = isFree ? 0 : +(taxedBase * TAX_RATE).toFixed(2)
+  const fees = isFree ? 0 : +(CONV_FEE * qty).toFixed(2)
   const total = +(taxedBase + taxes + fees).toFixed(2)
 
   function dec() {
-    setQty(q => Math.max(1, q - 1))
+    setQty((q) => Math.max(1, q - 1))
   }
   function inc() {
     const lim = activeTier.limit ?? 10
-    setQty(q => Math.min(lim, q + 1))
+    setQty((q) => Math.min(lim, q + 1))
   }
 
   function openCardPay() {
+    if (isFree) {
+      // FREE: directly issue the ticket then go to success
+      createTicketAndGo({
+        eid: event.id,
+        qty,
+        total,
+        tier: activeTier.name,
+      })
+      return
+    }
     setShowCardForm(true)
   }
-
   return (
     <div className="min-h-[calc(100vh-44px)] p-6 bg-[#7A0019] flex items-start justify-center">
       <div className="w-full max-w-5xl grid lg:grid-cols-5 gap-6">
-        {/* 左：活动 & 选票 */}
+        {/* LEFT: event & selection */}
         <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl overflow-hidden">
-          {event.banner && <img src={event.banner} className="w-full h-44 object-cover" alt="" />}
+          {event.banner && (
+            <img src={event.banner} className="w-full h-44 object-cover" alt="" />
+          )}
           <div className="p-6">
             <h1 className="text-2xl font-bold text-[#7A0019]">{event.title}</h1>
-            <div className="text-gray-600 mt-1">{event.date} · {event.venue}</div>
+            <div className="text-gray-600 mt-1">
+              {event.date}
+              {event.venue ? ` · ${event.venue}` : ''}
+            </div>
 
-            {/* 票种 */}
+            {/* Single tier (still clickable if you want) */}
             <div className="mt-6">
-              <label className="block text-sm text-gray-700 mb-1">Ticket Type</label>
+              <label className="block text-sm text-gray-700 mb-1">Ticket</label>
               <div className="grid sm:grid-cols-3 gap-3">
-                {event.tiers.map(t => (
+                {event.tiers.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => { setTierId(t.id); setQty(1) }}
+                    onClick={() => {
+                      setTierId(t.id)
+                      setQty(1)
+                    }}
                     className={`border rounded-lg px-4 py-2 text-left hover:border-[#7A0019] transition
                       ${t.id === tierId ? 'border-[#7A0019] bg-[#7A0019]/5' : 'border-gray-300'}`}
                   >
                     <div className="font-medium">{t.name}</div>
-                    <div className="text-sm text-gray-600">${t.price.toFixed(2)} {t.limit ? `(max ${t.limit})` : ''}</div>
+                    <div className="text-sm text-gray-600">
+                      {t.price > 0 ? `$${t.price.toFixed(2)}` : 'Free'}{' '}
+                      {t.limit ? `(max ${t.limit})` : ''}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 数量 */}
+            {/* Quantity */}
             <div className="mt-6">
               <label className="block text-sm text-gray-700 mb-1">Quantity</label>
               <div className="inline-flex items-center border rounded-lg overflow-hidden">
-                <button onClick={dec} className="px-3 py-2 hover:bg-gray-50" aria-label="decrease">−</button>
+                <button onClick={dec} className="px-3 py-2 hover:bg-gray-50" aria-label="decrease">
+                  −
+                </button>
                 <input
                   value={qty}
-                  onChange={e => {
+                  onChange={(e) => {
                     const v = Number(e.target.value || 1)
                     const lim = activeTier.limit ?? 10
                     setQty(Math.min(Math.max(1, v), lim))
@@ -120,20 +204,23 @@ export default function PurchasePage() {
                   min={1}
                   max={activeTier.limit ?? 10}
                 />
-                <button onClick={inc} className="px-3 py-2 hover:bg-gray-50" aria-label="increase">＋</button>
+                <button onClick={inc} className="px-3 py-2 hover:bg-gray-50" aria-label="increase">
+                  ＋
+                </button>
               </div>
             </div>
 
-            {/* 优惠码 */}
+            {/* Promo (kept, but has no effect when free) */}
             <div className="mt-6">
               <label className="block text-sm text-gray-700 mb-1">Promo Code</label>
               <input
                 value={promo}
-                onChange={e => setPromo(e.target.value)}
+                onChange={(e) => setPromo(e.target.value)}
                 placeholder="e.g. CLANKERS10"
                 className="w-full border rounded-lg px-3 py-2"
+                disabled={isFree}
               />
-              {discount > 0 && (
+              {!isFree && discount > 0 && (
                 <p className="text-xs text-green-700 mt-1">
                   Promo applied: {(discount * 100).toFixed(0)}% off
                 </p>
@@ -142,7 +229,7 @@ export default function PurchasePage() {
           </div>
         </div>
 
-        {/* 右：结算 / 支付 */}
+        {/* RIGHT: summary / payment */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6 h-fit">
           <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
           <div className="space-y-2 text-sm">
@@ -159,7 +246,7 @@ export default function PurchasePage() {
               onClick={openCardPay}
               className="w-full mt-5 rounded-lg bg-[#7A0019] text-white font-semibold py-2.5 hover:bg-[#600013] transition"
             >
-              Pay Now
+              {isFree ? 'Get Free Ticket' : 'Pay Now'}
             </button>
           ) : (
             <CardPayment
@@ -168,15 +255,13 @@ export default function PurchasePage() {
               initialEventId={event.id}
               initialTier={activeTier.name}
               onCancel={() => setShowCardForm(false)}
-              onSuccess={(res) => {
-                navigate({
-                  to: '/payment-success',
-                  search: {
-                    eventId: res.eventId,
-                    qty: res.qty,
-                    total: res.total,
-                    tier: res.tier,
-                  },
+              onSuccess={async (res) => {
+                // PAID: issue ticket then go to success
+                await createTicketAndGo({
+                  eid: res.eventId ?? event.id,
+                  qty: res.qty ?? qty,
+                  total,
+                  tier: res.tier ?? activeTier.name,
                 })
               }}
             />
@@ -200,7 +285,6 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   )
 }
 
-/* ===================== 内联的 Mock 银行卡付款表单 ===================== */
 type CardResult = { orderId: string; total: string; qty?: number; eventId?: number | string; tier?: string }
 
 function CardPayment({
@@ -219,8 +303,8 @@ function CardPayment({
   onCancel?: () => void
 }) {
   const [name, setName] = React.useState('')
-  const [card, setCard] = React.useState('') // digits only
-  const [exp, setExp] = React.useState('')   // MM/YY
+  const [card, setCard] = React.useState('')
+  const [exp, setExp] = React.useState('')
   const [cvv, setCvv] = React.useState('')
   const [zip, setZip] = React.useState('')
   const [busy, setBusy] = React.useState(false)
@@ -238,27 +322,22 @@ function CardPayment({
     if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2)
     setExp(v)
   }
-
   function luhnValidate(num: string) {
     const digits = num.replace(/\D/g, '')
     if (digits.length < 12) return false
-    let sum = 0, dbl = false
+    let sum = 0,
+      dbl = false
     for (let i = digits.length - 1; i >= 0; i--) {
       let d = digits.charCodeAt(i) - 48
-      if (dbl) { d *= 2; if (d > 9) d -= 9 }
+      if (dbl) {
+        d *= 2
+        if (d > 9) d -= 9
+      }
       sum += d
       dbl = !dbl
     }
     return sum % 10 === 0
   }
-  function brand(num: string) {
-    if (/^4/.test(num)) return 'Visa'
-    if (/^5[1-5]/.test(num)) return 'Mastercard'
-    if (/^3[47]/.test(num)) return 'Amex'
-    if (/^6(?:011|5)/.test(num)) return 'Discover'
-    return 'Card'
-  }
-
   function validateAll() {
     setError(null)
     if (!name.trim()) return setError('Please enter cardholder name')
@@ -266,7 +345,8 @@ function CardPayment({
     if (!luhnValidate(card)) return setError('Card number failed Luhn check')
     if (!/^\d{2}\/\d{2}$/.test(exp)) return setError('Expiry must be MM/YY')
     const [mmStr, yyStr] = exp.split('/')
-    const mm = Number(mmStr), yy = Number(yyStr)
+    const mm = Number(mmStr),
+      yy = Number(yyStr)
     if (!(mm >= 1 && mm <= 12)) return setError('Expiry month invalid')
     const now = new Date()
     const fullYear = 2000 + yy
@@ -280,16 +360,15 @@ function CardPayment({
     e?.preventDefault()
     const v = validateAll()
     if (v) return
-    setBusy(true); setError(null)
+    setBusy(true)
+    setError(null)
 
     try {
-      await new Promise(r => setTimeout(r, 1500)) // 模拟网络/处理延迟
-      if (Math.random() < 0.07) { // 7% 概率模拟拒付
-        setError('Payment declined by bank (simulated). Try another card.')
-        setBusy(false)
-        return
-      }
-      const orderId = `CC-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      await new Promise((r) => setTimeout(r, 1200))
+      const orderId = `CC-${new Date().getFullYear()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)
+        .toUpperCase()}`
       onSuccess({
         orderId,
         total: amount.toFixed(2),
@@ -315,7 +394,12 @@ function CardPayment({
       </div>
       <div>
         <label className="text-sm block mb-1">Cardholder name</label>
-        <input value={name} onChange={e => setName(e.target.value)} className="w-full border rounded px-3 py-2" placeholder="YOUR NAME" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+          placeholder="YOUR NAME"
+        />
       </div>
       <div>
         <label className="text-sm block mb-1">Card number</label>
@@ -327,33 +411,58 @@ function CardPayment({
             className="w-full border rounded px-3 py-2 pr-24 tracking-widest"
             placeholder="4111 1111 1111 1111"
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">{brand(card)}</div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
+            Card
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-sm block mb-1">Expiry (MM/YY)</label>
-          <input value={exp} onChange={onExpInput} placeholder="08/27" className="w-full border rounded px-3 py-2" inputMode="numeric" />
+          <input
+            value={exp}
+            onChange={onExpInput}
+            placeholder="08/27"
+            className="w-full border rounded px-3 py-2"
+            inputMode="numeric"
+          />
         </div>
         <div>
           <label className="text-sm block mb-1">CVV</label>
-          <input value={cvv} onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="123" className="w-full border rounded px-3 py-2" inputMode="numeric" />
+          <input
+            value={cvv}
+            onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="123"
+            className="w-full border rounded px-3 py-2"
+            inputMode="numeric"
+          />
         </div>
       </div>
       <div>
         <label className="text-sm block mb-1">ZIP / Postal</label>
-        <input value={zip} onChange={e => setZip(e.target.value)} placeholder="H3G 1M8" className="w-full border rounded px-3 py-2" />
+        <input
+          value={zip}
+          onChange={(e) => setZip(e.target.value)}
+          placeholder="H3G 1M8"
+          className="w-full border rounded px-3 py-2"
+        />
       </div>
       {error && <div className="text-sm text-red-600 rounded p-2 bg-red-50">{error}</div>}
       <div className="flex gap-3">
-        <button type="submit" disabled={busy} className="flex-1 rounded bg-[#7A0019] text-white px-4 py-2 disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex-1 rounded bg-[#7A0019] text-white px-4 py-2 disabled:opacity-60"
+        >
           {busy ? 'Processing…' : `Pay $${amount.toFixed(2)}`}
         </button>
         <button type="button" onClick={onCancel} disabled={busy} className="rounded border px-4 py-2">
           Cancel
         </button>
       </div>
-      <div className="text-xs text-zinc-500">This is a simulated payment. Do not enter real card data in production.</div>
+      <div className="text-xs text-zinc-500">
+        This is a simulated payment. Do not enter real card data in production.
+      </div>
     </form>
   )
 }

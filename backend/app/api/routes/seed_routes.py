@@ -7,6 +7,7 @@ from models import UserCreate, User, EventDB, UserRole
 from api.deps import SessionDep
 import crud
 
+from core.security import get_password_hash, verify_password
 router = APIRouter()
 
 @router.post("/seed-database", tags=["Admin Utilities"])

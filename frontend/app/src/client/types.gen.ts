@@ -9,13 +9,27 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
-export type EventCreate = {
+export type EventAdminCreate = {
     name: string;
     description: string;
     price: number;
     location: string;
     start_time: string;
     end_time: string;
+    tags?: (string | null);
+    pictures?: (string | null);
+    visibility: string;
+    organizer_id?: (string | null);
+};
+
+export type EventList = {
+    name: string;
+    description: string;
+    price: number;
+    location: string;
+    start_time: string;
+    end_time: string;
+    id: number;
     tags?: (string | null);
     pictures?: (string | null);
 };
@@ -37,6 +51,18 @@ export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
 
+export type Message = {
+    message: string;
+};
+
+export type ReviewAdd = {
+    desc?: (string | null);
+    star?: (number | null);
+    date_created: string;
+    user_id: string;
+    event_id: number;
+};
+
 export type Token = {
     access_token: string;
     token_type?: string;
@@ -48,11 +74,34 @@ export type UserPublic = {
     last_name?: (string | null);
     pronouns?: (string | null);
     username: string;
+    date_of_birth?: (string | null);
     role?: UserRole;
     id: string;
 };
 
+export type UserRegister = {
+    username: string;
+    email: string;
+    password: string;
+    first_name?: string;
+    last_name?: string;
+    pronouns?: (string | null);
+    date_of_birth?: (string | null);
+};
+
 export type UserRole = 'admin' | 'student' | 'organizer';
+
+export type UserUpdate = {
+    email?: (string | null);
+    first_name?: (string | null);
+    last_name?: (string | null);
+    pronouns?: (string | null);
+};
+
+export type UserUpdatePassword = {
+    current_password: string;
+    new_password: string;
+};
 
 export type ValidationError = {
     loc: Array<(string | number)>;
@@ -60,11 +109,31 @@ export type ValidationError = {
     type: string;
 };
 
+export type AdminUtilitiesSeedDatabaseResponse = (unknown);
+
+export type ToolsGetNumUsersResponse = (unknown);
+
+export type ToolsGetNumOrganizersResponse = (unknown);
+
+export type ToolsGetPronounCountResponse = (unknown);
+
+export type ToolsGetAverageAgeResponse = (unknown);
+
+export type ToolsGetEventAverageAgeData = {
+    eventId: number;
+};
+
+export type ToolsGetEventAverageAgeResponse = (unknown);
+
+export type ToolsGetAllEventsResponse = (unknown);
+
 export type EventsCreateEventData = {
-    requestBody: EventCreate;
+    requestBody: EventAdminCreate;
 };
 
 export type EventsCreateEventResponse = (unknown);
+
+export type EventsListEventsResponse = (Array<EventList>);
 
 export type EventsReadEventData = {
     eventId: number;
@@ -93,10 +162,78 @@ export type EventsDeleteEventData = {
 
 export type EventsDeleteEventResponse = (unknown);
 
+export type EventsAddTicketData = {
+    eventId: number;
+    ticket: string;
+};
+
+export type EventsAddTicketResponse = (unknown);
+
+export type EventsRemoveTicketData = {
+    eventId: number;
+};
+
+export type EventsRemoveTicketResponse = (unknown);
+
+export type EventsAddReviewData = {
+    requestBody: ReviewAdd;
+};
+
+export type EventsAddReviewResponse = (unknown);
+
+export type EventsRemoveReviewData = {
+    reviewId: number;
+};
+
+export type EventsRemoveReviewResponse = (unknown);
+
+export type EventsGetEventReviewsData = {
+    eventId: number;
+};
+
+export type EventsGetEventReviewsResponse = (unknown);
+
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
 };
 
 export type LoginLoginAccessTokenResponse = (Token);
 
-export type LoginTestTokenResponse = (UserPublic);
+export type ToolsGetAllUsersResponse = (unknown);
+
+export type ToolsGetAllOrganizersResponse = (unknown);
+
+export type ToolsDeleteUserData = {
+    userId: string;
+};
+
+export type ToolsDeleteUserResponse = (unknown);
+
+export type UsersCreateUserData = {
+    requestBody: UserRegister;
+    userRole: string;
+};
+
+export type UsersCreateUserResponse = (Token);
+
+export type UsersGetMeUserResponse = (UserPublic);
+
+export type UsersDeleteMeResponse = (Message);
+
+export type UsersGetUserData = {
+    userId: string;
+};
+
+export type UsersGetUserResponse = (UserPublic);
+
+export type UsersUpdatePasswordData = {
+    requestBody: UserUpdatePassword;
+};
+
+export type UsersUpdatePasswordResponse = (Message);
+
+export type UsersUpdateMeData = {
+    requestBody: UserUpdate;
+};
+
+export type UsersUpdateMeResponse = (UserPublic);
