@@ -74,32 +74,39 @@ function EventsPage() {
       }
     })();
 
-    // Initialize daily count for "Feeling Lucky"
-    try {
-      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD (local)
-      const raw = localStorage.getItem('events-feeling-lucky');
-      if (raw) {
-        const parsed = JSON.parse(raw) as { date: string; count: number } | null;
-        if (parsed && parsed.date === today) {
-          if (mounted) setLuckyCountToday(parsed.count ?? 0);
-        } else {
-          // New day, reset
-          localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: 0 }));
-          if (mounted) setLuckyCountToday(0);
-        }
-      } else {
-        localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: 0 }));
-        if (mounted) setLuckyCountToday(0);
-      }
-    } catch {
-      // If localStorage is unavailable or parsing fails, just ignore and start from 0 in memory
-      if (mounted) setLuckyCountToday(0);
-    }
-
     return () => {
       mounted = false;
     };
   }, []);
+
+  // Build a per-user storage key (fallback to 'guest' when not logged in)
+  const getLuckyKey = React.useCallback(() => {
+    const uid = (user?.id ?? user?.username ?? user?.email ?? 'guest') as string;
+    return `events-feeling-lucky:${uid}`;
+  }, [user]);
+
+  // Load/reset today's count whenever the user changes (per-user daily limit)
+  React.useEffect(() => {
+    try {
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD (local)
+      const key = getLuckyKey();
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { date: string; count: number } | null;
+        if (parsed && parsed.date === today) {
+          setLuckyCountToday(parsed.count ?? 0);
+        } else {
+          localStorage.setItem(key, JSON.stringify({ date: today, count: 0 }));
+          setLuckyCountToday(0);
+        }
+      } else {
+        localStorage.setItem(key, JSON.stringify({ date: today, count: 0 }));
+        setLuckyCountToday(0);
+      }
+    } catch {
+      setLuckyCountToday(0);
+    }
+  }, [getLuckyKey]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -126,12 +133,13 @@ function EventsPage() {
       setFreeTicketEvent(filtered[i]);
     }
 
-    // Increment and persist today's count
+    // Increment and persist today's count (per-user)
     try {
       const today = new Date().toLocaleDateString('en-CA');
       const next = luckyCountToday + 1;
       setLuckyCountToday(next);
-      localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: next }));
+      const key = getLuckyKey();
+      localStorage.setItem(key, JSON.stringify({ date: today, count: next }));
     } catch {
       // ignore localStorage errors
     }
