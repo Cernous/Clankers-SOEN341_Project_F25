@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlmodel import SQLModel, Field, create_engine, Session, select, func
 from datetime import datetime
 from typing import Optional
 
@@ -42,6 +42,16 @@ def list_events(session: SessionDep):
     events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
     return events 
 
+@router.get("/events/random")
+def random_button(session: SessionDep):
+    #select a random public event from the database of existing databases organized by the tag public
+    statement = select(EventDB).where(EventDB.visibility == "public").order_by(func.random()).limit(1)
+
+    #loads chosen random event into event variable
+    event = session.exec(statement).first()
+
+    #return model validated event from public perspective
+    return EventPublicRead.model_validate(event)
 
 
 @router.get("/events/{event_id}")
