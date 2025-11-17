@@ -23,6 +23,9 @@ function EventsPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   const [selected, setSelected] = React.useState<SimpleEvent | null>(null);
+  // Track daily limit for "Feeling Lucky"
+  const [luckyCountToday, setLuckyCountToday] = React.useState(0);
+  const LUCKY_LIMIT = 5;
 
   // filters
   const [query, setQuery] = React.useState("");
@@ -67,6 +70,28 @@ function EventsPage() {
       }
     })();
 
+    // Initialize daily count for "Feeling Lucky"
+    try {
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD (local)
+      const raw = localStorage.getItem('events-feeling-lucky');
+      if (raw) {
+        const parsed = JSON.parse(raw) as { date: string; count: number } | null;
+        if (parsed && parsed.date === today) {
+          if (mounted) setLuckyCountToday(parsed.count ?? 0);
+        } else {
+          // New day, reset
+          localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: 0 }));
+          if (mounted) setLuckyCountToday(0);
+        }
+      } else {
+        localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: 0 }));
+        if (mounted) setLuckyCountToday(0);
+      }
+    } catch {
+      // If localStorage is unavailable or parsing fails, just ignore and start from 0 in memory
+      if (mounted) setLuckyCountToday(0);
+    }
+
     return () => {
       mounted = false;
     };
@@ -83,9 +108,24 @@ function EventsPage() {
   }, [all, query, category, date]);
 
   const handleLucky = () => {
+    // Enforce 5-presses-per-day limit (local, per device)
+    if (luckyCountToday >= LUCKY_LIMIT) {
+      alert(`You've reached your daily limit of ${LUCKY_LIMIT} tries. Please try again tomorrow.`);
+      return;
+    }
     if (!filtered.length) return;
     const i = Math.floor(Math.random() * filtered.length);
     setSelected(filtered[i]);
+
+    // Increment and persist today's count
+    try {
+      const today = new Date().toLocaleDateString('en-CA');
+      const next = luckyCountToday + 1;
+      setLuckyCountToday(next);
+      localStorage.setItem('events-feeling-lucky', JSON.stringify({ date: today, count: next }));
+    } catch {
+      // ignore localStorage errors
+    }
   };
 
   const handleRegister = (ev: { id: string; title: string }) => {
