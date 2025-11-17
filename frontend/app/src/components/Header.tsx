@@ -6,6 +6,10 @@ export default function Header() {
   const { isLoggedIn, user, logout } = useAuth()
   const { saved, tickets } = useUserData()
 
+  // Show per-user ticket count in the nav
+  const ownerId = user?.username || user?.email || ''
+  const myTicketsCount = isLoggedIn ? tickets.filter(t => t.owner === ownerId).length : 0
+
   return (
     <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
@@ -65,7 +69,7 @@ export default function Header() {
                 to="/tickets"
                 className="text-gray-700 hover:text-[#7A0019] transition-colors duration-200"
               >
-                My Tickets{tickets.length ? ` (${tickets.length})` : ''}
+                My Tickets{myTicketsCount ? ` (${myTicketsCount})` : ''}
               </Link>
             </>
           )}
