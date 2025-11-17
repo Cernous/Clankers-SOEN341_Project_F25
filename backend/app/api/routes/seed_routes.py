@@ -1,68 +1,68 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session
+from sqlmodel import Session, func, select
 from datetime import datetime, timedelta, date, timezone
 import uuid
 
-from models import User, EventDB, UserRole
+from models import UserCreate, User, EventDB, UserRole
 from api.deps import SessionDep
+import crud
 
 from core.security import get_password_hash, verify_password
 router = APIRouter()
 
 @router.post("/seed-database", tags=["Admin Utilities"])
 def seed_database(session: SessionDep):
+    
     #user dummy data
     users = [
-        User(
-            id=str(uuid.uuid4()),
+        UserCreate(
             email="alice@example.com",
             first_name="Alice",
             last_name="Nguyen",
             pronouns="she/her",
             username="alice",
-            hashed_password=get_password_hash("alice123"),
+            password="hashed_pw1",
             role=UserRole.STUDENT,
             date_of_birth=date(2001, 5, 14),
-            tickets=None
         ),
-        User(
-            id=str(uuid.uuid4()),
+        UserCreate(
             email="bob@example.com",
             first_name="Bob",
             last_name="Martinez",
             pronouns="he/him",
             username="bob",
-            hashed_password=get_password_hash("bob123"),
+            password="hashed_pw2",
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 8, 22),
             tickets=None
         ),
-        User(
-            id=str(uuid.uuid4()),
+        UserCreate(
             email="jordan@example.com",
             first_name="Jordan",
             last_name="Lee",
             pronouns="they/them",
             username="jordan",
-            hashed_password=get_password_hash("jordan123"),
+            password="hashed_pw3",
             role=UserRole.ORGANIZER,
             date_of_birth=date(1995, 2, 10),
-            tickets=None
         ),
-        User(
-            id=str(uuid.uuid4()),
+        UserCreate(
             email="admin@example.com",
             first_name="Sam",
             last_name="Blake",
             pronouns="he/him",
             username="admin",
-            hashed_password=get_password_hash("admin123"),
+            password="hashed_admin_pw",
             role=UserRole.ADMIN,
             date_of_birth=date(1990, 1, 1),
-            tickets=None
         )
     ]
 
+    for u in users:
+        user_sesh = session.exec(select(User).where(u.email == User.email or u.username == User.username)).all()
+        if not user_sesh:
+            crud.create_user(session=session, user_create=u)
+    
     #event dummy data
     now = datetime.now(timezone.utc)
     events = [
@@ -110,8 +110,7 @@ def seed_database(session: SessionDep):
         ),
     ]
 
-    for u in users:
-        session.add(u)
+    
     for e in events:
         session.add(e)
 
