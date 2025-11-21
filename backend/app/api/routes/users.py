@@ -37,7 +37,9 @@ def create_user(userRole: str, user: UserRegister, session: SessionDep) -> Token
     '''
         Registers an user into the database as student
     '''
-    user_sesh = crud.verify_unique_email_username(session, user.username, user.email)
+    user_sesh = crud.verify_unique_email_username(session=session, 
+                                                  username=user.username, 
+                                                  email=user.email)
     if user_sesh:
         raise HTTPException(status_code=403, 
                             detail="Username or Email has been previously used. Please try again")
@@ -76,7 +78,7 @@ def get_user(user_id: str, session: SessionDep, current_user: CurrentUser):
     """
         Get User depending on the given user ID
     """
-    user = crud.get_user_by_uid(session, user_id)
+    user = crud.get_user_by_uid(session=session, uid=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user.role == UserRole.ADMIN or user == current_user:

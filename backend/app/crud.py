@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, Sequence
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
@@ -47,7 +47,12 @@ def get_user_by_username(*, session: Session, username: str) -> User | None:
     session_user = session.exec(statement).first()
     return session_user
 
-def verify_unique_email_username(*, session: Session, username: str, email: str) -> bool | None:
+def get_uid_by_role(*, session: Session, role: str) -> list[str] | None:
+    statement = select(User).where(func.lower(User.role) == role).column(User.id)
+    session_users = session.exec(statement).all()
+    return [u.id for u in session_users]
+
+def verify_unique_email_username(*, session: Session, username: str, email: str) -> bool:
     statement = session.exec(select(User).where(email == User.email or username == User.username)).all()
     return True if statement else False
 
