@@ -93,7 +93,7 @@ class EventCreate(SQLModel):
     tags: Optional[str] = None
     pictures: Optional[str] = None
     visibility: str
-    organizer_id: int
+    organizer_id: str
     count_attendees: int = 0
     capacity: int
     ticket_count: int | None = None
@@ -134,7 +134,7 @@ class EventOrganizerRead(SQLModel):
     start_time: datetime
     end_time: datetime
     id: int
-    organizer_id: int
+    organizer_id: str
     visibility: Literal["public", "private"] = "private"
     state: str
     count_attendees: int
@@ -151,7 +151,7 @@ class EventOrganizerRead(SQLModel):
 
 class EventDB(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    organizer_id: int
+    organizer_id: str
     name: str
     description: str
     price: float
