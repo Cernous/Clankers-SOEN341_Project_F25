@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, func, select
 from datetime import datetime, timedelta, date, timezone
-import uuid
 
 from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
 from api.deps import SessionDep
 import crud
 
-from core.security import get_password_hash, verify_password
 router = APIRouter()
 
 @router.post("/seed-database", tags=["Admin Utilities"])
