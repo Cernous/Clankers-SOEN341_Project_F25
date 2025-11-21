@@ -19,7 +19,6 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.refresh(db_obj)
     return db_obj
 
-
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
     extra_data = {}
@@ -33,6 +32,10 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+def get_user_by_uid(*, session: Session, uid: str) -> User | None:
+    usersTable = select(User)
+    session_user = session.exec(usersTable.filter(User.id == uid)).first()
+    return session_user
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(func.lower(User.email) == func.lower(email))
@@ -43,6 +46,10 @@ def get_user_by_username(*, session: Session, username: str) -> User | None:
     statement = select(User).where(func.lower(User.username) == func.lower(username))
     session_user = session.exec(statement).first()
     return session_user
+
+def verify_unique_email_username(*, session: Session, username: str, email: str) -> bool | None:
+    statement = session.exec(select(User).where(email == User.email or username == User.username)).all()
+    return True if statement else False
 
 def authenticate(*, session: Session, username: str, password: str) -> User | None:
     db_user = get_user_by_username(session=session, username=username)
