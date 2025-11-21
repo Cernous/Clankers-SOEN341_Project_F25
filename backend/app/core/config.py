@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # a week 60 minutes * 24 hours * 7 days
 
-    FRONTEND_HOST: list[str] = ["http://localhost"] # NOTE: do remind me which port does react/vitejs run on?
+    FRONTEND_HOST: list[str] = ["http://localhost:3000"] # NOTE: do remind me which port does react/vitejs run on?
     ENVIRONMENT: Literal["local", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = [
