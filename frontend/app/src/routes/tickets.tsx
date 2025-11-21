@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import QRCode from 'react-qr-code'
 import { useUserData } from '../hooks/UserDataContext'
+import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createFileRoute('/tickets')({
   component: TicketsPage,
@@ -8,6 +9,12 @@ export const Route = createFileRoute('/tickets')({
 
 function TicketsPage() {
   const { tickets } = useUserData()
+  const { user, isLoggedIn } = useAuth()
+
+  const ownerId = user?.username || user?.email || ''
+  const myTickets = isLoggedIn
+    ? tickets.filter((t) => t.owner === ownerId)
+    : []
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -16,13 +23,17 @@ function TicketsPage() {
         <p className="mt-1 text-neutral-600">Show this QR at check-in.</p>
       </header>
 
-      {tickets.length === 0 ? (
+      {!isLoggedIn ? (
+        <div className="rounded-xl border border-dashed border-neutral-300 p-6 text-neutral-600">
+          Please log in to see your tickets.
+        </div>
+      ) : myTickets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-300 p-6 text-neutral-600">
           No tickets yet. Open an event and click <em>Claim Free Ticket</em>.
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {tickets.map((t) => (
+          {myTickets.map((t) => (
             <li key={t.id} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
               <h3 className="m-0 truncate text-lg font-semibold">{t.title}</h3>
               <p className="mt-1 text-sm text-neutral-600">

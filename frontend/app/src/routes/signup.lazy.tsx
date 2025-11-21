@@ -17,7 +17,7 @@ type FormDataShape = {
 }
 
 function SignUpPage() {
-  const { signup } = useAuth()
+  //const { signup } = useAuth()
   const navigate = useNavigate()
   const [showPw, setShowPw] = React.useState(false)
   const [errors, setErrors] = React.useState<Partial<Record<keyof FormDataShape, string>>>({})
@@ -35,9 +35,12 @@ function SignUpPage() {
     return e
   }
 
- async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+const { signupStudent } = useAuth()
+
+async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault()
   const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
+
   const data = {
     firstName: raw.firstName?.trim() ?? '',
     lastName: raw.lastName?.trim() ?? '',
@@ -47,30 +50,32 @@ function SignUpPage() {
     password: raw.password ?? '',
     confirm: raw.confirm ?? '',
   }
+
   const errs = validate(data)
   setErrors(errs)
   if (Object.keys(errs).length) return
 
-  // Build minimal user for fake signup/login
-  const newUser = {
-    firstName: data.firstName,
-    lastName: data.lastName,
-    email: data.email,
-    username: data.username,
-    role: data.role,
+  try {
+    await signupStudent({
+      email: data.email,
+      username: data.username,
+      password: data.password,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      role: data.role, // "creator" will be mapped to "organizer" inside the context
+    })
+
+    const dest =
+      data.role === 'admin' ? '/admin'
+      : data.role === 'creator' ? '/'
+      : '/events'
+    navigate({ to: dest })
+  } catch (err: any) {
+    setMessage(err.message || 'Signup failed')
   }
-
-  // Save to auth (localStorage) and auto-login
-  signup(newUser)
-
-  // Redirect based on role
-  const dest =
-  data.role === 'admin' ? '/admin'
-  : data.role === 'creator' ? '/'
-  : '/events'
-  navigate({ to: dest })
-
 }
+
+
 
   return (
     <div className="min-h-[calc(100vh-44px)] grid md:grid-cols-2 bg-[#7A0019]">

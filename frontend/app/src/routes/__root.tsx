@@ -1,3 +1,5 @@
+import '../setupApi'
+
 import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { UserDataProvider } from '../hooks/UserDataContext'
 

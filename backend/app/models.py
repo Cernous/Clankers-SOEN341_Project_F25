@@ -158,7 +158,8 @@ class EventDB(SQLModel, table=True):
     location: str
     start_time: datetime
     end_time: datetime
-    tags: Optional[str] = Field(default="private")
+    visibility: Optional[str] = Field(default="private")
+    tags: Optional[str] = None
     state: Optional[str] = Field(default="upcoming")
     count_attendees: int = 0
     date_created: Optional[datetime] = Field(default_factory=datetime.utcnow)
