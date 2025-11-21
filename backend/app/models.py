@@ -10,6 +10,7 @@ from datetime import datetime, date, timezone
 from functools import partial
 import uuid
 
+
 #-----------USER MODELS-------------#
 
 class UserRole(str, Enum):
@@ -184,7 +185,7 @@ class EventList(SQLModel):
 #-----------REVIEW MODELS-------------#
 
 #review table, one to many relationship with each event
-class Review(ReviewBase, table=True):
+class Review(SQLModel, table=True):
     id: int = Field(primary_key=True)
     user_id: str = Field(foreign_key="user.id") 
     event_id: int = Field(foreign_key="eventdb.id")
@@ -201,14 +202,14 @@ class Review(ReviewBase, table=True):
 class ReviewModerate(SQLModel):
     visible: Literal["public", "private"] = "private"
 
-class ReviewRead(ReviewBase):
+class ReviewRead(SQLModel):
     first_name: str | None = None
     event_id: int | None = None
     desc: str | None = None
     star: int | None = None
     date_created: Optional[datetime] = Field(default=None)
 
-class ReviewAdd(ReviewBase):
+class ReviewAdd(SQLModel):
     user_id: str
     event_id: int
     desc: str | None = None
