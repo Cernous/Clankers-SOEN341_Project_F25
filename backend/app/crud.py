@@ -202,3 +202,62 @@ def get_all_average_age(session: Session) -> Optional[float]:
     stmt = select(func.avg(func.extract("year", func.age(func.current_date(), User.date_of_birth))))
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
+
+
+#############################  Events Related CRUD #############################
+def create_event(session: Session, data: EventDB) -> EventDB:
+    event = EventDB(**data.model_dump())
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
+
+def list_events(session: Session) -> List[EventDB]:
+    statement = select(EventDB)
+    events = session.exec(statement).all()
+    return events
+
+def get_random_event(session: Session) -> EventDB:
+    #select a random public event from the database of existing databases organized by the tag public
+    statement = select(EventDB).where(EventDB.visibility == "public").order_by(func.random()).limit(1)
+
+    #loads chosen random event into event variable
+    return session.exec(statement).first()
+
+def get_event_by_id(session: Session, event_id: int) -> Optional[EventDB]:
+
+    return session.get(EventDB, event_id)
+
+def delete_event_by_id(session: Session, event_id: int) -> bool:
+    event = session.get(EventDB, event_id)
+    if event:
+        session.delete(event)
+        session.commit()
+        return True
+    return False
+
+def update_event_by_id(session: Session, event_id: int, updates: dict) -> Optional[EventDB]:
+    event = session.get(EventDB, event_id)
+    if not event:
+        return None
+
+    for key, value in updates.items():
+        setattr(event, key, value)
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
+
+def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
+    for key, value in updates.items():
+        setattr(event, key, value)
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
