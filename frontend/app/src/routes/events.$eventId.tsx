@@ -42,16 +42,16 @@ function EventDetailPage() {
 
   React.useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        const res = await EventsService.readEvent({ eventId: Number(eventId) })
-        if (mounted) setData(res)
-      } catch (e: any) {
-        if (mounted) setErr(e?.message ?? 'Failed to load event')
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+      ; (async () => {
+        try {
+          const res = await EventsService.readEvent({ eventId: Number(eventId) })
+          if (mounted) setData(res)
+        } catch (e: any) {
+          if (mounted) setErr(e?.message ?? 'Failed to load event')
+        } finally {
+          if (mounted) setLoading(false)
+        }
+      })()
     return () => {
       mounted = false
     }
@@ -92,41 +92,41 @@ function EventDetailPage() {
     (user?.role === 'admin')
 
   // ---- delete handler (admin only) ----
-async function handleDelete() {
-  if (!isAdmin) return
-  if (!window.confirm('Delete this event? This cannot be undone.')) return
-  setDeleting(true)
-  setDeleteErr(null)
+  async function handleDelete() {
+    if (!isAdmin) return
+    if (!window.confirm('Delete this event? This cannot be undone.')) return
+    setDeleting(true)
+    setDeleteErr(null)
 
-  try {
-    await EventsService.deleteEvent({
-      eventId: Number(eventId),
-      requestBody: {
-        name: data.name ?? '',
-        description: data.description ?? '',
-        price: Number(data.price ?? 0),
-        location: data.location ?? '',
-        start_time: data.start_time ?? new Date().toISOString(),
-        end_time: data.end_time ?? new Date().toISOString(),
-        tags: data.tags ?? '',
-        pictures: data.pictures ?? '',
-        visibility: data.visibility ?? 'public',
-        state: data.state ?? 'active',
-      },
-    } as any)
+    try {
+      await EventsService.deleteEvent({
+        eventId: Number(eventId),
+        requestBody: {
+          name: data.name ?? '',
+          description: data.description ?? '',
+          price: Number(data.price ?? 0),
+          location: data.location ?? '',
+          start_time: data.start_time ?? new Date().toISOString(),
+          end_time: data.end_time ?? new Date().toISOString(),
+          tags: data.tags ?? '',
+          pictures: data.pictures ?? '',
+          visibility: data.visibility ?? 'public',
+          state: data.state ?? 'active',
+        },
+      } as any)
 
-    navigate({ to: '/events' })
-  } catch (e: any) {
-    console.error('Delete error', e?.status, e?.body || e)
-    const maybeDetail =
-      e?.body && typeof e.body === 'object' && e.body.detail
-        ? JSON.stringify(e.body.detail)
-        : e?.message
-    setDeleteErr(maybeDetail ?? 'Failed to delete event')
-  } finally {
-    setDeleting(false)
+      navigate({ to: '/events' })
+    } catch (e: any) {
+      console.error('Delete error', e?.status, e?.body || e)
+      const maybeDetail =
+        e?.body && typeof e.body === 'object' && e.body.detail
+          ? JSON.stringify(e.body.detail)
+          : e?.message
+      setDeleteErr(maybeDetail ?? 'Failed to delete event')
+    } finally {
+      setDeleting(false)
+    }
   }
-}
 
 
 
@@ -245,6 +245,8 @@ async function handleDelete() {
                 title: String(data.name),
                 price: unitPrice,
                 qty: 1,
+                start: data.start_time,          
+                location: data.location ?? '',   
               }}
               className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
             >
@@ -313,7 +315,7 @@ async function handleDelete() {
             disabled={!isLoggedIn || submitting}
             className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100"
           >
-            {[5,4,3,2,1].map(s => <option key={s} value={s}>{s}★</option>)}
+            {[5, 4, 3, 2, 1].map(s => <option key={s} value={s}>{s}★</option>)}
           </select>
           <button
             type="submit"

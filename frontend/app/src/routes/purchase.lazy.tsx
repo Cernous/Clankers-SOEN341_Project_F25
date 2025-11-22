@@ -1,7 +1,9 @@
 import * as React from 'react'
 import { useNavigate, createLazyFileRoute } from '@tanstack/react-router'
-
 import { EventsService } from '../client'
+import { useUserData } from '../hooks/UserDataContext'
+import type { SimpleEvent } from '../data/events.sample'
+import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
@@ -12,7 +14,7 @@ type EventInfo = {
   id: number | string
   title: string
   date: string
-  venue: string
+  where: string
   banner?: string
   tiers: TicketTier[]
 }
@@ -21,7 +23,7 @@ const FALLBACK: EventInfo = {
   id: 0,
   title: 'Event',
   date: '',
-  venue: '',
+  where: '',
   banner:
     'https://images.unsplash.com/photo-1503428593586-e225b39bddfe?q=80&w=1600&auto=format&fit=crop',
   tiers: [{ id: 'default', name: 'General Admission', price: 0 }],
@@ -31,15 +33,17 @@ const TAX_RATE = 0.149 // example GST+QST
 const CONV_FEE = 0.5   // example per-ticket fee
 
 export default function PurchasePage() {
- const navigate = useNavigate()               
-         
+  const navigate = useNavigate()
+  const { isSaved, toggleSave, claimTicket } = useUserData()
+  const { user } = useAuth()
 
   async function createTicketAndGo({
     eid,
     qty,
     total,
     tier,
-  }: { eid: string | number; qty: number; total: number; tier: string }) {
+    ev,
+  }: { eid: string | number; qty: number; total: number; tier: string; ev: SimpleEvent }) {
     const eventIdNum = Number(eid)
     if (!Number.isFinite(eventIdNum)) {
       alert('Invalid event id')
@@ -61,6 +65,29 @@ export default function PurchasePage() {
       alert('Could not issue ticket(s). Please try again.')
       return
     }
+    // Only navigate if we successfully created tickets
+
+    // Auto-save event to "calendar" if not already there
+    if (!isSaved(ev.id)) {
+      toggleSave(ev)
+    }
+    // --- NEW: create local ticket(s) for the user -------------------------
+    const owner = user?.username || user?.email || 'me'
+    const ticketKind = total > 0 ? 'paid' : 'free' as const
+
+    // one ticket per quantity (or change to just once if you prefer)
+    for (let i = 0; i < qty; i++) {
+      claimTicket(ev, owner, ticketKind)
+    }
+    navigate({
+      to: '/payment-success',
+      search: {
+        eventId: eventIdNum,
+        qty,
+        total: total.toFixed(2),
+        tier,
+      },
+    })
 
     // Only navigate if we successfully created tickets
     navigate({
@@ -83,7 +110,7 @@ export default function PurchasePage() {
     location?: string
     qty?: number
   }
-  
+
 
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {
@@ -92,17 +119,29 @@ export default function PurchasePage() {
     const when = search?.start
       ? new Date(search.start).toLocaleString()
       : FALLBACK.date
-    const venue = String(search?.location ?? FALLBACK.venue)
+    const where = String(search?.location ?? FALLBACK.where)
 
     return {
       id: search?.eventId ?? FALLBACK.id,
       title,
       date: when,
-      venue,
+      where,
       banner: FALLBACK.banner,
       tiers: [{ id: 'general', name: 'General Admission', price: priceNum }],
     }
   }, [search])
+  const simpleEvent: SimpleEvent = React.useMemo(
+    () => ({
+      id: String(event.id ?? ''),
+      title: event.title,
+      date: event.date,                        // pretty date string
+      dateISO: (search?.start as string) ?? '',// or keep '' if not available
+      org: 'Organizer',                        // or map from backend if you have it
+      where: event.where || 'TBD',
+      category: 'Other',                       // or derive from tags
+    }),
+    [event, search],
+  )
 
   const [tierId, setTierId] = React.useState<string>(event.tiers[0].id)
   const [qty, setQty] = React.useState<number>(Math.max(1, Number(search?.qty ?? 1)))
@@ -141,6 +180,7 @@ export default function PurchasePage() {
         qty,
         total,
         tier: activeTier.name,
+        ev: simpleEvent,
       })
       return
     }
@@ -158,7 +198,7 @@ export default function PurchasePage() {
             <h1 className="text-2xl font-bold text-[#7A0019]">{event.title}</h1>
             <div className="text-gray-600 mt-1">
               {event.date}
-              {event.venue ? ` · ${event.venue}` : ''}
+              {event.where ? ` · ${event.where}` : ''}
             </div>
 
             {/* Single tier (still clickable if you want) */}
@@ -262,6 +302,7 @@ export default function PurchasePage() {
                   qty: res.qty ?? qty,
                   total,
                   tier: res.tier ?? activeTier.name,
+                  ev: simpleEvent,
                 })
               }}
             />
