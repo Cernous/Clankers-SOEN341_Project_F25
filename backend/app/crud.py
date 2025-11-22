@@ -190,3 +190,14 @@ def get_all_average_age(session: Session) -> Optional[float]:
     stmt = select(func.avg(func.extract("year", func.age(func.current_date(), User.date_of_birth))))
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
+
+
+#############################  Events Related CRUD #############################
+def create_event(session: Session, data: EventDB) -> EventDB:
+    event = EventDB(**data.model_dump())
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
