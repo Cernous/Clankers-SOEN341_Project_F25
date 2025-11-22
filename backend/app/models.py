@@ -92,7 +92,7 @@ class EventCreate(SQLModel):
     end_time: datetime
     tags: Optional[str] = None
     pictures: Optional[str] = None
-    visibility: str
+    visibility: Optional[str] = Field(default="private")
     organizer_id: str
     count_attendees: int = 0
     capacity: int = 1
