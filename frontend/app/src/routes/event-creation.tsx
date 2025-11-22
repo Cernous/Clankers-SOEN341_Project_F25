@@ -50,6 +50,9 @@ function RouteComponent() {
     if (!title.trim()) return setError('Title is required')
     if (!description.trim()) return setError('Description is required')
     if (!start) return setError('Start time is required')
+    if (end && new Date(end) < new Date(start)) {
+      return setError('End time cannot be before start time.')
+    }
     if (!location.trim()) return setError('Location is required')
     if (!ticketType) return setError('Please choose Free or Paid')
     if (ticketType === 'paid' && (isNaN(price) || price <= 0)) {
@@ -103,6 +106,7 @@ function RouteComponent() {
         <div>
           <label htmlFor="title" className="text-neutral-600 block font-bold">Title</label>
           <input
+            maxLength={50}
             id="title"
             type="text"
             placeholder="Title"
@@ -115,6 +119,7 @@ function RouteComponent() {
         <div>
           <label htmlFor="description" className="text-neutral-600 block font-bold">Description</label>
           <textarea
+            maxLength={100}
             id="description"
             placeholder="Description"
             value={description}
@@ -127,6 +132,7 @@ function RouteComponent() {
           <div>
             <label className="text-neutral-600 block font-bold">Start Time</label>
             <input
+
               type="datetime-local"
               value={start}
               onChange={(e) => setStart(e.target.value)}
@@ -138,6 +144,7 @@ function RouteComponent() {
             <label className="text-neutral-600 block font-bold">End Time (optional)</label>
             <input
               type="datetime-local"
+              min={start || undefined}
               value={end}
               onChange={(e) => setEnd(e.target.value)}
               className="rounded-xl border border-neutral-300 px-3 py-2"
@@ -149,6 +156,7 @@ function RouteComponent() {
         <div>
           <label htmlFor="location" className="text-neutral-600 block font-bold">Location</label>
           <input
+            maxLength={50}
             id="location"
             type="text"
             placeholder="Location"
@@ -176,6 +184,7 @@ function RouteComponent() {
             <div>
               <label className="text-neutral-600 block font-bold">Price</label>
               <input
+                max={9999}
                 type="number"
                 step="0.01"
                 min={0}
@@ -204,6 +213,7 @@ function RouteComponent() {
           <div>
             <label className="text-neutral-600 block font-bold">Tags (comma separated)</label>
             <input
+              maxLength={50}
               type="text"
               placeholder="e.g. tech, workshop, robotics"
               value={tags}
