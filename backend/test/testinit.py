@@ -209,22 +209,22 @@ def test_update_student(client:requests.Session) -> None:
     
     STUDENT_DATA["first_name"] = "Clonk"
 
-# def test_get_student_data(client: requests.Session) -> None:
-#     """
-#         Obtains the student data as the current user
-#         - Scope: student
-#     """
-#     global STUDENT_HEADERS, STUDENT_DATA
-#     response = client.get(
-#         f"{URL}{settings.API_STR}/users/me",
-#         headers=STUDENT_HEADERS
-#     )
-#     data = response.json()
-#     assert response.status_code == 200
-#     for key in data.keys():
-#         assert isinstance(data[key], str)
-#         if key in STUDENT_DATA:
-#             assert STUDENT_DATA[key] == data[key]
+def test_get_student_data(client: requests.Session) -> None:
+    """
+        Obtains the student data as the current user
+        - Scope: student
+    """
+    global STUDENT_HEADERS, STUDENT_DATA
+    response = client.get(
+        f"{URL}{settings.API_STR}/users/me",
+        headers=STUDENT_HEADERS
+    )
+    data = response.json()
+    assert response.status_code == 200
+    for key in data.keys():
+        assert isinstance(data[key], str)
+        if key in STUDENT_DATA:
+            assert STUDENT_DATA[key] == data[key]
 
 def test_delete_student(client: requests.Session) -> None:
     """

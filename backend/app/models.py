@@ -93,10 +93,10 @@ class EventCreate(SQLModel):
     tags: Optional[str] = None
     pictures: Optional[str] = None
     visibility: str
-    organizer_id: int
+    organizer_id: str
     count_attendees: int = 0
-    capacity: int
-    ticket_count: int | None = None
+    capacity: int = 1
+    tickets_left: int = 1
 
 class EventAdminCreate(EventCreate):
     organizer_id: Optional[str] = None
@@ -134,24 +134,24 @@ class EventOrganizerRead(SQLModel):
     start_time: datetime
     end_time: datetime
     id: int
-    organizer_id: int
+    organizer_id: str
     visibility: Literal["public", "private"] = "private"
     state: str
-    count_attendees: int
+    count_attendees: int = 0
     date_created: Optional[datetime] = None
     date_published: Optional[datetime] = None
     date_archived: Optional[datetime] = None
     tags: str | None = None
     pictures: str | None = None
-    capacity: int
-    ticket_count: int | None = None
-    tickets_left: int | None = None
+    capacity: int = 1
+    ticket_count: int = 0
+    tickets_left: int = 1
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
 
 class EventDB(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    organizer_id: int
+    organizer_id: str
     name: str
     description: str
     price: float
@@ -166,9 +166,9 @@ class EventDB(SQLModel, table=True):
     date_published: Optional[datetime] = Field(default=None)
     date_archived: Optional[datetime] = Field(default=None)
     pictures: Optional[str] = Field(default=None)
-    capacity: int
-    ticket_count: Optional[int] = Field(default=None)
-    tickets_left: Optional[int] = Field(default=None)
+    capacity: int = 1
+    ticket_count: int = 0
+    tickets_left: Optional[int] = Field(default=1)
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
 
