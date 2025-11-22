@@ -2,6 +2,8 @@ from sqlmodel import SQLModel, Field, create_engine, Session, select, func
 from datetime import datetime
 from typing import Optional
 
+import crud
+
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from crud import create_review, delete_review, get_reviews_for_event
@@ -28,13 +30,11 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
         raise HTTPException(status_code=403, detail="Only organizers can create events")
     if user.role == "organizer":
         data.organizer_id = user.id
-    event = EventDB(**data.model_dump())
+    db_event = EventDB(**data.model_dump())
 
-    session.add(event)
-    session.commit()
-    session.refresh(event)
+    post_event = crud.create_event(session=session, data=db_event)
 
-    return EventOrganizerRead.model_validate(event)
+    return EventOrganizerRead.model_validate(post_event)
 
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
 @router.get("/events/list", response_model=list[EventList])
