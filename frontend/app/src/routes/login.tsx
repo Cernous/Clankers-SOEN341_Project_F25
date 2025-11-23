@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
+import { Button } from '../components/ui/Button'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -117,13 +118,14 @@ function RouteComponent() {
               )}
 
               <div className="mb-6 text-center">
-                <button
+                <Button
                   type="submit"
                   disabled={submitting}
-                  className="mb-3 text-lg bg-primary text-white py-2 px-14 rounded-md disabled:opacity-60 hover:bg-primaryHover"
+                  className="mb-3 text-lg px-14 py-2"
+                  loading={submitting}
                 >
-                  {submitting ? 'Logging in…' : 'Login'}
-                </button>
+                  Login
+                </Button>
                 <p>
                   <button
                     type="button"

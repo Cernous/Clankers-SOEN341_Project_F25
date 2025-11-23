@@ -34,7 +34,7 @@ export default function Hero() {
         )}
         <a
           href="/tickets"
-          className="inline-flex items-center gap-2 rounded-full bg-accentSunny px-6 py-3 text-sm font-semibold text-neutral-900 hover:brightness-105"
+          className="inline-flex items-center gap-2 rounded-full bg-accentSunny px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white hover:text-primary hover:shadow-lg"
         >
           My Tickets
         </a>
