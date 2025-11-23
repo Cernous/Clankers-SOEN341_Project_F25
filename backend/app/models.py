@@ -115,6 +115,7 @@ class EventUpdate(SQLModel):
     state: str
 
 class EventPublicRead(SQLModel):
+    id: int
     name: str
     description: str
     price: float
@@ -175,6 +176,7 @@ class EventDB(SQLModel, table=True):
 
 #to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
 class EventList(SQLModel):
+    id: int
     name: str
     description: str
     price: float
