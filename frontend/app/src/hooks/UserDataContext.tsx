@@ -1,6 +1,7 @@
 import * as React from 'react'
 import type { SimpleEvent } from '../data/events.sample'
-
+import { CalendarService } from '../client'
+import { useAuth } from '../hooks/AuthContext'
 export type TicketType = 'free' | 'paid'
 
 export type Ticket = {
@@ -27,6 +28,7 @@ type Ctx = {
 const UserDataContext = React.createContext<Ctx | null>(null)
 
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
+  const { isLoggedIn } = useAuth()
   const [saved, setSaved] = React.useState<string[]>([])
   const [tickets, setTickets] = React.useState<Ticket[]>([])
 
@@ -64,7 +66,32 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const value: Ctx = { saved, tickets, isSaved, toggleSave, claimTicket, clearAll }
+  React.useEffect(() => {
+    let cancelled = false
 
+    async function loadCalendar() {
+      if (!isLoggedIn) {
+        // if logged out, clear local state
+        setSaved([])
+        return
+      }
+
+      try {
+        const res = await CalendarService.getUserCalendar()
+        const list = Array.isArray(res) ? res : (res as any).events ?? []
+
+        const ids = list.map((e: any) => String(e.id))
+        if (!cancelled) {
+          setSaved(ids)
+        }
+      } catch (e) {
+        console.error('Failed to hydrate saved events from calendar', e)
+      }
+    }
+
+    loadCalendar()
+    return () => { cancelled = true }
+  }, [isLoggedIn])
   return (
     <UserDataContext.Provider value={value}>
       {children}

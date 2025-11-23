@@ -45,8 +45,23 @@ function EventDetailPage() {
   React.useEffect(() => {
     let mounted = true
       ; (async () => {
+        setLoading(true)
+        setErr(null)
         try {
-          const res = await EventsService.readEvent({ eventId: Number(eventId) })
+          let res: any
+
+          // 1) Try the protected endpoint
+          try {
+            res = await EventsService.readEvent({ eventId: Number(eventId) })
+          } catch (e: any) {
+            // 2) If unauthorized/forbidden, fall back to public endpoint
+            if (e?.status === 401 || e?.status === 403) {
+              res = await EventsService.readPublicEvent({ eventId: Number(eventId) })
+            } else {
+              throw e
+            }
+          }
+
           if (mounted) setData(res)
         } catch (e: any) {
           if (mounted) setErr(e?.message ?? 'Failed to load event')
@@ -54,10 +69,12 @@ function EventDetailPage() {
           if (mounted) setLoading(false)
         }
       })()
+
     return () => {
       mounted = false
     }
   }, [eventId])
+
 
   // fetch reviews for this event
   const loadReviews = React.useCallback(async () => {
