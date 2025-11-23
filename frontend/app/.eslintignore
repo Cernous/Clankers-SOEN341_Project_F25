@@ -1,0 +1,8 @@
+# Auto-generated API client files (causing errors)
+src/client/core/request.ts
+src/client/core/CancelablePromise.ts
+src/client/core/ApiRequestOptions.ts
+src/client/core/OpenAPI.ts
+
+# Config file (causing errors)
+tailwind.config.js
