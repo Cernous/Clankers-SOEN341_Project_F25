@@ -2,12 +2,15 @@
     Tool related API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException
+from typing import List
 
 from models import (
     EventDB,
     User,
     UserRole,
-    Attendees
+    Attendees,
+    ModQueue,
+    AddToQueue
 )
 from api.deps import (
     CurrentUser,
@@ -156,3 +159,33 @@ def get_all_events(session: SessionDep, current_user: CurrentUser):
             "Invalid Role"
         )
     return session.exec(select(EventDB)).all()
+
+@router.get("/moderation/queue", response_model=List[ModQueue])
+def get_queue(session: SessionDep):
+    return session.exec(select(ModQueue)).all()
+
+@router.post("/moderation/queue", response_model=ModQueue)
+def add_report(item: AddToQueue, session: SessionDep):
+    entry = ModQueue(user_id=item.user_id, desc=item.desc)
+    session.add(entry)
+    session.commit()
+    session.refresh(entry)
+    return entry
+
+@router.delete("/moderation/queue/{req}", response_model=ModQueue)
+def delete_report(req: int, session: SessionDep, current_user: CurrentUser):
+    
+    #Scope Admin
+    
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            403,
+            "Invalid Role"
+        )
+
+    entry = session.get(ModQueue, req)
+    if not entry:
+        raise HTTPException(404)
+    session.delete(entry)
+    session.commit()
+    return entry

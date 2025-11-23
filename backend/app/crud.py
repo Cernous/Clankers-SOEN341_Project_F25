@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, Sequence
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
@@ -19,7 +19,6 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.refresh(db_obj)
     return db_obj
 
-
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
     extra_data = {}
@@ -33,6 +32,10 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+def get_user_by_uid(*, session: Session, uid: str) -> User | None:
+    usersTable = select(User)
+    session_user = session.exec(usersTable.filter(User.id == uid)).first()
+    return session_user
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(func.lower(User.email) == func.lower(email))
@@ -43,6 +46,15 @@ def get_user_by_username(*, session: Session, username: str) -> User | None:
     statement = select(User).where(func.lower(User.username) == func.lower(username))
     session_user = session.exec(statement).first()
     return session_user
+
+def get_uid_by_role(*, session: Session, role: str) -> list[str] | None:
+    statement = select(User).where(func.lower(User.role) == role).column(User.id)
+    session_users = session.exec(statement).all()
+    return [u.id for u in session_users]
+
+def verify_unique_email_username(*, session: Session, username: str, email: str) -> bool:
+    statement = session.exec(select(User).where(email == User.email or username == User.username)).all()
+    return True if statement else False
 
 def authenticate(*, session: Session, username: str, password: str) -> User | None:
     db_user = get_user_by_username(session=session, username=username)
@@ -190,3 +202,62 @@ def get_all_average_age(session: Session) -> Optional[float]:
     stmt = select(func.avg(func.extract("year", func.age(func.current_date(), User.date_of_birth))))
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
+
+
+#############################  Events Related CRUD #############################
+def create_event(session: Session, data: EventDB) -> EventDB:
+    event = EventDB(**data.model_dump())
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
+
+def list_events(session: Session) -> List[EventDB]:
+    statement = select(EventDB)
+    events = session.exec(statement).all()
+    return events
+
+def get_random_event(session: Session) -> EventDB:
+    #select a random public event from the database of existing databases organized by the tag public
+    statement = select(EventDB).where(EventDB.visibility == "public").order_by(func.random()).limit(1)
+
+    #loads chosen random event into event variable
+    return session.exec(statement).first()
+
+def get_event_by_id(session: Session, event_id: int) -> Optional[EventDB]:
+
+    return session.get(EventDB, event_id)
+
+def delete_event_by_id(session: Session, event_id: int) -> bool:
+    event = session.get(EventDB, event_id)
+    if event:
+        session.delete(event)
+        session.commit()
+        return True
+    return False
+
+def update_event_by_id(session: Session, event_id: int, updates: dict) -> Optional[EventDB]:
+    event = session.get(EventDB, event_id)
+    if not event:
+        return None
+
+    for key, value in updates.items():
+        setattr(event, key, value)
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event
+
+def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
+    for key, value in updates.items():
+        setattr(event, key, value)
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+
+    return event

@@ -2,6 +2,8 @@ from sqlmodel import SQLModel, Field, create_engine, Session, select, func
 from datetime import datetime
 from typing import Optional
 
+import crud
+
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 
 from crud import create_review, delete_review, get_reviews_for_event
@@ -28,48 +30,45 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
         raise HTTPException(status_code=403, detail="Only organizers can create events")
     if user.role == "organizer":
         data.organizer_id = user.id
-    event = EventDB(**data.model_dump())
+    db_event = EventDB(**data.model_dump())
 
-    session.add(event)
-    session.commit()
-    session.refresh(event)
+    post_event = crud.create_event(session=session, data=db_event)
 
-    return EventOrganizerRead.model_validate(event)
+    return EventOrganizerRead.model_validate(post_event)
 
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
 @router.get("/events/list", response_model=list[EventList])
 def list_events(session: SessionDep):
-    events = session.exec(select(EventDB).where(EventDB.visibility == "public")).all()
-    return events 
+    listed_events = crud.list_events(session)
+    
+    return listed_events 
 
 @router.get("/events/random")
 def random_button(session: SessionDep):
-    #select a random public event from the database of existing databases organized by the tag public
-    statement = select(EventDB).where(EventDB.visibility == "public").order_by(func.random()).limit(1)
-
-    #loads chosen random event into event variable
-    event = session.exec(statement).first()
+    #loads chosen random event into random_event variable
+    random_event = crud.get_random_event(session)
 
     #return model validated event from public perspective
-    return EventPublicRead.model_validate(event)
+    return EventPublicRead.model_validate(random_event)
 
 
 @router.get("/events/{event_id}")
 def read_event(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
-    event = session.get(EventDB, event_id)
-    if not event:
+    get_event = crud.get_event_by_id(session, event_id)
+    if not get_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
     if user.role == "student":
-        return EventPublicRead.model_validate(event)
+        return EventPublicRead.model_validate(get_event)
 
     elif user.role == "organizer":
-        if event.organizer_id != user.id:
-            raise HTTPException(status_code=403, detail="Not your event dawg")
-        return EventOrganizerRead.model_validate(event)
+        if get_event.organizer_id != user.id:
+            return EventPublicRead.model_validate(get_event)
+        else:
+            return EventOrganizerRead.model_validate(get_event)
 
     elif user.role == "admin":
-        return EventOrganizerRead.model_validate(event)
+        return EventOrganizerRead.model_validate(get_event)
 
     raise HTTPException(status_code=403, detail="Invalid role used")
 
@@ -82,45 +81,45 @@ def update_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    #setting up the event session
+    get_event = crud.get_event_by_id(session, event_id)
+
+    if not get_event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
     #authorization to make sure only the correct organizer or admin can update the event
     if user.role == "student":
         raise HTTPException(status_code=403, detail="Students can't update events silly")
-    if user.role == "organizer" and event.organizer_id != user.id:
-        raise HTTPException(status_code=403, detail="Not your event broski")
+    if user.role == "organizer" and get_event.organizer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your event dawg")
 
     #get the fields to update, exclude_unset means only fields sent in the request body will be included
-    updates = data.model_dump()  #literally "exclude_unset=True" is dif between put and patch, oops
-
+    updates = data.model_dump(exclude_unset=True, exclude_none=True)
 
     #never allow these attributes to change
     immutable = {"id", "organizer_id", "date_created"}
     for k in immutable:
         updates.pop(k, None)
 
-    #update the event with the new values
-    for key, value in updates.items():
-        setattr(event, key, value)
-
-    #commit the changes to the database and refresh the event instance
-    session.commit()
-    session.refresh(event)
+    updated_event = crud.patch_event(session, get_event, updates)
 
     #both organizer and admin get the same view of the event
-    return EventOrganizerRead.model_validate(event)
+    return EventOrganizerRead.model_validate(updated_event)
 
 
 @router.patch("/events/{event_id}")
 def patch_event(event_id: int, data: EventUpdate, session: SessionDep, user: User = Depends(get_current_user)):
 
     #setting up the event session
-    event = session.get(EventDB, event_id)
-    if not event:
+    get_event = crud.get_event_by_id(session, event_id)
+
+    if not get_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
     #authorization to make sure only the correct organizer or admin can update the event
     if user.role == "student":
         raise HTTPException(status_code=403, detail="Students can't update events silly")
-    if user.role == "organizer" and event.organizer_id != user.id:
+    if user.role == "organizer" and get_event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not your event dawg")
 
     #get the fields to update, exclude_unset means only fields sent in the request body will be included
@@ -131,32 +130,28 @@ def patch_event(event_id: int, data: EventUpdate, session: SessionDep, user: Use
     for k in immutable:
         updates.pop(k, None)
 
-    #update the event with the new values
-    for key, value in updates.items():
-        setattr(event, key, value)
-
-    #commit the changes to the database and refresh the event instance
-    session.commit()
-    session.refresh(event)
+    updated_event = crud.patch_event(session, get_event, updates)
 
     #both organizer and admin get the same view of the event
-    return EventOrganizerRead.model_validate(event)
+    return EventOrganizerRead.model_validate(updated_event)
 
 @router.delete("/events/{event_id}")
 def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: User = Depends(get_current_user)):
     #setting up the event session
-    event = session.get(EventDB, event_id)
-    if not event:
+    get_event = crud.get_event_by_id(session, event_id)
+    if not get_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
     #authorization to make sure only the correct organizer or admin can delete the event
     if user.role == "student":
         raise HTTPException(status_code=403, detail="Students can't delete events silly")
-    if user.role == "organizer" and event.organizer_id != user.id:
+    if user.role == "organizer" and get_event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not your event to delete broseph")
 
-    session.delete(event)
-    session.commit()
+    results = crud.delete_event_by_id(session, event_id)
+
+    if results == False:
+        raise HTTPException(status_code=500, detail="Event could not be deleted")
 
     return {"detail": "Event deleted, bye bye"}
 

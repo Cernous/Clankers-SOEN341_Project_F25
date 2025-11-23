@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, func, select
 from datetime import datetime, timedelta, date, timezone
-import uuid
 
-from models import UserCreate, User, EventDB, UserRole
+from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
 from api.deps import SessionDep
 import crud
 
-from core.security import get_password_hash, verify_password
 router = APIRouter()
 
 @router.post("/seed-database", tags=["Admin Utilities"])
@@ -55,64 +53,564 @@ def seed_database(session: SessionDep):
             password="hashed_admin_pw",
             role=UserRole.ADMIN,
             date_of_birth=date(1990, 1, 1),
+        ),
+        UserCreate(
+            email="chloe.wang@example.com",
+            first_name="Chloe",
+            last_name="Wang",
+            pronouns="she/her",
+            username="chloe",
+            password="hashed_pw4",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2003, 3, 19),
+        ),
+        UserCreate(
+            email="michael.ross@example.com",
+            first_name="Michael",
+            last_name="Ross",
+            pronouns="he/him",
+            username="mross",
+            password="hashed_pw5",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2000, 11, 2),
+        ),
+        UserCreate(
+            email="taylor.kim@example.com",
+            first_name="Taylor",
+            last_name="Kim",
+            pronouns="they/them",
+            username="taylor",
+            password="hashed_pw6",
+            role=UserRole.ORGANIZER,
+            date_of_birth=date(1997, 9, 28),
+        ),
+        UserCreate(
+            email="devon.smith@example.com",
+            first_name="Devon",
+            last_name="Smith",
+            pronouns="he/him",
+            username="devon",
+            password="hashed_pw7",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2002, 7, 5),
+        ),
+        UserCreate(
+            email="mia.ren@example.com",
+            first_name="Mia",
+            last_name="Ren",
+            pronouns="she/her",
+            username="miaren",
+            password="hashed_pw8",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2001, 4, 11),
+        ),
+        UserCreate(
+            email="luca.moretti@example.com",
+            first_name="Luca",
+            last_name="Moretti",
+            pronouns="he/him",
+            username="lmoretti",
+            password="hashed_pw9",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2000, 12, 30),
+        ),
+        UserCreate(
+            email="skye.bennett@example.com",
+            first_name="Skye",
+            last_name="Bennett",
+            pronouns="they/them",
+            username="skye",
+            password="hashed_pw10",
+            role=UserRole.ORGANIZER,
+            date_of_birth=date(1994, 6, 18),
+        ),
+        UserCreate(
+            email="hannah.ali@example.com",
+            first_name="Hannah",
+            last_name="Ali",
+            pronouns="she/her",
+            username="hali",
+            password="hashed_pw11",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2003, 1, 27),
+        ),
+        UserCreate(
+            email="ethan.cho@example.com",
+            first_name="Ethan",
+            last_name="Cho",
+            pronouns="he/him",
+            username="echo",
+            password="hashed_pw12",
+            role=UserRole.STUDENT,
+            date_of_birth=date(1999, 10, 9),
+        ),
+        UserCreate(
+            email="valerie.duval@example.com",
+            first_name="Valerie",
+            last_name="Duval",
+            pronouns="she/her",
+            username="vduval",
+            password="hashed_pw13",
+            role=UserRole.ORGANIZER,
+            date_of_birth=date(1996, 5, 23),
+        ),
+        UserCreate(
+            email="noah.tremblay@example.com",
+            first_name="Noah",
+            last_name="Tremblay",
+            pronouns="he/him",
+            username="ntremblay",
+            password="hashed_pw14",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2002, 2, 17),
+        ),
+        UserCreate(
+            email="ava.santos@example.com",
+            first_name="Ava",
+            last_name="Santos",
+            pronouns="she/her",
+            username="asantos",
+            password="hashed_pw15",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2001, 9, 1),
+        ),
+        UserCreate(
+            email="sasha.morgan@example.com",
+            first_name="Sasha",
+            last_name="Morgan",
+            pronouns="they/them",
+            username="sasha",
+            password="hashed_pw16",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2004, 2, 3),
+        ),
+        UserCreate(
+            email="liam.roy@example.com",
+            first_name="Liam",
+            last_name="Roy",
+            pronouns="he/him",
+            username="lroy",
+            password="hashed_pw17",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2003, 6, 12),
+        ),
+        UserCreate(
+            email="nina.schultz@example.com",
+            first_name="Nina",
+            last_name="Schultz",
+            pronouns="she/her",
+            username="nina",
+            password="hashed_pw18",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2000, 3, 25),
+        ),
+        UserCreate(
+            email="omar.haddad@example.com",
+            first_name="Omar",
+            last_name="Haddad",
+            pronouns="he/him",
+            username="omar",
+            password="hashed_pw19",
+            role=UserRole.STUDENT,
+            date_of_birth=date(1998, 12, 8),
+        ),
+        UserCreate(
+            email="riley.jacobs@example.com",
+            first_name="Riley",
+            last_name="Jacobs",
+            pronouns="they/them",
+            username="riley",
+            password="hashed_pw20",
+            role=UserRole.ORGANIZER,
+            date_of_birth=date(1995, 8, 14),
+        ),
+        UserCreate(
+            email="zoe.lang@example.com",
+            first_name="Zoe",
+            last_name="Lang",
+            pronouns="she/her",
+            username="zoelang",
+            password="hashed_pw21",
+            role=UserRole.STUDENT,
+            date_of_birth=date(2004, 11, 6),
+        ),
+        UserCreate(
+            email="kevin.dupont@example.com",
+            first_name="Kevin",
+            last_name="Dupont",
+            pronouns="he/him",
+            username="kdupont",
+            password="hashed_pw22",
+            role=UserRole.STUDENT,
+            date_of_birth=date(1999, 4, 20),
         )
     ]
 
     for u in users:
-        user_sesh = session.exec(select(User).where(u.email == User.email or u.username == User.username)).all()
+        user_sesh = crud.verify_unique_email_username(session=session, username=u.username, email=u.email)
         if not user_sesh:
             crud.create_user(session=session, user_create=u)
     
+    uids = crud.get_uid_by_role(session=session, 
+                         role=UserRole.ORGANIZER)
+
     #event dummy data
     now = datetime.now(timezone.utc)
     events = [
-        EventDB(
+        EventAdminCreate(
             name="Tech Expo 2025",
             description="A showcase of student tech projects.",
             price=10.0,
             location="Montreal Convention Centre",
             start_time=now + timedelta(days=7),
             end_time=now + timedelta(days=7, hours=4),
-            organizer_id=3,
             tags="tech,expo,student",
             visibility="public",
+	        capacity=400,
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
+            organizer_id=uids[0]
+            
         ),
-        EventDB(
+        EventAdminCreate(
             name="Cybersecurity Summit",
             description="Talks and demos on network security and hacking.",
             price=15.0,
             location="McGill Engineering Building",
             start_time=now + timedelta(days=14),
             end_time=now + timedelta(days=14, hours=6),
-            organizer_id=3,
             tags="cybersecurity,hacking,infosec",
             visibility="public",
+	        capacity=40,
             state="upcoming",
             count_attendees=0,
             tickets_left=30,
+            organizer_id=uids[0]
         ),
-        EventDB(
+        EventAdminCreate(
             name="AI and Ethics Forum",
             description="Panel discussion on ethical AI deployment.",
             price=0.0,
             location="Concordia Hall",
             start_time=now + timedelta(days=21),
             end_time=now + timedelta(days=21, hours=3),
-            organizer_id=3,
             tags="AI,ethics,forum",
             visibility="public",
+	        capacity=80,
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
+            organizer_id=uids[0]
         ),
+        EventAdminCreate(
+            name="Machine Learning Bootcamp",
+            description="Hands-on introduction to modern ML workflows.",
+            price=49.99,
+            location="EV Building",
+            start_time=now + timedelta(days=10),
+            end_time=now + timedelta(days=10, hours=6),
+            tags="ML,workshop,training",
+            visibility="public",
+            capacity=50,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=50,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Cybersecurity Awareness Night",
+            description="Learn how to secure your digital identity.",
+            price=0.0,
+            location="H110 Auditorium",
+            start_time=now + timedelta(days=5),
+            end_time=now + timedelta(days=5, hours=2),
+            tags="security,cyber,lecture",
+            visibility="public",
+            capacity=120,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=120,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="Cloud Computing Expo",
+            description="Showcase of cloud platforms and tools.",
+            price=10.0,
+            location="Conference Center A",
+            start_time=now + timedelta(days=30),
+            end_time=now + timedelta(days=30, hours=5),
+            tags="cloud,expo,technology",
+            visibility="public",
+            capacity=150,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=150,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="Intro to Robotics",
+            description="An interactive session exploring robotics fundamentals.",
+            price=15.0,
+            location="Engineering Lab 2",
+            start_time=now + timedelta(days=14),
+            end_time=now + timedelta(days=14, hours=4),
+            tags="robotics,workshop",
+            visibility="public",
+            capacity=40,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=40,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Blockchain & Web3 Meetup",
+            description="Exploring decentralized technologies and applications.",
+            price=5.0,
+            location="GS Building Room 301",
+            start_time=now + timedelta(days=18),
+            end_time=now + timedelta(days=18, hours=3),
+            tags="blockchain,web3,meetup",
+            visibility="public",
+            capacity=60,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=60,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="Data Science Career Panel",
+            description="Industry professionals discuss roles in data science.",
+            price=0.0,
+            location="John Molson School of Business",
+            start_time=now + timedelta(days=25),
+            end_time=now + timedelta(days=25, hours=2),
+            tags="data,career,panel",
+            visibility="public",
+            capacity=200,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=200,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="Game Development Jam",
+            description="Team-based game building competition.",
+            price=20.0,
+            location="Design Studio 4",
+            start_time=now + timedelta(days=40),
+            end_time=now + timedelta(days=42),
+            tags="game,jam,development",
+            visibility="public",
+            capacity=100,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=100,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Quantum Computing Intro",
+            description="Beginner-friendly explanation of quantum logic and algorithms.",
+            price=25.0,
+            location="Physics Lecture Hall",
+            start_time=now + timedelta(days=16),
+            end_time=now + timedelta(days=16, hours=3),
+            tags="quantum,computing,lecture",
+            visibility="public",
+            capacity=70,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=70,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="VR/AR Experience Fair",
+            description="Try immersive virtual and augmented reality technologies.",
+            price=12.0,
+            location="Innovation Space",
+            start_time=now + timedelta(days=12),
+            end_time=now + timedelta(days=12, hours=5),
+            tags="vr,ar,expo",
+            visibility="public",
+            capacity=90,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=90,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="AI Hackathon 48h",
+            description="48-hour hackathon focused on AI applications.",
+            price=30.0,
+            location="H Building Labs",
+            start_time=now + timedelta(days=45),
+            end_time=now + timedelta(days=47),
+            tags="ai,hackathon,competition",
+            visibility="public",
+            capacity=120,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=120,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Python for Beginners",
+            description="Absolute beginner-level Python programming workshop.",
+            price=0.0,
+            location="ENCS Lab 5",
+            start_time=now + timedelta(days=4),
+            end_time=now + timedelta(days=4, hours=3),
+            tags="python,programming,workshop",
+            visibility="public",
+            capacity=35,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=35,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="Sustainability in Tech",
+            description="Understanding energy-conscious software and hardware development.",
+            price=0.0,
+            location="Green Center",
+            start_time=now + timedelta(days=22),
+            end_time=now + timedelta(days=22, hours=2),
+            tags="sustainability,tech,environment",
+            visibility="public",
+            capacity=75,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=75,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="Deep Learning Advanced Workshop",
+            description="Dive deep into neural networks, transformers, and optimization tricks.",
+            price=59.0,
+            location="AI Lab 1",
+            start_time=now + timedelta(days=28),
+            end_time=now + timedelta(days=28, hours=6),
+            tags="deep learning,neural networks,training",
+            visibility="public",
+            capacity=45,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=45,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Tech Startup Pitch Night",
+            description="Founders present their startup ideas to a panel of judges.",
+            price=10.0,
+            location="Startup Hub",
+            start_time=now + timedelta(days=20),
+            end_time=now + timedelta(days=20, hours=3),
+            tags="startup,pitch,entrepreneurship",
+            visibility="public",
+            capacity=100,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=100,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="Math for AI",
+            description="Crash course on linear algebra and calculus foundations for AI.",
+            price=0.0,
+            location="Math Building Room 210",
+            start_time=now + timedelta(days=9),
+            end_time=now + timedelta(days=9, hours=3),
+            tags="math,ai,lecture",
+            visibility="public",
+            capacity=80,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=80,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="Networking Fundamentals",
+            description="Introductory talk on network protocols and architectures.",
+            price=0.0,
+            location="Computer Centre",
+            start_time=now + timedelta(days=11),
+            end_time=now + timedelta(days=11, hours=2),
+            tags="networking,tech,lecture",
+            visibility="public",
+            capacity=60,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=60,
+            organizer_id=uids[1]
+        ),
+
+        EventAdminCreate(
+            name="Mobile App Development Workshop",
+            description="Build your first cross-platform mobile app.",
+            price=29.99,
+            location="Software Lab 3",
+            start_time=now + timedelta(days=17),
+            end_time=now + timedelta(days=17, hours=5),
+            tags="mobile,app,workshop",
+            visibility="public",
+            capacity=50,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=50,
+            organizer_id=uids[2]
+        ),
+
+        EventAdminCreate(
+            name="Databases Crash Course",
+            description="Learn SQL, indexes, ACID, and schema design basics.",
+            price=0.0,
+            location="DB Lab",
+            start_time=now + timedelta(days=8),
+            end_time=now + timedelta(days=8, hours=3),
+            tags="database,sql,training",
+            visibility="public",
+            capacity=40,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=40,
+            organizer_id=uids[0]
+        ),
+
+        EventAdminCreate(
+            name="AI in Healthcare Symposium",
+            description="Exploring the role of AI in diagnosis and treatment.",
+            price=35.0,
+            location="Medical Sciences Auditorium",
+            start_time=now + timedelta(days=35),
+            end_time=now + timedelta(days=35, hours=4),
+            tags="ai,healthcare,symposium",
+            visibility="public",
+            capacity=150,
+            state="upcoming",
+            count_attendees=0,
+            tickets_left=150,
+            organizer_id=uids[1]
+        )
     ]
 
     
     for e in events:
-        session.add(e)
+        session.add(EventDB(**e.model_dump()))
 
     session.commit()
     return {"message": "Dummy users and events successfully seeded."}
