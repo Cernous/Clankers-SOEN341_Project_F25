@@ -51,17 +51,17 @@ def random_button(session: SessionDep):
     #return model validated event from public perspective
     return EventPublicRead.model_validate(random_event)
 
+@router.get("/events/pub/{event_id}")
+def read_public_event(event_id: int, session: Session):
+    return EventPublicRead.model_validate(crud.get_event_by_id(session=session, event_id=event_id))
 
 @router.get("/events/{event_id}")
-def read_event(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
+def read_event(event_id: int, session: SessionDep, user: CurrentUser):
     get_event = crud.get_event_by_id(session, event_id)
     if not get_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    if user.role == "student":
-        return EventPublicRead.model_validate(get_event)
-
-    elif user.role == "organizer":
+    if user.role == "organizer":
         if get_event.organizer_id != user.id:
             return EventPublicRead.model_validate(get_event)
         else:
@@ -70,7 +70,7 @@ def read_event(event_id: int, session: SessionDep, user: User = Depends(get_curr
     elif user.role == "admin":
         return EventOrganizerRead.model_validate(get_event)
 
-    raise HTTPException(status_code=403, detail="Invalid role used")
+    return EventPublicRead.model_validate(get_event)
 
 
 @router.put("/events/{event_id}")
