@@ -182,6 +182,7 @@ class EventList(SQLModel):
     end_time: datetime
     tags: str | None = None
     pictures: str | None = None
+    organizer_id:str
 
 #-----------REVIEW MODELS-------------#
 
