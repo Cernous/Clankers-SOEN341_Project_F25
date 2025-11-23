@@ -77,9 +77,9 @@ class User(UserBase, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     hashed_password: str
     tickets: Optional[str] = None
+    saved_events: Optional[str] = None
     reviews: list["Review"] = Relationship(back_populates="user")
     # insert list of events and list of saved events
-
 
 #-----------EVENT MODELS-------------#
 
@@ -124,6 +124,7 @@ class EventPublicRead(SQLModel):
     tags: str | None = None
     pictures: str | None = None
     reviews: list["Review"] = Relationship(back_populates="event")
+    organizer_id: Optional[str] = None
 
 #not just for organizers, also for admins!
 class EventOrganizerRead(SQLModel):
