@@ -1,0 +1,56 @@
+name: Frontend Code Validation
+
+on:
+  push:
+    branches: [ main, frontend, frontend-sprint3 ]
+    paths: 
+      - 'frontend/**'
+  pull_request:
+    branches: [ main, frontend, frontend-sprint3 ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  validate-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/app/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd frontend/app
+        npm ci
+        
+    - name: Run ESLint
+      run: |
+        cd frontend/app
+        npm run lint:check
+        
+    - name: Check code formatting
+      run: |
+        cd frontend/app
+        npm run format:check
+        
+    - name: TypeScript type check
+      run: |
+        cd frontend/app
+        npm run type-check
+        
+    - name: Run tests
+      run: |
+        cd frontend/app
+        npm run test
+        
+    - name: Build project
+      run: |
+        cd frontend/app
+        npm run build
