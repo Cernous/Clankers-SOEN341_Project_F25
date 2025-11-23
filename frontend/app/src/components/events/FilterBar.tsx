@@ -52,7 +52,7 @@ export default function FilterBar({
       <button
         type="button"
         onClick={onFeelingLucky}
-        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
+        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-primary/10 hover:text-neutral-900 hover:shadow-md active:bg-primary/20 cursor-pointer transition-colors"
       >
         Feeling Lucky
       </button>

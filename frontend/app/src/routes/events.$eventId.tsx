@@ -1,8 +1,10 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { EventsService } from '../client'
+import { EventsService, CalendarService } from '../client'
 import { useAuth } from '../hooks/AuthContext'
+import { useUserData } from '../hooks/UserDataContext'
+import type { SimpleEvent } from '../data/events.sample'
 
 export const Route = createFileRoute('/events/$eventId')({
   component: EventDetailPage,
@@ -85,6 +87,45 @@ function EventDetailPage() {
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
+
+  // EXACT same logic as modal (transform backend data -> SimpleEvent then reuse)
+  const { isSaved, toggleSave } = useUserData()
+  const event: SimpleEvent = {
+    id: String(data.id),
+    title: String(data.name || 'Event'),
+    date: new Date(data.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric' }),
+    dateISO: String(data.start_time).slice(0, 10),
+    org: 'Organizer',
+    where: String(data.location || 'TBD'),
+    category: 'Other'
+  }
+  const saved = isSaved(event.id)
+
+  const handleSave = async () => {
+    if (!isLoggedIn) return
+
+    // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
+    if (saved) {
+      toggleSave(event)
+      return
+    }
+    try {
+      const numericId = Number(event.id)
+      if (!Number.isFinite(numericId)) {
+        console.error('Invalid event id for calendar save:', event.id)
+        alert('Could not save this event to your calendar (invalid ID).')
+        return
+      }
+
+      await CalendarService.saveEventCalendar({ eventId: numericId })
+
+      // Only update local state if backend call succeeded
+      toggleSave(event)
+    } catch (e) {
+      console.error('saveEventCalendar failed', e)
+      alert('Could not save this event to your calendar. Please try again.')
+    }
+  }
 
   // ---- admin-only check ----
   const isAdmin =
@@ -238,6 +279,22 @@ function EventDetailPage() {
               <li><span className="font-medium">Price:</span> {fmtPrice(unitPrice)}</li>
             </ul>
 
+            <button
+              onClick={handleSave}
+              disabled={!isLoggedIn}
+              className={[
+                'mt-5 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+                'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200',
+                isLoggedIn
+                  ? saved
+                    ? 'bg-red-50 text-[#7A0019] border border-red-200'
+                    : 'border border-neutral-300 text-neutral-700'
+                  : 'bg-neutral-300 cursor-not-allowed text-white',
+              ].join(' ')}
+              title={isLoggedIn ? '' : 'Log in to save'}
+            >
+              {saved ? 'Unsave' : 'Save to Calendar'}
+            </button>
             <Link
               to="/purchase"
               search={{
@@ -245,10 +302,10 @@ function EventDetailPage() {
                 title: String(data.name),
                 price: unitPrice,
                 qty: 1,
-                start: data.start_time,          
-                location: data.location ?? '',   
+                start: data.start_time,
+                location: data.location ?? '',
               }}
-              className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
+              className="mt-3 block w-full rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Get Ticket
             </Link>

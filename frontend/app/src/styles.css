@@ -2,11 +2,23 @@
 
 body {
   @apply m-0;
+  /* Lighter, blue background with primary accent */
+  background:
+    radial-gradient(circle at 10% 15%, rgba(145,35,56,0.48), transparent 85%), /* boldest primary color accent */
+    radial-gradient(circle at 15% 20%, rgba(80,140,255,0.18), transparent 65%), /* light blue accent */
+    radial-gradient(circle at 85% 30%, rgba(178,200,255,0.16), transparent 60%), /* blue-lavender */
+    radial-gradient(circle at 50% 85%, rgba(120,200,255,0.14), transparent 65%), /* blue-mint */
+    linear-gradient(to bottom, #e3ecfa 0%, #c9daf8 60%, #eaf3fb 100%); /* light blue gradient */
+  background-attachment: fixed;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+/* Plain white background for login page */
+body.login-page {
+  background: #ffffff !important;
 }
 
 code {
@@ -30,12 +42,12 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7A0019;
+  background: #912338;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #600013;
+  background: #701A29;
 }
 
 /* Smooth transitions for all interactive elements */
@@ -47,6 +59,14 @@ code {
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #7A0019;
+  outline: 2px solid #912338;
   outline-offset: 2px;
 }
+
+/* Brand utility classes */
+.bg-primary { background-color: #912338; }
+.bg-primary-hover { background-color: #A93A4F; }
+.bg-primary-active { background-color: #701A29; }
+.text-primary { color: #912338; }
+.text-primary-hover { color: #A93A4F; }
+.border-primary { border-color: #912338; }

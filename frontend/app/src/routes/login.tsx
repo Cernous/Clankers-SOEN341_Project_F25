@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
+import { Button } from '../components/ui/Button'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -58,21 +59,21 @@ function RouteComponent() {
   }
 
   return (
-    <div className="w-screen h-screen flex" id="login">
+    <div className="w-screen flex flex-1 h-[calc(100vh-64px)]" id="login">
       <div className="flex flex-col w-[500px]" id="form">
-        <div className="bg-[#912338] min-h-[200px] w-full flex flex-col justify-center items-center px-5">
+        <div className="bg-primary min-h-[200px] w-full flex flex-col justify-center items-center px-5">
           <Link
             to="/"
             className="bg-[#912338] min-h-[200px] w-full flex flex-col justify-center items-center px-5 no-underline"
           >
-            <h1 className="text-[40px] text-white font-bold mt-0">Concordia</h1>
-            <h2 className="text-[25px] text-white">Campus Events & Ticketing Web App</h2>
+            <h1 className="text-4xl md:text-5xl text-white font-extrabold mt-0">Concordia</h1>
+            <h2 className="text-xl md:text-2xl text-white font-medium">Campus Events & Ticketing Web App</h2>
           </Link>
         </div>
 
         <div className="flex justify-center items-center flex-col">
           <div className="mb-5 text-center">
-            <p className="mb-3 mt-10 text-5xl font-normal">Login</p>
+            <p className="mb-3 mt-10 text-4xl font-semibold text-primary">Login</p>
             <p>
               Don&apos;t have an account? <Link to="/signup" id="s_l">Create Account Now</Link>
             </p>
@@ -90,7 +91,7 @@ function RouteComponent() {
                   id="username"
                   type="text"
                   placeholder="e.g. you@concordia.ca"
-                  className="h-10 w-100 border border-[#757575] rounded-[5px] pl-3"
+                  className="h-10 w-full border border-neutral-300 rounded-md pl-3 focus:border-primary"
                   autoComplete="username"
                 />
               </div>
@@ -105,7 +106,7 @@ function RouteComponent() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="h-10 w-100 border border-[#757575] rounded-[5px] pl-3"
+                  className="h-10 w-full border border-neutral-300 rounded-md pl-3 focus:border-primary"
                   autoComplete="current-password"
                 />
               </div>
@@ -117,18 +118,19 @@ function RouteComponent() {
               )}
 
               <div className="mb-6 text-center">
-                <button
+                <Button
                   type="submit"
                   disabled={submitting}
-                  className="mb-3 text-[20px] bg-[#912338] text-white py-[5px] px-[60px] rounded-[5px] disabled:opacity-60"
+                  className="mb-3 text-lg px-14 py-2"
+                  loading={submitting}
                 >
-                  {submitting ? 'Logging in…' : 'Login'}
-                </button>
+                  Login
+                </Button>
                 <p>
                   <button
                     type="button"
                     onClick={() => setShowResetModal(true)}
-                    className="text-[#912338] underline"
+                    className="text-primary underline"
                   >
                     Forgot Password?
                   </button>
@@ -179,7 +181,7 @@ function RouteComponent() {
           </button>
           <button
             type="submit"
-            className="rounded bg-[#912338] px-4 py-2 text-white"
+            className="rounded bg-primary px-4 py-2 text-white hover:bg-primaryHover"
           >
             Send Link
           </button>

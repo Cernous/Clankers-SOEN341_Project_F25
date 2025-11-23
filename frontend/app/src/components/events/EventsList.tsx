@@ -12,10 +12,13 @@ export default function EventsList({ events, onSelect }: Props) {
       {events.map((ev) => (
         <div
           key={ev.id}
-          className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg hover:border-red-200 transition-all duration-300 transform hover:-translate-y-1"
+          className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm hover:shadow-card transition-all duration-300 hover:-translate-y-1"
         >
-          {/* Gradient accent */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-[#7A0019]" />
+          {/* Decorative blob */}
+          <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-accentLavender opacity-20 blur-xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-6 h-40 w-40 rounded-full bg-accentMint opacity-10 blur-2xl" />
+          {/* Accent bar */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
 
           <div className="flex items-start justify-between gap-4">
             <button
@@ -24,8 +27,8 @@ export default function EventsList({ events, onSelect }: Props) {
               className="min-w-0 flex-1 text-left"
             >
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-3 h-3 rounded-full bg-[#7A0019]" />
-                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#7A0019] transition-colors duration-200">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors duration-200">
                   {ev.title}
                 </h3>
               </div>
@@ -74,7 +77,7 @@ export default function EventsList({ events, onSelect }: Props) {
             </button>
 
             <div className="shrink-0 text-right space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-sm font-medium text-[#7A0019]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -94,7 +97,7 @@ export default function EventsList({ events, onSelect }: Props) {
               <Link
                 to="/events/$eventId"
                 params={{ eventId: String(ev.id) }}
-                className="block rounded-full bg-[#7A0019] px-4 py-2 text-sm text-white hover:bg-[#600013] transition-colors duration-200 text-center"
+                className="block rounded-full bg-primary px-4 py-2 text-sm text-white hover:bg-primaryHover transition-colors duration-200 text-center"
               >
                 View Details
               </Link>
