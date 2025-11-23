@@ -261,3 +261,63 @@ def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
     session.refresh(event)
 
     return event
+
+def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+
+    if not get_event_by_id(session=session, event_id=event_id):
+        return False
+    
+    saved_events.append(str(event_id))
+    saved_events=list(set(saved_events)) # removes duplicates
+    user.saved_events = "[" + (",".join(saved_events)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return True
+
+def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+
+    if not get_event_by_id(session=session, event_id=event_id) or str(event_id) not in saved_events:
+        return False
+    
+    saved_events.remove(str(event_id))
+    user.saved_events = "[" + (",".join(saved_events)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return True
+
+def get_user_calendar(session: Session, user_id: str) -> list[EventDB]:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+    calendar:list[EventDB] = []
+    validated_calendar:list[str] = []
+
+    for events_id_str in saved_events:
+        if not events_id_str.isnumeric():
+            continue
+        
+        id = int(events_id_str)
+        event = get_event_by_id(session=session, event_id=id)
+        # if the event does not exists
+        if not event:
+            continue
+
+        validated_calendar.append(events_id_str)
+        calendar.append(event)
+
+    user.saved_events = "[" + (",".join(validated_calendar)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return calendar
