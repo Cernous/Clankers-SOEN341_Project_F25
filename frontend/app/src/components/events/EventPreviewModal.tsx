@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
 import type { SimpleEvent } from '../../data/events.sample'
 import { Link } from '@tanstack/react-router'
-
+import { CalendarService } from '../../client'
 type Props = {
   event: SimpleEvent | null
   isLoggedIn: boolean
@@ -24,10 +24,32 @@ export default function EventPreviewModal({
 
   const saved = isSaved(event.id)
 
-  const handleSave = () => {
-    if (!isLoggedIn) return
+ const handleSave = async () => {
+  if (!isLoggedIn) return
+
+  // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
+  if (saved) {
     toggleSave(event)
+    return
   }
+  try {
+    const numericId = Number(event.id)
+    if (!Number.isFinite(numericId)) {
+      console.error('Invalid event id for calendar save:', event.id)
+      alert('Could not save this event to your calendar (invalid ID).')
+      return
+    }
+
+    await CalendarService.saveEventCalendar({ eventId: numericId })
+
+    // Only update local state if backend call succeeded
+    toggleSave(event)
+  } catch (e) {
+    console.error('saveEventCalendar failed', e)
+    alert('Could not save this event to your calendar. Please try again.')
+  }
+}
+
 
   const handleClaim = () => {
     if (!isLoggedIn || !user) return

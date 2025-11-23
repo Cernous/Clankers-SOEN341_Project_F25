@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AdminUtilitiesSeedDatabaseResponse, ToolsGetNumUsersResponse, ToolsGetNumOrganizersResponse, ToolsGetPronounCountResponse, ToolsGetAverageAgeResponse, ToolsGetEventAverageAgeData, ToolsGetEventAverageAgeResponse, ToolsGetAllEventsResponse, EventsCreateEventData, EventsCreateEventResponse, EventsListEventsResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, EventsAddTicketData, EventsAddTicketResponse, EventsRemoveTicketData, EventsRemoveTicketResponse, EventsAddReviewData, EventsAddReviewResponse, EventsRemoveReviewData, EventsRemoveReviewResponse, EventsGetEventReviewsData, EventsGetEventReviewsResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, ToolsGetAllUsersResponse, ToolsGetAllOrganizersResponse, ToolsDeleteUserData, ToolsDeleteUserResponse, UsersCreateUserData, UsersCreateUserResponse, UsersGetMeUserResponse, UsersDeleteMeResponse, UsersGetUserData, UsersGetUserResponse, UsersUpdatePasswordData, UsersUpdatePasswordResponse, UsersUpdateMeData, UsersUpdateMeResponse } from './types.gen';
+import type { AdminUtilitiesSeedDatabaseResponse, ToolsGetNumUsersResponse, ToolsGetNumOrganizersResponse, ToolsGetPronounCountResponse, ToolsGetAverageAgeResponse, ToolsGetEventAverageAgeData, ToolsGetEventAverageAgeResponse, ToolsGetAllEventsResponse, CalendarGetUserCalendarResponse, CalendarDeleteEventCalendarData, CalendarDeleteEventCalendarResponse, CalendarSaveEventCalendarData, CalendarSaveEventCalendarResponse, EventsCreateEventData, EventsCreateEventResponse, EventsListEventsResponse, EventsRandomButtonResponse, EventsReadPublicEventData, EventsReadPublicEventResponse, EventsReadEventData, EventsReadEventResponse, EventsUpdateEventData, EventsUpdateEventResponse, EventsPatchEventData, EventsPatchEventResponse, EventsDeleteEventData, EventsDeleteEventResponse, EventsAddTicketData, EventsAddTicketResponse, EventsRemoveTicketData, EventsRemoveTicketResponse, EventsAddReviewData, EventsAddReviewResponse, EventsRemoveReviewData, EventsRemoveReviewResponse, EventsGetEventReviewsData, EventsGetEventReviewsResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, ToolsGetAllUsersResponse, ToolsGetAllOrganizersResponse, ToolsDeleteUserData, ToolsDeleteUserResponse, ToolsGetQueueResponse, ToolsAddReportData, ToolsAddReportResponse, ToolsDeleteReportData, ToolsDeleteReportResponse, UsersCreateUserData, UsersCreateUserResponse, UsersGetMeUserResponse, UsersDeleteMeResponse, UsersGetUserData, UsersGetUserResponse, UsersUpdatePasswordData, UsersUpdatePasswordResponse, UsersUpdateMeData, UsersUpdateMeResponse } from './types.gen';
 
 export class AdminUtilitiesService {
     /**
@@ -113,6 +113,61 @@ export class AnalyticsService {
     }
 }
 
+export class CalendarService {
+    /**
+     * Get User Calendar
+     * Gets the calendar of the saved events from the current user
+     * @returns EventList Successful Response
+     * @throws ApiError
+     */
+    public static getUserCalendar(): CancelablePromise<CalendarGetUserCalendarResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/calendar/'
+        });
+    }
+    
+    /**
+     * Delete Event Calendar
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static deleteEventCalendar(data: CalendarDeleteEventCalendarData): CancelablePromise<CalendarDeleteEventCalendarResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/calendar/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Save Event Calendar
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static saveEventCalendar(data: CalendarSaveEventCalendarData): CancelablePromise<CalendarSaveEventCalendarResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/calendar/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
 export class EventsService {
     /**
      * Create Event
@@ -142,6 +197,38 @@ export class EventsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/clank/events/list'
+        });
+    }
+    
+    /**
+     * Random Button
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static randomButton(): CancelablePromise<EventsRandomButtonResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/events/random'
+        });
+    }
+    
+    /**
+     * Read Public Event
+     * @param data The data for the request.
+     * @param data.eventId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static readPublicEvent(data: EventsReadPublicEventData): CancelablePromise<EventsReadPublicEventResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/events/pub/{event_id}',
+            path: {
+                event_id: data.eventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
     
@@ -538,6 +625,57 @@ export class ToolsService {
             url: '/clank/tools/analytics/get-all-events/detail'
         });
     }
+    
+    /**
+     * Get Queue
+     * @returns ModQueue Successful Response
+     * @throws ApiError
+     */
+    public static getQueue(): CancelablePromise<ToolsGetQueueResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clank/tools/moderation/queue'
+        });
+    }
+    
+    /**
+     * Add Report
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ModQueue Successful Response
+     * @throws ApiError
+     */
+    public static addReport(data: ToolsAddReportData): CancelablePromise<ToolsAddReportResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clank/tools/moderation/queue',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Report
+     * @param data The data for the request.
+     * @param data.req
+     * @returns ModQueue Successful Response
+     * @throws ApiError
+     */
+    public static deleteReport(data: ToolsDeleteReportData): CancelablePromise<ToolsDeleteReportResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clank/tools/moderation/queue/{req}',
+            path: {
+                req: data.req
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
 }
 
 export class UsersService {
@@ -596,7 +734,7 @@ export class UsersService {
      * Get User depending on the given user ID
      * @param data The data for the request.
      * @param data.userId
-     * @returns UserPublic Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static getUser(data: UsersGetUserData): CancelablePromise<UsersGetUserResponse> {
