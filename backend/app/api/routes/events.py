@@ -51,6 +51,13 @@ def random_button(session: SessionDep):
     #return model validated event from public perspective
     return EventPublicRead.model_validate(random_event)
 
+@router.get("/events/get_tickets")
+def get_tickets(session: SessionDep, current_user: CurrentUser):
+	if current_user.tickets != "":
+		return current_user.tickets
+	else:
+		return None
+
 @router.get("/events/pub/{event_id}")
 def read_public_event(event_id: int, session: SessionDep):
     return EventPublicRead.model_validate(crud.get_event_by_id(session=session, event_id=event_id))
