@@ -52,7 +52,7 @@ def random_button(session: SessionDep):
     return EventPublicRead.model_validate(random_event)
 
 @router.get("/events/pub/{event_id}")
-def read_public_event(event_id: int, session: Session):
+def read_public_event(event_id: int, session: SessionDep):
     return EventPublicRead.model_validate(crud.get_event_by_id(session=session, event_id=event_id))
 
 @router.get("/events/{event_id}")
