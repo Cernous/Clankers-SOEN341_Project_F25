@@ -11,7 +11,7 @@ type FormDataShape = {
   lastName: string
   email: string
   username: string
-   role: 'student' | 'creator' | 'admin'   
+  role: 'student' | 'creator' | 'admin'
   password: string
   confirm: string
 }
@@ -26,54 +26,70 @@ function SignUpPage() {
   function validate(d: FormDataShape) {
     const e: Partial<Record<keyof FormDataShape, string>> = {}
     if (!d.firstName) e.firstName = 'Required'
+    else if (!/^[A-Za-z\s'-]{1,50}$/.test(d.firstName)) {
+      e.firstName = 'Only letters, spaces, - and \' allowed (max 50 chars)'
+    }
+
     if (!d.lastName) e.lastName = 'Required'
-    if (!/^\S+@\S+\.\S+$/.test(d.email)) e.email = 'Invalid email'
+    else if (!/^[A-Za-z\s'-]{1,50}$/.test(d.lastName)) {
+      e.lastName = 'Only letters, spaces, - and \' allowed (max 50 chars)'
+    }
+    if (!d.email) {
+      e.email = 'Required'
+    } else if (!/^\S+@\S+\.\S+$/.test(d.email)) {
+      e.email = 'Invalid email'
+    } else if (d.email.length > 50) {
+      e.email = 'Max 50 characters'
+    }
     if (!d.username) e.username = 'Required'
     if (d.password.length < 8) e.password = 'At least 8 characters'
+    else if (d.password.length > 20) e.password = 'Max 20 characters'
+    else if (d.username.length > 20) e.username = 'Max 20 characters'
+
     if (d.password !== d.confirm) e.confirm = 'Passwords do not match'
     if (!['student', 'creator', 'admin'].includes(d.role)) e.role = 'Select a role'
     return e
   }
 
-const { signupStudent } = useAuth()
+  const { signupStudent, user } = useAuth()
 
-async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault()
-  const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
 
-  const data = {
-    firstName: raw.firstName?.trim() ?? '',
-    lastName: raw.lastName?.trim() ?? '',
-    email: raw.email?.trim() ?? '',
-    username: raw.username?.trim() ?? '',
-    role: (raw.role as 'student' | 'creator' | 'admin') ?? 'student',
-    password: raw.password ?? '',
-    confirm: raw.confirm ?? '',
+    const data = {
+      firstName: raw.firstName?.trim() ?? '',
+      lastName: raw.lastName?.trim() ?? '',
+      email: raw.email?.trim() ?? '',
+      username: raw.username?.trim() ?? '',
+      role: (raw.role as 'student' | 'creator' | 'admin') ?? 'student',
+      password: raw.password ?? '',
+      confirm: raw.confirm ?? '',
+    }
+
+    const errs = validate(data)
+    setErrors(errs)
+    if (Object.keys(errs).length) return
+
+    try {
+      await signupStudent({
+        email: data.email,
+        username: data.username,
+        password: data.password,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role: data.role, // "creator" will be mapped to "organizer" inside the context
+      })
+
+      const dest =
+        data.role === 'admin' ? '/admin'
+          : data.role === 'creator' ? '/'
+            : '/events'
+      navigate({ to: dest })
+    } catch (err: any) {
+      setMessage(err.message || 'Signup failed')
+    }
   }
-
-  const errs = validate(data)
-  setErrors(errs)
-  if (Object.keys(errs).length) return
-
-  try {
-    await signupStudent({
-      email: data.email,
-      username: data.username,
-      password: data.password,
-      first_name: data.firstName,
-      last_name: data.lastName,
-      role: data.role, // "creator" will be mapped to "organizer" inside the context
-    })
-
-    const dest =
-      data.role === 'admin' ? '/admin'
-      : data.role === 'creator' ? '/'
-      : '/events'
-    navigate({ to: dest })
-  } catch (err: any) {
-    setMessage(err.message || 'Signup failed')
-  }
-}
 
 
 
@@ -91,12 +107,38 @@ async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 
           <form className="space-y-4" onSubmit={onSubmit} noValidate>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field name="firstName" label="First name" error={errors.firstName} />
-              <Field name="lastName" label="Last name" error={errors.lastName} />
+              <Field
+                name="firstName"
+                label="First name"
+                error={errors.firstName}
+                maxLength={50}
+                pattern="[A-Za-z\s'-]{1,50}"
+              />
+              <Field
+                name="lastName"
+                label="Last name"
+                error={errors.lastName}
+                maxLength={50}
+                pattern="[A-Za-z\s'-]{1,50}"
+              />
             </div>
 
-            <Field name="email" type="email" label="Email" placeholder="you@concordia.ca" error={errors.email} />
-            <Field name="username" label="Username" placeholder="e.g. yifu123" error={errors.username} />
+            <Field
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="you@concordia.ca"
+              error={errors.email}
+              maxLength={50}
+            />
+            <Field
+              name="username"
+              label="Username"
+              placeholder="e.g. yifu123"
+              error={errors.username}
+              maxLength={20}
+              pattern=".{1,20}"
+            />
 
             <PasswordField
               name="password"
@@ -105,6 +147,7 @@ async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
               show={showPw}
               setShow={setShowPw}
               error={errors.password}
+
             />
             <PasswordField
               name="confirm"
@@ -120,7 +163,7 @@ async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
               <select name="role" defaultValue="student" className="w-full border rounded-lg px-3 py-2">
                 <option value="student">Student</option>
                 <option value="creator">Event Creator</option>
-                <option value="admin">Admin</option>
+                {user?.role === 'admin' && <option value="admin">Admin</option>}
               </select>
               {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
             </label>
@@ -168,12 +211,16 @@ function Field({
   type = 'text',
   placeholder,
   error,
+  maxLength,
+  pattern,
 }: {
   label: string
   name: string
   type?: string
   placeholder?: string
   error?: string
+  maxLength?: number
+  pattern?: string
 }) {
   return (
     <label className="block">
@@ -183,6 +230,8 @@ function Field({
         type={type}
         placeholder={placeholder}
         required
+        maxLength={maxLength}
+        pattern={pattern}
         className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#FFC72C]"
       />
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
@@ -214,6 +263,7 @@ function PasswordField({
           type={show ? 'text' : 'password'}
           placeholder={placeholder}
           minLength={8}
+          maxLength={20}
           required
           className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 outline-none focus:ring-2 focus:ring-[#FFC72C]"
         />
