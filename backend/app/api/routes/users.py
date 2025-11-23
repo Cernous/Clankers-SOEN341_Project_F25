@@ -73,7 +73,7 @@ def get_me_user(current_user: CurrentUser):
     return current_user
 
 
-@router.get("/{user_id}", response_model=UserPublic)
+@router.get("/{user_id}")
 def get_user(user_id: str, session: SessionDep):
     """
         Get User depending on the given user ID
@@ -82,7 +82,11 @@ def get_user(user_id: str, session: SessionDep):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     # if user.role == UserRole.ADMIN or user == current_user:
-    return user
+    return {
+        "name": user.first_name + " " + user.last_name,
+        "pronouns": user.pronouns,
+        "email": user.email
+    }
     # else:
     #     raise HTTPException(status_code=403, details = "You don't have permission to view this profile")
 
