@@ -4,7 +4,7 @@ import { EventsService } from '../client'
 import { useUserData } from '../hooks/UserDataContext'
 import type { SimpleEvent } from '../data/events.sample'
 import { useAuth } from '../hooks/AuthContext'
-
+import { CalendarService } from '../client'
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
 })
@@ -69,6 +69,15 @@ export default function PurchasePage() {
 
     // Auto-save event to "calendar" if not already there
     if (!isSaved(ev.id)) {
+      try {
+        const numericId = Number(ev.id)
+        if (Number.isFinite(numericId)) {
+          await CalendarService.saveEventCalendar({ eventId: numericId })
+        }
+      } catch (e) {
+        console.error('saveEventCalendar from purchase failed', e)
+        // maybe ignore silently, since purchase succeeded
+      }
       toggleSave(ev)
     }
     // --- NEW: create local ticket(s) for the user -------------------------

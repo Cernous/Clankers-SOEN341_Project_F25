@@ -1,6 +1,6 @@
 import React from 'react'
 import { OpenAPI, LoginService } from '../client'
-import { setToken, getToken, clearToken } from '../client/tokenStore'
+import { setToken, getToken, clearToken } from '../lib/tokenStore'
 
 export type UserRole = 'student' | 'creator' | 'admin'
 
