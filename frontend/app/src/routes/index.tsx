@@ -88,13 +88,14 @@ function HomePage() {
           </h2>
           <Link
             to="/events"
-            className="text-sm font-semibold text-[#7A0019] hover:text-[#600013] transition-colors duration-200"
+            className="text-sm font-semibold text-primary hover:text-primaryActive transition-colors duration-200"
           >
             See all
           </Link>
         </div>
-        <p className="mb-6 text-neutral-600 text-lg">
+        <p className="mb-6 text-neutral-700 text-lg relative">
           A quick look at what's next on campus.
+          <span className="pointer-events-none absolute -right-6 -top-6 h-10 w-10 rounded-full bg-accentSunny opacity-40 blur-sm" />
         </p>
 
         {loading && (

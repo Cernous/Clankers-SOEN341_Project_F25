@@ -2,11 +2,22 @@
 
 body {
   @apply m-0;
+  /* Darker tinted background */
+  background:
+    radial-gradient(circle at 15% 20%, rgba(145,35,56,0.18), transparent 65%),
+    radial-gradient(circle at 85% 30%, rgba(178,141,255,0.18), transparent 60%),
+    radial-gradient(circle at 50% 85%, rgba(44,181,179,0.16), transparent 65%),
+    linear-gradient(to bottom, #f2e8eb 0%, #e9e1e4 55%, #f1e9ec 100%);
+  background-attachment: fixed;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+/* Plain white background for login page */
+body.login-page {
+  background: #ffffff !important;
 }
 
 code {
@@ -30,12 +41,12 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7A0019;
+  background: #912338;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #600013;
+  background: #701A29;
 }
 
 /* Smooth transitions for all interactive elements */
@@ -47,6 +58,14 @@ code {
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #7A0019;
+  outline: 2px solid #912338;
   outline-offset: 2px;
 }
+
+/* Brand utility classes */
+.bg-primary { background-color: #912338; }
+.bg-primary-hover { background-color: #A93A4F; }
+.bg-primary-active { background-color: #701A29; }
+.text-primary { color: #912338; }
+.text-primary-hover { color: #A93A4F; }
+.border-primary { border-color: #912338; }

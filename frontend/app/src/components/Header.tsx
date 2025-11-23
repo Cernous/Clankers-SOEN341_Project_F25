@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
 import { useUserData } from '../hooks/UserDataContext'
 
@@ -10,39 +10,57 @@ export default function Header() {
   const ownerId = user?.username || user?.email || ''
   const myTicketsCount = isLoggedIn ? tickets.filter(t => t.owner === ownerId).length : 0
 
+  const location = useLocation()
+  const isActive = (path: string) => location.pathname === path
+
   return (
-    <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+    <header className="sticky top-0 z-20 bg-white/60 backdrop-blur-md shadow-sm">
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
+        {/* Accent bar */}
+        <div className="pointer-events-none absolute inset-x-0 -bottom-1 h-[3px] bg-gradient-to-r from-primary via-accentSunny to-accentMint opacity-70 rounded-full" />
         {/* Brand */}
         <Link
           to="/"
-          className="text-xl font-extrabold tracking-tight text-[#7A0019]"
+          className="text-xl font-extrabold tracking-tight text-primary flex items-center gap-2"
         >
-          CampusEvents
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold">CE</span>
+          <span>CampusEvents</span>
         </Link>
 
         {/* Nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link
             to="/"
-            className="text-gray-700 hover:text-[#7A0019] transition-colors duration-200"
+            className={[
+              'transition-colors duration-200 relative',
+              isActive('/') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+            ].join(' ')}
           >
             Home
+            {isActive('/') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
           </Link>
           <Link
             to="/events"
-            className="text-gray-700 hover:text-[#7A0019] transition-colors duration-200"
+            className={[
+              'transition-colors duration-200 relative',
+              isActive('/events') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+            ].join(' ')}
           >
             Events
+            {isActive('/events') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
           </Link>
 
           {/* Creator-only */}
           {isLoggedIn && user?.role === 'creator' && (
             <Link
               to="/event-creation"
-              className="text-[#7A0019] hover:text-[#600013] font-semibold transition-colors duration-200"
+              className={[
+                'relative transition-colors duration-200 font-semibold',
+                isActive('/event-creation') ? 'text-primary' : 'text-primary hover:text-primary-active'
+              ].join(' ')}
             >
               + Create Event
+              {isActive('/event-creation') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
             </Link>
           )}
 
@@ -50,9 +68,13 @@ export default function Header() {
           {isLoggedIn && user?.role === 'admin' && (
             <Link
               to="/admin"
-              className="text-[#7A0019] hover:text-[#600013] font-semibold transition-colors duration-200"
+              className={[
+                'relative transition-colors duration-200 font-semibold',
+                isActive('/admin') ? 'text-primary' : 'text-primary hover:text-primary-active'
+              ].join(' ')}
             >
               Admin
+              {isActive('/admin') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
             </Link>
           )}
 
@@ -61,15 +83,33 @@ export default function Header() {
             <>
               <Link
                 to="/calendar"
-                className="text-gray-700 hover:text-[#7A0019] transition-colors duration-200"
+                className={[
+                  'relative transition-colors duration-200',
+                  isActive('/calendar') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+                ].join(' ')}
               >
-                My Calendar{saved.length ? ` (${saved.length})` : ''}
+                My Calendar
+                {saved.length > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                    {saved.length}
+                  </span>
+                )}
+                {isActive('/calendar') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
               </Link>
               <Link
                 to="/tickets"
-                className="text-gray-700 hover:text-[#7A0019] transition-colors duration-200"
+                className={[
+                  'relative transition-colors duration-200',
+                  isActive('/tickets') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+                ].join(' ')}
               >
-                My Tickets{myTicketsCount ? ` (${myTicketsCount})` : ''}
+                My Tickets
+                {myTicketsCount > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                    {myTicketsCount}
+                  </span>
+                )}
+                {isActive('/tickets') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
               </Link>
             </>
           )}
@@ -96,12 +136,12 @@ export default function Header() {
         <div className="hidden md:flex items-center gap-3">
           {isLoggedIn && user ? (
             <>
-              <span className="max-w-[180px] truncate rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-[#7A0019]">
-                {user.firstName || user.username} ({user.role})
+              <span className="max-w-[180px] truncate rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary border border-primary/20">
+                {user.firstName || user.username} · {user.role}
               </span>
               <button
                 onClick={logout}
-                className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primaryHover"
               >
                 Logout
               </button>
@@ -110,13 +150,13 @@ export default function Header() {
             <>
               <Link
                 to="/login"
-                className="rounded-full bg-[#7A0019] px-5 py-2 text-sm font-medium text-white hover:bg-[#600013] transition-colors duration-200"
+                className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primaryHover"
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="rounded-full border-2 border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                className="rounded-xl border border-neutral-300 bg-white px-5 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
               >
                 Sign Up
               </Link>

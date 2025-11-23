@@ -248,7 +248,7 @@ function EventDetailPage() {
                 start: data.start_time,          
                 location: data.location ?? '',   
               }}
-              className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
+              className="mt-5 block w-full rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Get Ticket
             </Link>
