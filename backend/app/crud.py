@@ -264,7 +264,7 @@ def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
 
 def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
     user:User = get_user_by_uid(session=session, uid=user_id)
-    calendar_data:str = user.saved_events
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
     saved_events:list[str] = calendar_data.strip("[]").split(",")
 
     if not get_event_by_id(session=session, event_id=event_id):
@@ -281,7 +281,7 @@ def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
 
 def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
     user:User = get_user_by_uid(session=session, uid=user_id)
-    calendar_data:str = user.saved_events
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
     saved_events:list[str] = calendar_data.strip("[]").split(",")
 
     if not get_event_by_id(session=session, event_id=event_id) or str(event_id) not in saved_events:
