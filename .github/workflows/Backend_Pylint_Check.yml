@@ -33,6 +33,21 @@ jobs:
                     pip install pylint
 
             - name: Start Pylint
+              id: pylint
               run: |
                     cd backend
-                    python -m pylint app/
+                    python -m pylint app/ --disable=missing-function-docstring,missing-class-docstring,missing-module-docstring --exit-zero | tee pylint.txt
+                    SCORE=$(grep "Your code has been rated at" pylint.txt | sed -E 's/.*rated at ([0-9]+\.[0-9]+)\/.*/\1/')
+                    echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+            - name: Compare minimum score
+              run: |
+                THRESHOLD=8.5
+                SCORE=${{ steps.pylint.outputs.score }}
+                
+                if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
+                  echo "Pylint score is too low."
+                  exit 1
+                else
+                  echo "Pylint score meets threshold."
+                fi

@@ -132,7 +132,7 @@ def get_user_tickets(user_id: str, session: Session) -> Optional[str]:
 
 def get_event_attendance_count(event_id: int, session: Session) -> int:
     statement = (
-        select(func.count)
+        select(func.count())
         .select_from(Attendees)
         .where(Attendees.event_id == event_id)
     )
@@ -238,10 +238,9 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
 
 
 def get_all_pronoun(session: Session) -> Dict[str, int]:
-    statement = select(User.pronouns, func.count).group_by(User.pronouns)
+    statement = select(User.pronouns, func.count()).group_by(User.pronouns)
     results = session.exec(statement).all()
     return {pronoun if pronoun else "Unspecified": count for pronoun, count in results}
-
 
 def get_event_average_age(event_id: int, session: Session) -> Optional[float]:
     stmt = (
