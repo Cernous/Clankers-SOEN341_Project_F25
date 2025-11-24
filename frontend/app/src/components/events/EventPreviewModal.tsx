@@ -1,8 +1,9 @@
 // src/components/events/EventPreviewModal.tsx
+import * as React from 'react'
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
-import { CalendarService } from '../../client'
+import { CalendarService, EventsService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
 
 type Props = {
@@ -24,6 +25,30 @@ export default function EventPreviewModal({
   if (!event) return null
 
   const saved = isSaved(event.id)
+  // Only allow claiming a free ticket when the event price is exactly 0.
+  // Remove the claim button for any non-zero or unknown price.
+  const [price, setPrice] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    let ignore = false
+    ;(async () => {
+      try {
+        const numericId = Number(event.id)
+        if (!Number.isFinite(numericId)) return
+        // Try public read (works for all roles)
+        const res: any = await EventsService.readPublicEvent({ eventId: numericId })
+        if (!ignore && res && typeof res.price === 'number') {
+          setPrice(res.price)
+        }
+      } catch (e) {
+        // If fetch fails, leave price null (treated as free/unknown)
+        console.warn('Could not fetch event price for modal', e)
+      }
+    })()
+    return () => {
+      ignore = true
+    }
+  }, [event.id])
 
   const handleSave = async () => {
     if (!isLoggedIn) return
@@ -104,21 +129,23 @@ export default function EventPreviewModal({
               {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
 
-            {/* Claim ticket */}
-            <button
-              onClick={handleClaim}
-              disabled={!isLoggedIn}
-              className={[
-                'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
-                'hover:bg-primary hover:text-white hover:shadow-lg cursor-pointer active:bg-primaryActive',
-                isLoggedIn
-                  ? 'bg-[#7A0019]'
-                  : 'bg-neutral-400 cursor-not-allowed',
-              ].join(' ')}
-              title={isLoggedIn ? '' : 'Log in to claim tickets'}
-            >
-              Claim Free Ticket
-            </button>
+            {/* Claim ticket (only for strictly free events) */}
+            {price === 0 && (
+              <button
+                onClick={handleClaim}
+                disabled={!isLoggedIn}
+                className={[
+                  'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
+                  'hover:bg-primary hover:text-white hover:shadow-lg cursor-pointer active:bg-primaryActive',
+                  isLoggedIn
+                    ? 'bg-[#7A0019]'
+                    : 'bg-neutral-400 cursor-not-allowed',
+                ].join(' ')}
+                title={isLoggedIn ? '' : 'Log in to claim tickets'}
+              >
+                Claim Free Ticket
+              </button>
+            )}
 
             {/* View details */}
             <Link
