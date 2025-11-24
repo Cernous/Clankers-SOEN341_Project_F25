@@ -129,14 +129,14 @@ export default function PurchasePage() {
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {
     const title = String(search.title ?? FALLBACK.title)
-    const priceNum = Number(search?.price ?? 0)
-    const when = search?.start
+    const priceNum = Number(search.price ?? 0)
+    const when = search.start
       ? new Date(search.start).toLocaleString()
       : FALLBACK.date
-    const where = String(search?.location ?? FALLBACK.where)
+    const where = String(search.location ?? FALLBACK.where)
 
     return {
-      id: search?.eventId ?? FALLBACK.id,
+      id: search.eventId ?? FALLBACK.id,
       title,
       date: when,
       where,
@@ -496,6 +496,7 @@ function CardPayment({
       </div>
       <div>
         <label className="text-sm block mb-1">Cardholder name</label>
+
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
