@@ -14,6 +14,9 @@ export default [
       'src/client/sdk.gen.ts',
       // Config files
       'tailwind.config.js',
+      'node_modules',
+      'dist',
+      'src/routes/demo.start.server-funcs.tsx',
     ],
   },
 ]
