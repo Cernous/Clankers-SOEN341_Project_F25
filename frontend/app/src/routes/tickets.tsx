@@ -12,9 +12,7 @@ function TicketsPage() {
   const { user, isLoggedIn } = useAuth()
 
   const ownerId = user?.username || user?.email || ''
-  const myTickets = isLoggedIn
-    ? tickets.filter((t) => t.owner === ownerId)
-    : []
+  const myTickets = isLoggedIn ? tickets.filter((t) => t.owner === ownerId) : []
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -34,7 +32,10 @@ function TicketsPage() {
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {myTickets.map((t) => (
-            <li key={t.id} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <li
+              key={t.id}
+              className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+            >
               <h3 className="m-0 truncate text-lg font-semibold">{t.title}</h3>
               <p className="mt-1 text-sm text-neutral-600">
                 {t.date} • {t.where}
@@ -55,7 +56,9 @@ function TicketsPage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-neutral-500">Owner: {t.owner}</span>
+                <span className="text-xs text-neutral-500">
+                  Owner: {t.owner}
+                </span>
                 <DownloadQRButton fileName={`${t.id}.png`} />
               </div>
             </li>
@@ -68,7 +71,6 @@ function TicketsPage() {
 
 /** Renders a QR as SVG using react-qr-code */
 function TicketQR({ payload }: { payload: any }) {
-  
   const text = JSON.stringify(payload)
   return (
     <div className="rounded-xl bg-white p-2">
@@ -81,7 +83,7 @@ function TicketQR({ payload }: { payload: any }) {
 function DownloadQRButton({ fileName }: { fileName: string }) {
   const onDownload = () => {
     // Find the nearest SVG within the same card
-    
+
     const card = (event?.target as HTMLElement | null)?.closest('li')
     const svg = card?.querySelector('svg')
     if (!svg) return

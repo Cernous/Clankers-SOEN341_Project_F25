@@ -59,10 +59,11 @@ def get_uid_by_role(*, session: Session, role: str) -> list[str] | None:
 def verify_unique_email_username(
     *, session: Session, username: str, email: str
 ) -> bool:
-    statement = session.exec(
-        select(User).where(email == User.email or username == User.username)
-    ).all()
-    return bool(statement)
+    user_email_find = get_user_by_email(session=session, email=email)
+    user_name_find = get_user_by_username(session=session, username=username)
+    if user_name_find or user_email_find:
+        return True
+    return False
 
 
 def authenticate(*, session: Session, username: str, password: str) -> User | None:
@@ -306,7 +307,7 @@ def get_random_event(session: Session) -> EventDB:
     statement = (
         select(EventDB)
         .where(EventDB.visibility == "public")
-        .order_by(func.random)
+        .order_by(func.random())
         .limit(1)
     )
 

@@ -1,5 +1,4 @@
 // src/routes/payment-success.lazy.tsx
-import * as React from 'react'
 import { Link, createLazyFileRoute } from '@tanstack/react-router'
 
 export const Route = createLazyFileRoute('/payment-success')({
@@ -21,19 +20,33 @@ function SuccessPage() {
         <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-green-100 flex items-center justify-center">
           <span className="text-2xl">✅</span>
         </div>
-        <h1 className="text-2xl font-bold text-[#0f5132]">Payment Successful</h1>
+        <h1 className="text-2xl font-bold text-[#0f5132]">
+          Payment Successful
+        </h1>
         <p className="text-gray-600 mt-2">Your order is confirmed.</p>
 
         <div className="mt-5 text-sm text-gray-800 space-y-1">
-          <div>Event ID: <span className="font-semibold">{String(eventId)}</span></div>
-          <div>Ticket: <span className="font-semibold">{tier}</span></div>
-          <div>Quantity: <span className="font-semibold">{qty}</span></div>
-          <div>Total Paid: <span className="font-semibold">${total}</span></div>
-          <div className="text-xs text-gray-500">Order No: {generateOrderId()}</div>
+          <div>
+            Event ID: <span className="font-semibold">{String(eventId)}</span>
+          </div>
+          <div>
+            Ticket: <span className="font-semibold">{tier}</span>
+          </div>
+          <div>
+            Quantity: <span className="font-semibold">{qty}</span>
+          </div>
+          <div>
+            Total Paid: <span className="font-semibold">${total}</span>
+          </div>
+          <div className="text-xs text-gray-500">
+            Order No: {generateOrderId()}
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
-          <Link to="/purchase" className="px-4 py-2 rounded-lg border">Back to Purchase</Link>
+          <Link to="/purchase" className="px-4 py-2 rounded-lg border">
+            Back to Purchase
+          </Link>
 
           {eventId ? (
             <Link
@@ -45,15 +58,21 @@ function SuccessPage() {
             </Link>
           ) : null}
 
-          <Link to="/tickets" className="px-4 py-2 rounded-lg border">My Tickets</Link>
+          <Link to="/tickets" className="px-4 py-2 rounded-lg border">
+            My Tickets
+          </Link>
 
-          <button onClick={() => window.print()} className="px-4 py-2 rounded-lg border">
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 rounded-lg border"
+          >
             Print / Save Receipt
           </button>
         </div>
 
         <p className="text-xs text-gray-500 mt-6">
-          A confirmation email will be sent to your address. Keep this receipt for entry.
+          A confirmation email will be sent to your address. Keep this receipt
+          for entry.
         </p>
       </div>
     </div>

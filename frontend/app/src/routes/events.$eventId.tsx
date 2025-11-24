@@ -1,8 +1,10 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { EventsService } from '../client'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { CalendarService, EventsService } from '../client'
 import { useAuth } from '../hooks/AuthContext'
+import { useUserData } from '../hooks/UserDataContext'
+import type { SimpleEvent } from '../data/events.sample'
 
 export const Route = createFileRoute('/events/$eventId')({
   component: EventDetailPage,
@@ -27,7 +29,7 @@ function EventDetailPage() {
   const [loading, setLoading] = React.useState(true)
 
   // --- reviews state ---
-  const [reviews, setReviews] = React.useState<ReviewItem[]>([])
+  const [reviews, setReviews] = React.useState<Array<ReviewItem>>([])
   const [reviewsLoading, setReviewsLoading] = React.useState(true)
   const [reviewErr, setReviewErr] = React.useState<string | null>(null)
 
@@ -41,20 +43,35 @@ function EventDetailPage() {
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let mounted = true
     ;(async () => {
+      setLoading(true)
+      setErr(null)
       try {
-        const res = await EventsService.readEvent({ eventId: Number(eventId) })
-        if (mounted) setData(res)
+        let res: any
+
+        // 1) Try the protected endpoint
+        try {
+          res = await EventsService.readEvent({ eventId: Number(eventId) })
+        } catch (e: any) {
+          // 2) If unauthorized/forbidden, fall back to public endpoint
+          if (e?.status === 401 || e?.status === 403) {
+            res = await EventsService.readPublicEvent({
+              eventId: Number(eventId),
+            })
+          } else {
+            throw e
+          }
+        }
+
+        setData(res)
       } catch (e: any) {
-        if (mounted) setErr(e?.message ?? 'Failed to load event')
+        setErr(e?.message ?? 'Failed to load event')
       } finally {
-        if (mounted) setLoading(false)
+        setLoading(false)
       }
     })()
-    return () => {
-      mounted = false
-    }
+
+    return () => {}
   }, [eventId])
 
   // fetch reviews for this event
@@ -62,9 +79,13 @@ function EventDetailPage() {
     setReviewsLoading(true)
     setReviewErr(null)
     try {
-      const res = await EventsService.getEventReviews({ eventId: Number(eventId) })
-      const list: ReviewItem[] = Array.isArray(res) ? (res as any) : ((res as any)?.reviews ?? [])
-      setReviews(list ?? [])
+      const res = await EventsService.getEventReviews({
+        eventId: Number(eventId),
+      })
+      const list: Array<ReviewItem> = Array.isArray(res)
+        ? (res as any)
+        : ((res as any)?.reviews ?? [])
+      setReviews(list)
     } catch (e: any) {
       setReviewErr(e?.message ?? 'Failed to load reviews')
       setReviews([])
@@ -81,54 +102,93 @@ function EventDetailPage() {
   if (err) return <main className="p-6 text-red-600">{err}</main>
   if (!data) return <main className="p-6">Not found.</main>
 
-  const fmtDateTime = (iso?: string) => (iso ? new Date(iso).toLocaleString() : '—')
+  const fmtDateTime = (iso?: string) =>
+    iso ? new Date(iso).toLocaleString() : '—'
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
 
+  // EXACT same logic as modal (transform backend data -> SimpleEvent then reuse)
+  const { isSaved, toggleSave } = useUserData()
+  const event: SimpleEvent = {
+    id: String(data.id),
+    title: String(data.name || 'Event'),
+    date: new Date(data.start_time).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }),
+    dateISO: String(data.start_time).slice(0, 10),
+    org: 'Organizer',
+    where: String(data.location || 'TBD'),
+    category: 'Other',
+  }
+  const saved = isSaved(event.id)
+
+  const handleSave = async () => {
+    if (!isLoggedIn) return
+
+    // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
+    if (saved) {
+      toggleSave(event)
+      return
+    }
+    try {
+      const numericId = Number(event.id)
+      if (!Number.isFinite(numericId)) {
+        console.error('Invalid event id for calendar save:', event.id)
+        alert('Could not save this event to your calendar (invalid ID).')
+        return
+      }
+
+      await CalendarService.saveEventCalendar({ eventId: numericId })
+
+      // Only update local state if backend call succeeded
+      toggleSave(event)
+    } catch (e) {
+      console.error('saveEventCalendar failed', e)
+      alert('Could not save this event to your calendar. Please try again.')
+    }
+  }
+
   // ---- admin-only check ----
-  const isAdmin =
-    isLoggedIn &&
-    (user?.role === 'admin')
+  const isAdmin = isLoggedIn && user?.role === 'admin'
 
   // ---- delete handler (admin only) ----
-async function handleDelete() {
-  if (!isAdmin) return
-  if (!window.confirm('Delete this event? This cannot be undone.')) return
-  setDeleting(true)
-  setDeleteErr(null)
+  async function handleDelete() {
+    if (!isAdmin) return
+    if (!window.confirm('Delete this event? This cannot be undone.')) return
+    setDeleting(true)
+    setDeleteErr(null)
 
-  try {
-    await EventsService.deleteEvent({
-      eventId: Number(eventId),
-      requestBody: {
-        name: data.name ?? '',
-        description: data.description ?? '',
-        price: Number(data.price ?? 0),
-        location: data.location ?? '',
-        start_time: data.start_time ?? new Date().toISOString(),
-        end_time: data.end_time ?? new Date().toISOString(),
-        tags: data.tags ?? '',
-        pictures: data.pictures ?? '',
-        visibility: data.visibility ?? 'public',
-        state: data.state ?? 'active',
-      },
-    } as any)
+    try {
+      await EventsService.deleteEvent({
+        eventId: Number(eventId),
+        requestBody: {
+          name: data.name ?? '',
+          description: data.description ?? '',
+          price: Number(data.price ?? 0),
+          location: data.location ?? '',
+          start_time: data.start_time ?? new Date().toISOString(),
+          end_time: data.end_time ?? new Date().toISOString(),
+          tags: data.tags ?? '',
+          pictures: data.pictures ?? '',
+          visibility: data.visibility ?? 'public',
+          state: data.state ?? 'active',
+        },
+      } as any)
 
-    navigate({ to: '/events' })
-  } catch (e: any) {
-    console.error('Delete error', e?.status, e?.body || e)
-    const maybeDetail =
-      e?.body && typeof e.body === 'object' && e.body.detail
-        ? JSON.stringify(e.body.detail)
-        : e?.message
-    setDeleteErr(maybeDetail ?? 'Failed to delete event')
-  } finally {
-    setDeleting(false)
+      navigate({ to: '/events' })
+    } catch (e: any) {
+      console.error('Delete error', e?.status, e?.body || e)
+      const maybeDetail =
+        e?.body && typeof e.body === 'object' && e.body.detail
+          ? JSON.stringify(e.body.detail)
+          : e?.message
+      setDeleteErr(maybeDetail ?? 'Failed to delete event')
+    } finally {
+      setDeleting(false)
+    }
   }
-}
-
-
 
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
@@ -148,7 +208,7 @@ async function handleDelete() {
           desc: reviewText.trim(),
           star: Math.max(1, Math.min(5, Number(reviewStar))),
           date_created: new Date().toISOString(),
-          user_id: String(user.username ?? user.id),
+          user_id: String(user.username),
           event_id: Number(eventId),
         },
       })
@@ -180,7 +240,9 @@ async function handleDelete() {
         {/* Admin-only delete button */}
         {isAdmin && (
           <div className="flex items-center gap-2">
-            {deleteErr && <span className="text-sm text-red-600">{deleteErr}</span>}
+            {deleteErr && (
+              <span className="text-sm text-red-600">{deleteErr}</span>
+            )}
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -204,9 +266,13 @@ async function handleDelete() {
             }}
           />
           <div className="p-6">
-            <h1 className="text-3xl font-extrabold tracking-tight">{data.name}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              {data.name}
+            </h1>
             {!!data.description && (
-              <p className="mt-3 text-neutral-700 leading-relaxed">{data.description}</p>
+              <p className="mt-3 text-neutral-700 leading-relaxed">
+                {data.description}
+              </p>
             )}
             {data.tags && (
               <div className="mt-4 flex flex-wrap gap-2">
@@ -232,12 +298,40 @@ async function handleDelete() {
           <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Event info</h3>
             <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-              <li><span className="font-medium">Starts:</span> {fmtDateTime(data.start_time)}</li>
-              <li><span className="font-medium">Ends:</span> {fmtDateTime(data.end_time)}</li>
-              <li><span className="font-medium">Location:</span> {data.location ?? 'TBD'}</li>
-              <li><span className="font-medium">Price:</span> {fmtPrice(unitPrice)}</li>
+              <li>
+                <span className="font-medium">Starts:</span>{' '}
+                {fmtDateTime(data.start_time)}
+              </li>
+              <li>
+                <span className="font-medium">Ends:</span>{' '}
+                {fmtDateTime(data.end_time)}
+              </li>
+              <li>
+                <span className="font-medium">Location:</span>{' '}
+                {data.location ?? 'TBD'}
+              </li>
+              <li>
+                <span className="font-medium">Price:</span>{' '}
+                {fmtPrice(unitPrice)}
+              </li>
             </ul>
 
+            <button
+              onClick={handleSave}
+              disabled={!isLoggedIn}
+              className={[
+                'mt-5 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+                'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200',
+                isLoggedIn
+                  ? saved
+                    ? 'bg-red-50 text-[#7A0019] border border-red-200'
+                    : 'border border-neutral-300 text-neutral-700'
+                  : 'bg-neutral-300 cursor-not-allowed text-white',
+              ].join(' ')}
+              title={isLoggedIn ? '' : 'Log in to save'}
+            >
+              {saved ? 'Unsave' : 'Save to Calendar'}
+            </button>
             <Link
               to="/purchase"
               search={{
@@ -245,8 +339,10 @@ async function handleDelete() {
                 title: String(data.name),
                 price: unitPrice,
                 qty: 1,
+                start: data.start_time,
+                location: data.location ?? '',
               }}
-              className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
+              className="mt-3 block w-full rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Get Ticket
             </Link>
@@ -274,7 +370,9 @@ async function handleDelete() {
         </div>
 
         <div className="mt-4 space-y-5">
-          {reviewsLoading && <div className="text-sm text-neutral-600">Loading…</div>}
+          {reviewsLoading && (
+            <div className="text-sm text-neutral-600">Loading…</div>
+          )}
           {reviewErr && <div className="text-sm text-red-600">{reviewErr}</div>}
           {!reviewsLoading && !reviews.length && !reviewErr && (
             <div className="text-sm text-neutral-600">No comments yet.</div>
@@ -285,7 +383,9 @@ async function handleDelete() {
               <div className="flex-1">
                 <div className="text-sm">
                   <span className="font-semibold">{maskUser(r.user_id)}</span>{' '}
-                  <span className="text-neutral-500">· {fmtDateTime(r.date_created)}</span>{' '}
+                  <span className="text-neutral-500">
+                    · {fmtDateTime(r.date_created)}
+                  </span>{' '}
                   {typeof r.star === 'number' && (
                     <span className="ml-1 text-yellow-600">
                       {'★'.repeat(Math.max(1, Math.min(5, r.star)))}
@@ -298,10 +398,15 @@ async function handleDelete() {
           ))}
         </div>
 
-        <form onSubmit={submitReview} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form
+          onSubmit={submitReview}
+          className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center"
+        >
           <input
             type="text"
-            placeholder={isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'}
+            placeholder={
+              isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'
+            }
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
             disabled={!isLoggedIn || submitting}
@@ -313,7 +418,11 @@ async function handleDelete() {
             disabled={!isLoggedIn || submitting}
             className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100"
           >
-            {[5,4,3,2,1].map(s => <option key={s} value={s}>{s}★</option>)}
+            {[5, 4, 3, 2, 1].map((s) => (
+              <option key={s} value={s}>
+                {s}★
+              </option>
+            ))}
           </select>
           <button
             type="submit"
