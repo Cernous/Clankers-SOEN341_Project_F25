@@ -17,7 +17,7 @@ type FormDataShape = {
 }
 
 function SignUpPage() {
-  // const { signup } = useAuth()
+
   const navigate = useNavigate()
   const [showPw, setShowPw] = React.useState(false)
   const [errors, setErrors] = React.useState<
@@ -25,6 +25,8 @@ function SignUpPage() {
   >({})
   const [message, setMessage] = React.useState<string>('')
 
+
+  
   function validate(d: FormDataShape) {
     const e: Partial<Record<keyof FormDataShape, string>> = {}
     if (!d.firstName) e.firstName = 'Required'
@@ -54,7 +56,7 @@ function SignUpPage() {
     return e
   }
 
-  const { signupStudent, user } = useAuth()
+  const { signupStudent, createUserAsAdmin, user } = useAuth()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -76,27 +78,40 @@ function SignUpPage() {
     setErrors(errs)
     if (Object.keys(errs).length) return
 
-    try {
-      await signupStudent({
-        email: data.email,
-        username: data.username,
-        password: data.password,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        role: data.role, // "creator" will be mapped to "organizer" inside the context
-      })
+    // Common payload for both flows
+    const payload = {
+      email: data.email,
+      username: data.username,
+      password: data.password,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      role: data.role, // "creator" -> "organizer" mapping is handled inside the context
+    }
 
-      const dest =
-        data.role === 'admin'
-          ? '/admin'
-          : data.role === 'creator'
-            ? '/'
-            : '/events'
-      navigate({ to: dest })
+    try {
+      if (user?.role === 'admin') {
+        // Admin is creating a user: DO NOT log in as that user
+        await createUserAsAdmin(payload)
+        setMessage('User created successfully.')
+        navigate({ to: '/admin' })
+      } else {
+        // Normal self-signup: log in as the new user
+        await signupStudent(payload)
+
+        const dest =
+          data.role === 'admin'
+            ? '/admin'
+            : data.role === 'creator'
+              ? '/'
+              : '/events'
+
+        navigate({ to: dest })
+      }
     } catch (err: any) {
       setMessage(err.message || 'Signup failed')
     }
   }
+
 
   return (
     <div className="min-h-[calc(100vh-44px)] grid md:grid-cols-2 bg-[#7A0019]">

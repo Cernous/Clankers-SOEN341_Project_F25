@@ -167,6 +167,15 @@ export default function Header() {
               <span className="max-w-[180px] truncate rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary border border-primary/20">
                 {user.firstName || user.username} · {user.role}
               </span>
+              {/* Admin can register users  */}
+              {user.role === 'admin' && (
+                <Link
+                  to="/signup"
+                  className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Register Users
+                </Link>
+              )}
               <button
                 onClick={logout}
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primaryHover hover:shadow-lg cursor-pointer active:bg-primaryActive transition"
