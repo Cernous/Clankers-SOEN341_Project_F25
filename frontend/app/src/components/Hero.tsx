@@ -34,12 +34,7 @@ export default function Hero() {
             Sign Up
           </a>
         )}
-        <a
-          href="/tickets"
-          className="inline-flex items-center gap-2 rounded-full bg-accentSunny px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white hover:text-primary hover:shadow-lg"
-        >
-          My Tickets
-        </a>
+        
       </div>
 
       <div className="mt-12 h-64 rounded-3xl bg-gradient-to-br from-primary/10 via-accentLavender/20 to-accentMint/20 md:h-80 lg:h-[420px] shadow-card flex items-center justify-center">
