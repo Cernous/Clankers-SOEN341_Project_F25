@@ -77,9 +77,9 @@ class User(UserBase, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     hashed_password: str
     tickets: Optional[str] = None
+    saved_events: Optional[str] = None
     reviews: list["Review"] = Relationship(back_populates="user")
     # insert list of events and list of saved events
-
 
 #-----------EVENT MODELS-------------#
 
@@ -115,6 +115,7 @@ class EventUpdate(SQLModel):
     state: str
 
 class EventPublicRead(SQLModel):
+    id: int
     name: str
     description: str
     price: float
@@ -124,6 +125,7 @@ class EventPublicRead(SQLModel):
     tags: str | None = None
     pictures: str | None = None
     reviews: list["Review"] = Relationship(back_populates="event")
+    organizer_id: Optional[str] = None
 
 #not just for organizers, also for admins!
 class EventOrganizerRead(SQLModel):
@@ -174,6 +176,7 @@ class EventDB(SQLModel, table=True):
 
 #to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
 class EventList(SQLModel):
+    id: int
     name: str
     description: str
     price: float
@@ -182,6 +185,7 @@ class EventList(SQLModel):
     end_time: datetime
     tags: str | None = None
     pictures: str | None = None
+    organizer_id:str
 
 #-----------REVIEW MODELS-------------#
 

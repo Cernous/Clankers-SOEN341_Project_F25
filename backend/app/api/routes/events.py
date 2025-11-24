@@ -65,17 +65,24 @@ def random_button(session: SessionDep):
     #return model validated event from public perspective
     return EventPublicRead.model_validate(random_event)
 
+@router.get("/events/get_tickets")
+def get_tickets(session: SessionDep, current_user: CurrentUser):
+	if current_user.tickets != "":
+		return current_user.tickets
+	else:
+		return None
+
+@router.get("/events/pub/{event_id}")
+def read_public_event(event_id: int, session: SessionDep):
+    return EventPublicRead.model_validate(crud.get_event_by_id(session=session, event_id=event_id))
 
 @router.get("/events/{event_id}")
-def read_event(event_id: int, session: SessionDep, user: User = Depends(get_current_user)):
+def read_event(event_id: int, session: SessionDep, user: CurrentUser):
     get_event = crud.get_event_by_id(session, event_id)
     if not get_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    if user.role == "student":
-        return EventPublicRead.model_validate(get_event)
-
-    elif user.role == "organizer":
+    if user.role == "organizer":
         if get_event.organizer_id != user.id:
             return EventPublicRead.model_validate(get_event)
         else:
@@ -84,7 +91,7 @@ def read_event(event_id: int, session: SessionDep, user: User = Depends(get_curr
     elif user.role == "admin":
         return EventOrganizerRead.model_validate(get_event)
 
-    raise HTTPException(status_code=403, detail="Invalid role used")
+    return EventPublicRead.model_validate(get_event)
 
 
 @router.put("/events/{event_id}")
@@ -171,40 +178,33 @@ def delete_event( event_id: int, data: EventUpdate, session: SessionDep, user: U
 
 @router.post("/{event_id}/add_ticket/")
 def add_ticket(event_id: int, session: SessionDep, ticket: str, current_user: CurrentUser):
-    event = session.query(EventDB).filter(EventDB.id == event_id).first()
+    event = crud.get_event_by_id(session=session, event_id=event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event or User not found")
     if event.tickets_left <= 0:
         raise HTTPException(status_code=400, detail="No tickets left")
-    event.tickets_left -= 1
-    ticket = str(event_id) + ":" + f"{ticket}"
-    if current_user.tickets == None:
-        current_user.tickets = ticket
+    if crud.assign_ticket_to_user(user_id=current_user.id,
+                                  event_id=event_id,
+                                  new_ticket=ticket,
+                                  session=session):
+        return {"message": "Ticket added and user added to attendees"}
     else:
-        current_user.tickets += f",{ticket}"
-    session.add(Attendees(event_id=event_id, user_id=current_user.id))
-    session.commit()
-    return {"message": "Ticket added and user added to attendees"}
+        raise HTTPException(status_code=500, detail="Cannot add ticket to user")
 
 
 @router.post("/{event_id}/remove_ticket")
 def remove_ticket(event_id: int, session: SessionDep, current_user: CurrentUser):
-    event = session.query(EventDB).filter(EventDB.id == event_id).first()
-    attendee = (
-        session.query(Attendees)
-        .filter(Attendees.event_id == event_id, Attendees.user_id == current_user.id)
-        .first()
-    )
-    if not event or not attendee:
-        raise HTTPException(status_code=404, detail="Event or Attendee not found")
-    event.tickets_left += 1 
-    if current_user.tickets:
-        tickets_list = current_user.tickets.split(',')
-        filtered_tickets = [t for t in tickets_list if not t.startswith(f"{event_id}:")]
-        current_user.tickets = ','.join(filtered_tickets) if filtered_tickets else None
-
-    session.delete(attendee)
-    session.commit()
+    event = crud.get_event_by_id(session=session, event_id=event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.tickets_left <= 0:
+        raise HTTPException(status_code=400, detail="No tickets left")
+    if not crud.remove_ticket(
+        user_id=current_user.id,
+        event_id=event_id,
+        session=session
+    ): 
+        raise HTTPException(status_code=500, detail="Cannot remove ticket from user")
     return {"message": "Ticket removed and user removed from attendees"}
 
 @router.post("/reviews/add")

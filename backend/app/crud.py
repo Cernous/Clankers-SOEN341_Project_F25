@@ -119,6 +119,29 @@ def get_all_users(session: Session) -> List[User]:
     statement = select(User)
     return session.exec(statement).all()
 
+def get_event_attendees(session: Session, event_id: int) -> str | None:
+    statement = select(Attendees).where(Attendees.event_id == event_id)
+    attendees = session.exec(statement).all()
+
+    event = get_event_by_id(session=session, event_id=event_id)
+    
+    csv_str_data: list = ["FIRST NAME, LAST NAME, EMAIL ADDRESS, TICKET"]
+
+    for a in attendees:
+        user = get_user_by_uid(session=session, uid=a.user_id)
+        if not user:
+            # remove the attendee if the user no longer exist
+            session.delete(a)
+            event.tickets_left += 1
+            event.ticket_count -= 1
+            continue
+        csv_str_data.append(",".join([user.first_name, user.last_name, user.email, a.ticket]))
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+    return None if len(csv_str_data) <= 1 else "\n".join(csv_str_data)
+
 def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session: Session) -> bool:
     user = session.get(User, user_id)
     event = session.get(EventDB, event_id)
@@ -134,6 +157,7 @@ def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session:
 
     #update the event tickets
     event.tickets_left -= 1
+    event.ticket_count += 1
 
     #update attendees
     attendee = Attendees(user_id=user_id, event_id=event_id, ticket=new_ticket)
@@ -146,7 +170,7 @@ def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session:
     session.refresh(event)
     return True
 
-def remove_ticket(user_id: str, event_id: int, ticket_str: str, session: Session) -> bool:
+def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
     #We can add refund functionality here
     user = session.get(User, user_id)
     event = session.get(EventDB, event_id)
@@ -155,28 +179,24 @@ def remove_ticket(user_id: str, event_id: int, ticket_str: str, session: Session
 
     if not user.tickets:
         return False
-    #remove from the csv
-    tickets = [t.strip() for t in user.tickets.split(",") if t.strip()]
-    if ticket_str not in tickets:
-        return False
-
-    tickets.remove(ticket_str)
-    user.tickets = ",".join(tickets) if tickets else None
-
-    #put the ticket back into the event
-    if event.tickets_left is not None:
-        event.tickets_left += 1
-
+    
     #update attendees list
     statement = select(Attendees).where(
         Attendees.user_id == user_id,
-        Attendees.event_id == event_id,
-        Attendees.ticket == ticket_str
+        Attendees.event_id == event_id
     )
     attendee = session.exec(statement).first()
-    if attendee:
-        session.delete(attendee)
+    if not attendee:
+        return False
 
+    #remove from the csv
+    tickets_list = user.tickets.split(',')
+    filtered_tickets = [t for t in tickets_list if not t.startswith(f"{event_id}:")] # removes the ticket from the user
+    user.tickets = ','.join(filtered_tickets) if filtered_tickets else None
+    event.tickets_left += 1
+    event.ticket_count -= 1
+
+    session.delete(attendee)
     session.add(user)
     session.add(event)
     session.commit()
@@ -282,3 +302,63 @@ def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
     session.refresh(event)
 
     return event
+
+def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+
+    if not get_event_by_id(session=session, event_id=event_id):
+        return False
+    
+    saved_events.append(str(event_id))
+    saved_events=list(set(saved_events)) # removes duplicates
+    user.saved_events = "[" + (",".join(saved_events)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return True
+
+def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+
+    if not get_event_by_id(session=session, event_id=event_id) or str(event_id) not in saved_events:
+        return False
+    
+    saved_events.remove(str(event_id))
+    user.saved_events = "[" + (",".join(saved_events)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return True
+
+def get_user_calendar(session: Session, user_id: str) -> list[EventDB]:
+    user:User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events:list[str] = calendar_data.strip("[]").split(",")
+    calendar:list[EventDB] = []
+    validated_calendar:list[str] = []
+
+    for events_id_str in saved_events:
+        if not events_id_str.isnumeric():
+            continue
+        
+        id = int(events_id_str)
+        event = get_event_by_id(session=session, event_id=id)
+        # if the event does not exists
+        if not event:
+            continue
+
+        validated_calendar.append(events_id_str)
+        calendar.append(event)
+
+    user.saved_events = "[" + (",".join(validated_calendar)) + "]"
+    user.sqlmodel_update(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return calendar
