@@ -37,7 +37,7 @@ jobs:
               run: |
                     cd backend
                     python -m pylint app/ --disable=missing-function-docstring,missing-class-docstring,missing-module-docstring --exit-zero | tee pylint.txt
-                    SCORE=$(grep "Your code has been rated at" pylint.txt | sed -E 's/.* ([0-9]+\.[0-9]+)\/.*/\1/)'
+                    SCORE=$(grep "Your code has been rated at" pylint.txt | sed -E 's/.* ([0-9]+(\.[0-9]+)\/.*/\1/)'
                     echo "score=$SCORE" >> $GITHUB_OUTPUT
 
             - name: Compare minimum score
