@@ -104,3 +104,28 @@ code {
 .border-primary {
   border-color: #912338;
 }
+
+/* Global button hover highlight (excludes disabled) */
+button:not([disabled]) {
+  position: relative;
+  transition:
+    box-shadow 150ms,
+    filter 150ms,
+    transform 150ms;
+}
+button:not([disabled]):hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+button:not([disabled]):active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transform: translateY(1px);
+}
+button[disabled] {
+  cursor: not-allowed;
+}
+
+/* Pointer cursor only on date input calendar icon (Chrome/WebKit) */
+input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
