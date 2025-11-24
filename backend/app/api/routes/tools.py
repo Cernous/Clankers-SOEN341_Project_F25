@@ -147,13 +147,8 @@ def get_event_average_age(
     if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not your event! Stop being nosy")
     today = date.today()
-    attendees = (
-        session.query(User)
-        .join(Attendees, Attendees.user_id == User.id)
-        .filter(Attendees.event_id == event_id)
-        .filter(User.date_of_birth.isnot(None))
-        .all()
-    )
+    statement = select(User).join(Attendees, Attendees.user_id == User.id).where(Attendees.event_id == event_id).where(User.date_of_birth.isnot(None))
+    attendees = session.exec(statement).all()
     if not attendees:
         return {"average_age": None}
     avg_age = sum((today - u.date_of_birth).days / 365 for u in attendees) / len(
