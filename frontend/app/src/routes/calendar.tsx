@@ -1,9 +1,10 @@
 // src/routes/calendar.tsx
 import * as React from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { CalendarService } from '../client'
-import type { SimpleEvent } from '../data/events.sample'
 import { useUserData } from '../hooks/UserDataContext'
+import type { SimpleEvent } from '../data/events.sample'
+
 export const Route = createFileRoute('/calendar')({
   component: CalendarPage,
 })
@@ -12,7 +13,7 @@ function CalendarPage() {
   const { toggleSave } = useUserData()
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [items, setItems] = React.useState<SimpleEvent[]>([])
+  const [items, setItems] = React.useState<Array<SimpleEvent>>([])
 
   React.useEffect(() => {
     let mounted = true
@@ -32,32 +33,34 @@ function CalendarPage() {
       return 'Other'
     }
 
-      ; (async () => {
-        try {
-          // Get events from the user's calendar backend
-          const res = await CalendarService.getUserCalendar()
+    ;(async () => {
+      try {
+        // Get events from the user's calendar backend
+        const res = await CalendarService.getUserCalendar()
 
-          const list = Array.isArray(res) ? res : (res as any).events ?? []
+        const list = Array.isArray(res) ? res : ((res as any).events ?? [])
 
-          const mapped: SimpleEvent[] = list.map((e: any) => ({
-            id: String(e.id),
-            title: e.name,
-            date: toMonthDay(e.start_time),
-            dateISO: toDateOnly(e.start_time),
-            org: 'Organizer',
-            where: e.location ?? 'TBD',
-            category: toCategory(e.tags),
-          }))
+        const mapped: Array<SimpleEvent> = list.map((e: any) => ({
+          id: String(e.id),
+          title: e.name,
+          date: toMonthDay(e.start_time),
+          dateISO: toDateOnly(e.start_time),
+          org: 'Organizer',
+          where: e.location ?? 'TBD',
+          category: toCategory(e.tags),
+        }))
 
-          if (mounted) setItems(mapped)
-        } catch (err: any) {
-          if (mounted) setError(err?.message ?? 'Failed to load your events')
-        } finally {
-          if (mounted) setLoading(false)
-        }
-      })()
+        setItems(mapped)
+      } catch (err: any) {
+        setError(err?.message ?? 'Failed to load your events')
+      } finally {
+        setLoading(false)
+      }
+    })()
 
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [])
   async function handleRemove(ev: SimpleEvent) {
     try {
@@ -71,7 +74,7 @@ function CalendarPage() {
       await CalendarService.deleteEventCalendar({ eventId: numericId })
 
       // update this page's local list
-      setItems(prev => prev.filter(item => item.id !== ev.id))
+      setItems((prev) => prev.filter((item) => item.id !== ev.id))
 
       // update global saved state so header + modals stay in sync
       toggleSave(ev)
@@ -85,16 +88,21 @@ function CalendarPage() {
       <h1 className="mb-1 text-3xl font-extrabold">My Calendar</h1>
       <p className="mb-6 text-neutral-600">Events added to your calendar.</p>
 
-      {loading && <div className="rounded-xl border bg-white p-6">Loading…</div>}
+      {loading && (
+        <div className="rounded-xl border bg-white p-6">Loading…</div>
+      )}
       {error && (
-        <div className="rounded-xl border bg-white p-6 text-red-600">{error}</div>
+        <div className="rounded-xl border bg-white p-6 text-red-600">
+          {error}
+        </div>
       )}
 
       {!loading && !error && (
         <>
           {items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-neutral-300 p-6 text-neutral-600">
-              You haven’t saved any events yet. Browse events and click <em>Save</em>.
+              You haven’t saved any events yet. Browse events and click{' '}
+              <em>Save</em>.
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
@@ -114,7 +122,9 @@ function CalendarPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="shrink-0 text-sm text-neutral-600">{ev.date}</span>
+                    <span className="shrink-0 text-sm text-neutral-600">
+                      {ev.date}
+                    </span>
 
                     <Link
                       to="/events/$eventId"
@@ -130,12 +140,9 @@ function CalendarPage() {
                     >
                       Remove
                     </button>
-
                   </div>
                 </div>
               ))}
-
-
             </div>
           )}
         </>

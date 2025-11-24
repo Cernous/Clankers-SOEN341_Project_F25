@@ -1,8 +1,12 @@
 import '../setupApi'
 
-import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Scripts,
+  createRootRoute,
+  useLocation,
+} from '@tanstack/react-router'
 import { UserDataProvider } from '../hooks/UserDataContext'
-
 
 import Header from '../components/Header'
 import { AuthProvider } from '../hooks/AuthContext'
@@ -30,14 +34,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className={isLogin ? 'login-page h-screen overflow-hidden flex flex-col' : 'min-h-screen'}>
+      <body
+        className={
+          isLogin
+            ? 'login-page h-screen overflow-hidden flex flex-col'
+            : 'min-h-screen'
+        }
+      >
         {/* Provide Auth globally */}
         <AuthProvider>
           <UserDataProvider>
-          {/* Conditionally render header (hide on /login) */}
-          {/* Always show header, even on login */}
-          <Header />
-          {children}
+            {/* Conditionally render header (hide on /login) */}
+            {/* Always show header, even on login */}
+            <Header />
+            {children}
           </UserDataProvider>
         </AuthProvider>
 

@@ -57,11 +57,11 @@ function HomePage() {
                     : 'Other',
         }))
 
-        if (mounted) setEvents(mapped)
+        setEvents(mapped)
       } catch (err: any) {
-        if (mounted) setError(err?.message ?? 'Failed to load events')
+        setError(err?.message ?? 'Failed to load events')
       } finally {
-        if (mounted) setLoading(false)
+        setLoading(false)
       }
     })()
 

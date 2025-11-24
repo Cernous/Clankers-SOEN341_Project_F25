@@ -10,9 +10,9 @@ type Props = {
 }
 
 export default function FilterBar({
-  query = "",
-  category = "",
-  date = "",
+  query = '',
+  category = '',
+  date = '',
   onQueryChange,
   onCategoryChange,
   onDateChange,

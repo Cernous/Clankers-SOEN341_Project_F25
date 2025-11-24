@@ -1,9 +1,10 @@
 // src/components/events/EventPreviewModal.tsx
+import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
-import type { SimpleEvent } from '../../data/events.sample'
-import { Link } from '@tanstack/react-router'
 import { CalendarService } from '../../client'
+import type { SimpleEvent } from '../../data/events.sample'
+
 type Props = {
   event: SimpleEvent | null
   isLoggedIn: boolean
@@ -50,7 +51,6 @@ export default function EventPreviewModal({
       alert('Could not update your calendar. Please try again.')
     }
   }
-
 
   const handleClaim = () => {
     if (!isLoggedIn || !user) return
