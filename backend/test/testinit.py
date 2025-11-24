@@ -226,6 +226,32 @@ def test_get_student_data(client: requests.Session) -> None:
         if key in STUDENT_DATA:
             assert STUDENT_DATA[key] == data[key]
 
+def test_events_list(client: requests.Session) -> None:
+    global STUDENT_HEADERS, STUDENT_DATA
+    response = client.get(
+        f"{URL}{settings.API_STR}/events/list",
+        headers=STUDENT_HEADERS
+    )
+    data_keys = [
+        "id",
+        "name",
+        "description",
+        "price",
+        "location",
+        "start_time",
+        "end_time",
+        "tags",
+        "pictures",
+        "organizer_id"
+    ]
+    data = response.json()
+    assert response.status_code == 200
+    if len(data) == 0:
+        assert str(response) == "[]"
+    else:
+        for key in data_keys:
+            assert key in data[0].keys()
+
 def test_delete_student(client: requests.Session) -> None:
     """
         Delete the student as the current user
@@ -239,3 +265,7 @@ def test_delete_student(client: requests.Session) -> None:
 
     assert response.status_code == 200
     assert isinstance(response.json()["message"], str)
+
+"""
+
+"""
