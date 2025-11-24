@@ -36,7 +36,8 @@ function RouteComponent() {
   const [pictureName, setPictureName] = React.useState<string | null>(null) // NEW
 
   // NEW: handle file selection and convert to base64 string
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) { // NEW
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // NEW
     const file = e.target.files?.[0]
     if (!file) {
       setPictureData(null)
@@ -51,7 +52,7 @@ function RouteComponent() {
       const result = reader.result as string // e.g. "data:image/png;base64,AAAA..."
       // Strip the "data:*/*;base64," prefix so backend just gets the raw base64 if needed
       const [, base64] = result.split(',')
-      setPictureData(base64 ?? result)
+      setPictureData(base64)
     }
     reader.readAsDataURL(file)
   }

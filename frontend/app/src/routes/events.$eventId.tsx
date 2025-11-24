@@ -43,7 +43,7 @@ function EventDetailPage() {
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       setLoading(true)
       setErr(null)
       try {
@@ -71,7 +71,7 @@ function EventDetailPage() {
       }
     })()
 
-    return () => { }
+    return () => {}
   }, [eventId])
 
   // fetch reviews for this event
@@ -227,11 +227,11 @@ function EventDetailPage() {
     return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
   }
   const heroUrl = (() => {
-    const pics = (data as any).pictures
+    const pics = data.pictures
     const first = Array.isArray(pics) ? pics[0] : pics
     if (!first) {
       // fallback image if no picture was uploaded
-      return "https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop"
+      return 'https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop'
     }
 
     const s = String(first)
