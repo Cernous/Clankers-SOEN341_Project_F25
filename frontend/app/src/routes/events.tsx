@@ -38,8 +38,6 @@ function EventsPage() {
   const [date, setDate] = React.useState('') // YYYY-MM-DD, '' = any
 
   React.useEffect(() => {
-    let mounted = true
-
     const toMonthDay = (iso: string) => {
       const d = new Date(iso)
       return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
@@ -94,9 +92,7 @@ function EventsPage() {
       }
     })()
 
-    return () => {
-      mounted = false
-    }
+    return () => {}
   }, [])
 
   // Build a per-user storage key (fallback to 'guest' when not logged in)

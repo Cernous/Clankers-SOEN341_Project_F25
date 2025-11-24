@@ -3,11 +3,12 @@ import { createLazyFileRoute, useNavigate } from '@tanstack/react-router'
 import { CalendarService, EventsService } from '../client'
 import { useUserData } from '../hooks/UserDataContext'
 import { useAuth } from '../hooks/AuthContext'
+import type { purchaseSearchSchema } from './purchase'
 import type { SimpleEvent } from '../data/events.sample'
+import type { z } from 'zod'
 
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
-  validateSearch: (search: PurchaseSearch): PurchaseSearch => search,
 })
 
 type TicketTier = { id: string; name: string; price: number; limit?: number }
@@ -19,14 +20,7 @@ type EventInfo = {
   banner?: string
   tiers: Array<TicketTier>
 }
-type PurchaseSearch = {
-  eventId?: number | string
-  title?: string
-  price?: number
-  start?: string
-  location?: string
-  qty?: number
-}
+
 const FALLBACK: EventInfo = {
   id: 0,
   title: 'Event',
@@ -39,6 +33,8 @@ const FALLBACK: EventInfo = {
 
 const TAX_RATE = 0.149 // example GST+QST
 const CONV_FEE = 0.5 // example per-ticket fee
+
+type PurchaseSearch = z.infer<typeof purchaseSearchSchema>
 
 export default function PurchasePage() {
   const navigate = useNavigate()
@@ -124,19 +120,21 @@ export default function PurchasePage() {
     })
   }
 
-  const search = Route.useSearch()
+  // Use the search type inferred from the schema in purchase.tsx
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  const search = Route.useSearch() as PurchaseSearch
 
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {
     const title = String(search.title ?? FALLBACK.title)
-    const priceNum = Number(search?.price ?? 0)
-    const when = search?.start
+    const priceNum = Number(search.price ?? 0)
+    const when = search.start
       ? new Date(search.start).toLocaleString()
       : FALLBACK.date
-    const where = String(search?.location ?? FALLBACK.where)
+    const where = String(search.location ?? FALLBACK.where)
 
     return {
-      id: search?.eventId ?? FALLBACK.id,
+      id: search.eventId ?? FALLBACK.id,
       title,
       date: when,
       where,
@@ -149,7 +147,7 @@ export default function PurchasePage() {
       id: String(event.id),
       title: event.title,
       date: event.date, // pretty date string
-      dateISO: search.start ?? '', // or keep '' if not available
+      dateISO: search.start as string, // or keep '' if not available
       org: 'Organizer', // or map from backend if you have it
       where: event.where || 'TBD',
       category: 'Other', // or derive from tags
@@ -496,6 +494,7 @@ function CardPayment({
       </div>
       <div>
         <label className="text-sm block mb-1">Cardholder name</label>
+
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
