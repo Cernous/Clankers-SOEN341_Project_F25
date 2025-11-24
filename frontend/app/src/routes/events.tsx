@@ -80,6 +80,7 @@ function EventsPage() {
               org: orgName,
               where: e.location ?? 'TBD',
               category: toCategory(e.tags),
+              
             }
           }),
         )

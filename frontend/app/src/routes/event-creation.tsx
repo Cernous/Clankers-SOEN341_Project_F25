@@ -31,6 +31,31 @@ function RouteComponent() {
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState<string | null>(null)
 
+  // NEW: store the uploaded image as a base64 string (without the data:... prefix)
+  const [pictureData, setPictureData] = React.useState<string | null>(null) // NEW
+  const [pictureName, setPictureName] = React.useState<string | null>(null) // NEW
+
+  // NEW: handle file selection and convert to base64 string
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) { // NEW
+    const file = e.target.files?.[0]
+    if (!file) {
+      setPictureData(null)
+      setPictureName(null)
+      return
+    }
+
+    setPictureName(file.name)
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = reader.result as string // e.g. "data:image/png;base64,AAAA..."
+      // Strip the "data:*/*;base64," prefix so backend just gets the raw base64 if needed
+      const [, base64] = result.split(',')
+      setPictureData(base64 ?? result)
+    }
+    reader.readAsDataURL(file)
+  }
+
   // If not allowed, show a friendly message
   if (!canCreate) {
     return (
@@ -62,6 +87,11 @@ function RouteComponent() {
       return setError('Please enter a valid price greater than 0')
     }
 
+    // If you want to make the image required, uncomment this:
+    // if (!pictureData) {
+    //   return setError('Please upload a picture for the event')
+    // }
+
     const startISO = new Date(start).toISOString()
     const endISO = end
       ? new Date(end).toISOString()
@@ -78,10 +108,12 @@ function RouteComponent() {
           start_time: startISO,
           end_time: endISO,
           tags: tags.trim() || undefined, // backend accepts optional
-          pictures: undefined, // not in form yet
+          // NEW: send base64 string to backend as pictures
+          // if backend expects an array, wrap in [pictureData]
+          pictures: pictureData ?? undefined, // NEW
           visibility, // required by backend
           // organizer_id is set server-side for organizers; admins can specify but we’ll let backend handle
-        },
+        } as any, // NEW: cast to any in case types haven't been updated yet
       })
 
       setSuccess('Event created successfully!')
@@ -257,6 +289,24 @@ function RouteComponent() {
               className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
             />
           </div>
+        </div>
+
+        {/* NEW: image upload field */}
+        <div>
+          <label className="text-neutral-600 block font-bold">
+            Event Picture (header & thumbnail)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="mt-1"
+          />
+          {pictureName && (
+            <p className="text-xs text-neutral-600 mt-1">
+              Selected: {pictureName}
+            </p>
+          )}
         </div>
 
         <div>
