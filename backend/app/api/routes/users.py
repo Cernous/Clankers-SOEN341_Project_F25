@@ -117,7 +117,7 @@ def delete_me(session: SessionDep, current_user: CurrentUser):
     """
     Delete me user and say goodbye
     """
-    if current_user.role == user_role.ADMIN:
+    if current_user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403,
             detail="As an admin, you cannot delete yourself. Try doing it by deleting the database",
