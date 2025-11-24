@@ -235,7 +235,7 @@ function EventDetailPage() {
     if (!uid) return 'Anonymous'
     return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
   }
-  
+
   // Utility: insert a newline every `n` characters, preserving existing newlines
   function wrapEveryN(str: string, n: number): string {
     if (n <= 0) return str
@@ -251,8 +251,7 @@ function EventDetailPage() {
       })
       .join('\n')
   }
-  
- 
+
   const heroUrl = (() => {
     const pics = data.pictures
     const first = Array.isArray(pics) ? pics[0] : pics
@@ -265,12 +264,10 @@ function EventDetailPage() {
 
     // If backend ever starts returning full data URLs, just use them directly
     if (s.startsWith('data:')) {
-      return s 
+      return s
     }
-  // Otherwise assume it's raw base64 and add a JPEG prefix
+    // Otherwise assume it's raw base64 and add a JPEG prefix
     return `data:image/jpeg;base64,${s}`
-    
-
   })()
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
@@ -437,7 +434,9 @@ function EventDetailPage() {
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-neutral-800 break-words whitespace-pre-wrap">{wrapEveryN(String(r.desc || ''), 100)}</p>
+                <p className="mt-1 text-sm text-neutral-800 break-words whitespace-pre-wrap">
+                  {wrapEveryN(String(r.desc || ''), 100)}
+                </p>
               </div>
             </div>
           ))}
@@ -460,7 +459,9 @@ function EventDetailPage() {
               className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
             />
             <div className="mt-1 flex justify-between text-xs text-neutral-500">
-              <span>{reviewText.length}/{MAX_REVIEW_CHARS}</span>
+              <span>
+                {reviewText.length}/{MAX_REVIEW_CHARS}
+              </span>
               {reviewText.length === MAX_REVIEW_CHARS && (
                 <span className="text-red-600">Max length reached</span>
               )}

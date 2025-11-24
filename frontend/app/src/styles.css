@@ -108,7 +108,10 @@ code {
 /* Global button hover highlight (excludes disabled) */
 button:not([disabled]) {
   position: relative;
-  transition: box-shadow 150ms, filter 150ms, transform 150ms;
+  transition:
+    box-shadow 150ms,
+    filter 150ms,
+    transform 150ms;
 }
 button:not([disabled]):hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -123,6 +126,6 @@ button[disabled] {
 }
 
 /* Pointer cursor only on date input calendar icon (Chrome/WebKit) */
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
