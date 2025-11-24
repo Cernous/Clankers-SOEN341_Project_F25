@@ -17,7 +17,6 @@ type FormDataShape = {
 }
 
 function SignUpPage() {
-
   const navigate = useNavigate()
   const [showPw, setShowPw] = React.useState(false)
   const [errors, setErrors] = React.useState<
@@ -25,8 +24,6 @@ function SignUpPage() {
   >({})
   const [message, setMessage] = React.useState<string>('')
 
-
-  
   function validate(d: FormDataShape) {
     const e: Partial<Record<keyof FormDataShape, string>> = {}
     if (!d.firstName) e.firstName = 'Required'
@@ -111,7 +108,6 @@ function SignUpPage() {
       setMessage(err.message || 'Signup failed')
     }
   }
-
 
   return (
     <div className="min-h-[calc(100vh-44px)] grid md:grid-cols-2 bg-[#7A0019]">

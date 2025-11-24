@@ -98,8 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Normal self-signup (logs in as the new user)
   const signupStudent = React.useCallback(
     async (args: any) => {
-      const backendRole =
-        args.role === 'creator' ? 'organizer' : args.role // handles student/admin
+      const backendRole = args.role === 'creator' ? 'organizer' : args.role // handles student/admin
 
       const res = await fetch(
         `${OpenAPI.BASE}/clank/users/signup/${backendRole}`,
@@ -129,8 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Admin creates another user (DOES NOT change current login)
   const createUserAsAdmin = React.useCallback(async (args: any) => {
-    const backendRole =
-      args.role === 'creator' ? 'organizer' : args.role // student/admin/creator
+    const backendRole = args.role === 'creator' ? 'organizer' : args.role // student/admin/creator
 
     const res = await fetch(
       `${OpenAPI.BASE}/clank/users/signup/${backendRole}`,
@@ -169,7 +167,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createUserAsAdmin,
       logout,
     }),
-    [user, token, loginWithCredentials, signupStudent, createUserAsAdmin, logout],
+    [
+      user,
+      token,
+      loginWithCredentials,
+      signupStudent,
+      createUserAsAdmin,
+      logout,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

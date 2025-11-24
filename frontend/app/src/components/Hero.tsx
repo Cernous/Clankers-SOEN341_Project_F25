@@ -34,7 +34,6 @@ export default function Hero() {
             Sign Up
           </a>
         )}
-        
       </div>
 
       <div className="mt-12 h-64 rounded-3xl bg-gradient-to-br from-primary/10 via-accentLavender/20 to-accentMint/20 md:h-80 lg:h-[420px] shadow-card flex items-center justify-center">
