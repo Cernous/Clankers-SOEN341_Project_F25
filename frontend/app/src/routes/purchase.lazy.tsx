@@ -1,12 +1,13 @@
 import * as React from 'react'
-import { useNavigate, createLazyFileRoute } from '@tanstack/react-router'
-import { EventsService } from '../client'
+import { createLazyFileRoute, useNavigate } from '@tanstack/react-router'
+import { CalendarService, EventsService } from '../client'
 import { useUserData } from '../hooks/UserDataContext'
-import type { SimpleEvent } from '../data/events.sample'
 import { useAuth } from '../hooks/AuthContext'
-import { CalendarService } from '../client'
+import type { SimpleEvent } from '../data/events.sample'
+
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
+  validateSearch: (search: PurchaseSearch): PurchaseSearch => search,
 })
 
 type TicketTier = { id: string; name: string; price: number; limit?: number }
@@ -16,9 +17,16 @@ type EventInfo = {
   date: string
   where: string
   banner?: string
-  tiers: TicketTier[]
+  tiers: Array<TicketTier>
 }
-
+type PurchaseSearch = {
+  eventId?: number | string
+  title?: string
+  price?: number
+  start?: string
+  location?: string
+  qty?: number
+}
 const FALLBACK: EventInfo = {
   id: 0,
   title: 'Event',
@@ -30,7 +38,7 @@ const FALLBACK: EventInfo = {
 }
 
 const TAX_RATE = 0.149 // example GST+QST
-const CONV_FEE = 0.5   // example per-ticket fee
+const CONV_FEE = 0.5 // example per-ticket fee
 
 export default function PurchasePage() {
   const navigate = useNavigate()
@@ -43,7 +51,13 @@ export default function PurchasePage() {
     total,
     tier,
     ev,
-  }: { eid: string | number; qty: number; total: number; tier: string; ev: SimpleEvent }) {
+  }: {
+    eid: string | number
+    qty: number
+    total: number
+    tier: string
+    ev: SimpleEvent
+  }) {
     const eventIdNum = Number(eid)
     if (!Number.isFinite(eventIdNum)) {
       alert('Invalid event id')
@@ -56,7 +70,7 @@ export default function PurchasePage() {
         const code = `ORD-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${i + 1}`
         await EventsService.addTicket({
           eventId: eventIdNum,
-          ticket: code,   // this goes as query param ?ticket=...
+          ticket: code, // this goes as query param ?ticket=...
         })
       }
     } catch (e) {
@@ -82,7 +96,7 @@ export default function PurchasePage() {
     }
     // --- NEW: create local ticket(s) for the user -------------------------
     const owner = user?.username || user?.email || 'me'
-    const ticketKind = total > 0 ? 'paid' : 'free' as const
+    const ticketKind = total > 0 ? 'paid' : ('free' as const)
 
     // one ticket per quantity (or change to just once if you prefer)
     for (let i = 0; i < qty; i++) {
@@ -110,20 +124,11 @@ export default function PurchasePage() {
     })
   }
 
-  const search = Route.useSearch() as {
-    eventId?: string | number
-    name?: string
-    title?: string
-    price?: number | string
-    start?: string   // ISO
-    location?: string
-    qty?: number
-  }
-
+  const search = Route.useSearch()
 
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {
-    const title = String(search?.name ?? search?.title ?? FALLBACK.title)
+    const title = String(search.title ?? FALLBACK.title)
     const priceNum = Number(search?.price ?? 0)
     const when = search?.start
       ? new Date(search.start).toLocaleString()
@@ -141,19 +146,19 @@ export default function PurchasePage() {
   }, [search])
   const simpleEvent: SimpleEvent = React.useMemo(
     () => ({
-      id: String(event.id ?? ''),
+      id: String(event.id),
       title: event.title,
-      date: event.date,                        // pretty date string
-      dateISO: (search?.start as string) ?? '',// or keep '' if not available
-      org: 'Organizer',                        // or map from backend if you have it
+      date: event.date, // pretty date string
+      dateISO: search.start ?? '', // or keep '' if not available
+      org: 'Organizer', // or map from backend if you have it
       where: event.where || 'TBD',
-      category: 'Other',                       // or derive from tags
+      category: 'Other', // or derive from tags
     }),
     [event, search],
   )
 
   const [tierId, setTierId] = React.useState<string>(event.tiers[0].id)
-  const [qty, setQty] = React.useState<number>(Math.max(1, Number(search?.qty ?? 1)))
+  const [qty, setQty] = React.useState<number>(Math.max(1, Number(search.qty)))
   const [promo, setPromo] = React.useState<string>('')
   const [showCardForm, setShowCardForm] = React.useState(false)
 
@@ -164,8 +169,14 @@ export default function PurchasePage() {
     return promo.trim().toUpperCase() === 'CLANKERS10' ? 0.1 : 0
   }, [promo])
 
-  const subtotal = React.useMemo(() => activeTier.price * qty, [activeTier.price, qty])
-  const discountAmt = React.useMemo(() => subtotal * discount, [subtotal, discount])
+  const subtotal = React.useMemo(
+    () => activeTier.price * qty,
+    [activeTier.price, qty],
+  )
+  const discountAmt = React.useMemo(
+    () => subtotal * discount,
+    [subtotal, discount],
+  )
 
   // If free, don’t apply taxes/fees
   const taxedBase = Math.max(0, subtotal - discountAmt)
@@ -201,7 +212,11 @@ export default function PurchasePage() {
         {/* LEFT: event & selection */}
         <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl overflow-hidden">
           {event.banner && (
-            <img src={event.banner} className="w-full h-44 object-cover" alt="" />
+            <img
+              src={event.banner}
+              className="w-full h-44 object-cover"
+              alt=""
+            />
           )}
           <div className="p-6">
             <h1 className="text-2xl font-bold text-[#7A0019]">{event.title}</h1>
@@ -236,9 +251,15 @@ export default function PurchasePage() {
 
             {/* Quantity */}
             <div className="mt-6">
-              <label className="block text-sm text-gray-700 mb-1">Quantity</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Quantity
+              </label>
               <div className="inline-flex items-center border rounded-lg overflow-hidden">
-                <button onClick={dec} className="px-3 py-2 hover:bg-gray-50" aria-label="decrease">
+                <button
+                  onClick={dec}
+                  className="px-3 py-2 hover:bg-gray-50"
+                  aria-label="decrease"
+                >
                   −
                 </button>
                 <input
@@ -253,7 +274,11 @@ export default function PurchasePage() {
                   min={1}
                   max={activeTier.limit ?? 10}
                 />
-                <button onClick={inc} className="px-3 py-2 hover:bg-gray-50" aria-label="increase">
+                <button
+                  onClick={inc}
+                  className="px-3 py-2 hover:bg-gray-50"
+                  aria-label="increase"
+                >
                   ＋
                 </button>
               </div>
@@ -261,7 +286,9 @@ export default function PurchasePage() {
 
             {/* Promo (kept, but has no effect when free) */}
             <div className="mt-6">
-              <label className="block text-sm text-gray-700 mb-1">Promo Code</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Promo Code
+              </label>
               <input
                 value={promo}
                 onChange={(e) => setPromo(e.target.value)}
@@ -282,8 +309,13 @@ export default function PurchasePage() {
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6 h-fit">
           <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
           <div className="space-y-2 text-sm">
-            <Row label={`${activeTier.name} × ${qty}`} value={`$${subtotal.toFixed(2)}`} />
-            {discountAmt > 0 && <Row label="Discount" value={`− $${discountAmt.toFixed(2)}`} />}
+            <Row
+              label={`${activeTier.name} × ${qty}`}
+              value={`$${subtotal.toFixed(2)}`}
+            />
+            {discountAmt > 0 && (
+              <Row label="Discount" value={`− $${discountAmt.toFixed(2)}`} />
+            )}
             <Row label="Taxes" value={`$${taxes.toFixed(2)}`} />
             <Row label="Fees" value={`$${fees.toFixed(2)}`} />
             <hr className="my-2" />
@@ -326,7 +358,15 @@ export default function PurchasePage() {
   )
 }
 
-function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function Row({
+  label,
+  value,
+  bold,
+}: {
+  label: string
+  value: string
+  bold?: boolean
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className={bold ? 'font-semibold' : ''}>{label}</span>
@@ -335,7 +375,13 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   )
 }
 
-type CardResult = { orderId: string; total: string; qty?: number; eventId?: number | string; tier?: string }
+type CardResult = {
+  orderId: string
+  total: string
+  qty?: number
+  eventId?: number | string
+  tier?: string
+}
 
 function CardPayment({
   amount,
@@ -361,7 +407,10 @@ function CardPayment({
   const [error, setError] = React.useState<string | null>(null)
 
   function formatCard(v: string) {
-    return v.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim()
+    return v
+      .replace(/\D/g, '')
+      .replace(/(.{4})/g, '$1 ')
+      .trim()
   }
   function onCardInput(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 19)
@@ -408,8 +457,8 @@ function CardPayment({
 
   async function handlePay(e?: React.FormEvent) {
     e?.preventDefault()
-    const v = validateAll()
-    if (v) return
+    validateAll()
+
     setBusy(true)
     setError(null)
 
@@ -434,7 +483,10 @@ function CardPayment({
   }
 
   return (
-    <form className="space-y-4 bg-white p-6 rounded-xl shadow mt-5" onSubmit={handlePay}>
+    <form
+      className="space-y-4 bg-white p-6 rounded-xl shadow mt-5"
+      onSubmit={handlePay}
+    >
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-zinc-600">Paying</div>
@@ -481,7 +533,9 @@ function CardPayment({
           <label className="text-sm block mb-1">CVV</label>
           <input
             value={cvv}
-            onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            onChange={(e) =>
+              setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))
+            }
             placeholder="123"
             className="w-full border rounded px-3 py-2"
             inputMode="numeric"
@@ -497,7 +551,11 @@ function CardPayment({
           className="w-full border rounded px-3 py-2"
         />
       </div>
-      {error && <div className="text-sm text-red-600 rounded p-2 bg-red-50">{error}</div>}
+      {error && (
+        <div className="text-sm text-red-600 rounded p-2 bg-red-50">
+          {error}
+        </div>
+      )}
       <div className="flex gap-3">
         <button
           type="submit"
@@ -506,7 +564,12 @@ function CardPayment({
         >
           {busy ? 'Processing…' : `Pay $${amount.toFixed(2)}`}
         </button>
-        <button type="button" onClick={onCancel} disabled={busy} className="rounded border px-4 py-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="rounded border px-4 py-2"
+        >
           Cancel
         </button>
       </div>

@@ -11,10 +11,12 @@ export default function Hero() {
       <div className="pointer-events-none absolute bottom-0 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-accentMint opacity-20 blur-2xl" />
 
       <h1 className="m-0 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
-        Discover what's <span className="text-primary">happening</span> on campus.
+        Discover what's <span className="text-primary">happening</span> on
+        campus.
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-neutral-700 md:text-xl">
-        Browse events, grab tickets, and never miss out. Fun, fresh & student-powered.
+        Browse events, grab tickets, and never miss out. Fun, fresh &
+        student-powered.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-4">
@@ -43,7 +45,8 @@ export default function Hero() {
       <div className="mt-12 h-64 rounded-3xl bg-gradient-to-br from-primary/10 via-accentLavender/20 to-accentMint/20 md:h-80 lg:h-[420px] shadow-card flex items-center justify-center">
         <div className="rounded-2xl bg-white/70 backdrop-blur-sm px-8 py-6 shadow-soft max-w-md">
           <p className="m-0 text-center text-sm text-neutral-700">
-            Stay tuned: more interactive dashboards & creator tools are coming soon.
+            Stay tuned: more interactive dashboards & creator tools are coming
+            soon.
           </p>
         </div>
       </div>

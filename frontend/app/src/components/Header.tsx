@@ -8,7 +8,9 @@ export default function Header() {
 
   // Show per-user ticket count in the nav
   const ownerId = user?.username || user?.email || ''
-  const myTicketsCount = isLoggedIn ? tickets.filter(t => t.owner === ownerId).length : 0
+  const myTicketsCount = isLoggedIn
+    ? tickets.filter((t) => t.owner === ownerId).length
+    : 0
 
   const location = useLocation()
   const isActive = (path: string) => location.pathname === path
@@ -23,7 +25,9 @@ export default function Header() {
           to="/"
           className="text-xl font-extrabold tracking-tight text-primary flex items-center gap-2"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold">CE</span>
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold">
+            CE
+          </span>
           <span>CampusEvents</span>
         </Link>
 
@@ -33,21 +37,29 @@ export default function Header() {
             to="/"
             className={[
               'transition-colors duration-200 relative',
-              isActive('/') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+              isActive('/')
+                ? 'text-primary font-semibold'
+                : 'text-neutral-700 hover:text-primary',
             ].join(' ')}
           >
             Home
-            {isActive('/') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+            {isActive('/') && (
+              <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+            )}
           </Link>
           <Link
             to="/events"
             className={[
               'transition-colors duration-200 relative',
-              isActive('/events') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+              isActive('/events')
+                ? 'text-primary font-semibold'
+                : 'text-neutral-700 hover:text-primary',
             ].join(' ')}
           >
             Events
-            {isActive('/events') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+            {isActive('/events') && (
+              <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+            )}
           </Link>
 
           {/* Creator-only */}
@@ -56,11 +68,15 @@ export default function Header() {
               to="/event-creation"
               className={[
                 'relative transition-colors duration-200 font-semibold',
-                isActive('/event-creation') ? 'text-primary' : 'text-primary hover:text-primary-active'
+                isActive('/event-creation')
+                  ? 'text-primary'
+                  : 'text-primary hover:text-primary-active',
               ].join(' ')}
             >
               + Create Event
-              {isActive('/event-creation') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+              {isActive('/event-creation') && (
+                <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+              )}
             </Link>
           )}
 
@@ -70,11 +86,15 @@ export default function Header() {
               to="/admin"
               className={[
                 'relative transition-colors duration-200 font-semibold',
-                isActive('/admin') ? 'text-primary' : 'text-primary hover:text-primary-active'
+                isActive('/admin')
+                  ? 'text-primary'
+                  : 'text-primary hover:text-primary-active',
               ].join(' ')}
             >
               Admin
-              {isActive('/admin') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+              {isActive('/admin') && (
+                <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+              )}
             </Link>
           )}
 
@@ -85,7 +105,9 @@ export default function Header() {
                 to="/calendar"
                 className={[
                   'relative transition-colors duration-200',
-                  isActive('/calendar') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+                  isActive('/calendar')
+                    ? 'text-primary font-semibold'
+                    : 'text-neutral-700 hover:text-primary',
                 ].join(' ')}
               >
                 My Calendar
@@ -94,13 +116,17 @@ export default function Header() {
                     {saved.length}
                   </span>
                 )}
-                {isActive('/calendar') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+                {isActive('/calendar') && (
+                  <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+                )}
               </Link>
               <Link
                 to="/tickets"
                 className={[
                   'relative transition-colors duration-200',
-                  isActive('/tickets') ? 'text-primary font-semibold' : 'text-neutral-700 hover:text-primary'
+                  isActive('/tickets')
+                    ? 'text-primary font-semibold'
+                    : 'text-neutral-700 hover:text-primary',
                 ].join(' ')}
               >
                 My Tickets
@@ -109,7 +135,9 @@ export default function Header() {
                     {myTicketsCount}
                   </span>
                 )}
-                {isActive('/tickets') && <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />}
+                {isActive('/tickets') && (
+                  <span className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-primary/70" />
+                )}
               </Link>
             </>
           )}

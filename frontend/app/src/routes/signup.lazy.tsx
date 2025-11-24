@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useNavigate, createLazyFileRoute } from '@tanstack/react-router'
+import { Link, createLazyFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createLazyFileRoute('/signup')({
@@ -17,22 +17,24 @@ type FormDataShape = {
 }
 
 function SignUpPage() {
-  //const { signup } = useAuth()
+  // const { signup } = useAuth()
   const navigate = useNavigate()
   const [showPw, setShowPw] = React.useState(false)
-  const [errors, setErrors] = React.useState<Partial<Record<keyof FormDataShape, string>>>({})
+  const [errors, setErrors] = React.useState<
+    Partial<Record<keyof FormDataShape, string>>
+  >({})
   const [message, setMessage] = React.useState<string>('')
 
   function validate(d: FormDataShape) {
     const e: Partial<Record<keyof FormDataShape, string>> = {}
     if (!d.firstName) e.firstName = 'Required'
     else if (!/^[A-Za-z\s'-]{1,50}$/.test(d.firstName)) {
-      e.firstName = 'Only letters, spaces, - and \' allowed (max 50 chars)'
+      e.firstName = "Only letters, spaces, - and ' allowed (max 50 chars)"
     }
 
     if (!d.lastName) e.lastName = 'Required'
     else if (!/^[A-Za-z\s'-]{1,50}$/.test(d.lastName)) {
-      e.lastName = 'Only letters, spaces, - and \' allowed (max 50 chars)'
+      e.lastName = "Only letters, spaces, - and ' allowed (max 50 chars)"
     }
     if (!d.email) {
       e.email = 'Required'
@@ -47,7 +49,8 @@ function SignUpPage() {
     else if (d.username.length > 20) e.username = 'Max 20 characters'
 
     if (d.password !== d.confirm) e.confirm = 'Passwords do not match'
-    if (!['student', 'creator', 'admin'].includes(d.role)) e.role = 'Select a role'
+    if (!['student', 'creator', 'admin'].includes(d.role))
+      e.role = 'Select a role'
     return e
   }
 
@@ -55,16 +58,18 @@ function SignUpPage() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const raw = Object.fromEntries(new FormData(e.currentTarget) as any) as Record<string, string>
+    const raw = Object.fromEntries(
+      new FormData(e.currentTarget) as any,
+    ) as Record<string, string>
 
     const data = {
-      firstName: raw.firstName?.trim() ?? '',
-      lastName: raw.lastName?.trim() ?? '',
-      email: raw.email?.trim() ?? '',
-      username: raw.username?.trim() ?? '',
-      role: (raw.role as 'student' | 'creator' | 'admin') ?? 'student',
-      password: raw.password ?? '',
-      confirm: raw.confirm ?? '',
+      firstName: raw.firstName.trim(),
+      lastName: raw.lastName.trim(),
+      email: raw.email.trim(),
+      username: raw.username.trim(),
+      role: raw.role as 'student' | 'creator' | 'admin',
+      password: raw.password,
+      confirm: raw.confirm,
     }
 
     const errs = validate(data)
@@ -82,8 +87,10 @@ function SignUpPage() {
       })
 
       const dest =
-        data.role === 'admin' ? '/admin'
-          : data.role === 'creator' ? '/'
+        data.role === 'admin'
+          ? '/admin'
+          : data.role === 'creator'
+            ? '/'
             : '/events'
       navigate({ to: dest })
     } catch (err: any) {
@@ -91,16 +98,18 @@ function SignUpPage() {
     }
   }
 
-
-
   return (
     <div className="min-h-[calc(100vh-44px)] grid md:grid-cols-2 bg-[#7A0019]">
       {/* 左侧表单卡片 */}
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
           <header className="mb-8">
-            <h1 className="text-3xl font-bold text-[#7A0019]">Concordia Connect</h1>
-            <p className="text-gray-600 text-sm">Campus Events & Ticketing · by Clankers</p>
+            <h1 className="text-3xl font-bold text-[#7A0019]">
+              Concordia Connect
+            </h1>
+            <p className="text-gray-600 text-sm">
+              Campus Events & Ticketing · by Clankers
+            </p>
           </header>
 
           <h2 className="text-xl font-semibold mb-5">Create your account</h2>
@@ -147,7 +156,6 @@ function SignUpPage() {
               show={showPw}
               setShow={setShowPw}
               error={errors.password}
-
             />
             <PasswordField
               name="confirm"
@@ -160,23 +168,44 @@ function SignUpPage() {
 
             <label className="block">
               <span className="block text-sm text-gray-700 mb-1">Role</span>
-              <select name="role" defaultValue="student" className="w-full border rounded-lg px-3 py-2">
+              <select
+                name="role"
+                defaultValue="student"
+                className="w-full border rounded-lg px-3 py-2"
+              >
                 <option value="student">Student</option>
                 <option value="creator">Event Creator</option>
                 {user?.role === 'admin' && <option value="admin">Admin</option>}
               </select>
-              {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
+              {errors.role && (
+                <p className="mt-1 text-xs text-red-600">{errors.role}</p>
+              )}
             </label>
 
             <label className="flex items-start gap-2 text-sm">
-              <input required type="checkbox" className="mt-1 accent-[#7A0019]" />
+              <input
+                required
+                type="checkbox"
+                className="mt-1 accent-[#7A0019]"
+              />
               <span>
-                I agree to the <a className="text-[#7A0019] hover:text-[#FFC72C]" href="#">Terms</a> and{' '}
-                <a className="text-[#7A0019] hover:text-[#FFC72C]" href="#">Privacy</a>.
+                I agree to the{' '}
+                <a className="text-[#7A0019] hover:text-[#FFC72C]" href="#">
+                  Terms
+                </a>{' '}
+                and{' '}
+                <a className="text-[#7A0019] hover:text-[#FFC72C]" href="#">
+                  Privacy
+                </a>
+                .
               </span>
             </label>
 
-            {message && <div className="rounded-lg bg-amber-50 text-amber-800 px-3 py-2 text-sm">{message}</div>}
+            {message && (
+              <div className="rounded-lg bg-amber-50 text-amber-800 px-3 py-2 text-sm">
+                {message}
+              </div>
+            )}
 
             <button
               type="submit"
@@ -188,7 +217,10 @@ function SignUpPage() {
 
           <p className="text-sm text-gray-600 mt-6 text-center">
             Already have an account?{' '}
-            <Link className="text-[#7A0019] font-medium hover:text-[#FFC72C]" to="/login">
+            <Link
+              className="text-[#7A0019] font-medium hover:text-[#FFC72C]"
+              to="/login"
+            >
               Log in
             </Link>
           </p>
@@ -198,7 +230,10 @@ function SignUpPage() {
       {/* right side image */}
       <div
         className="hidden md:block bg-cover bg-center"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1503428593586-e225b39bddfe?q=80&w=1600&auto=format&fit=crop)' }}
+        style={{
+          backgroundImage:
+            'url(https://images.unsplash.com/photo-1503428593586-e225b39bddfe?q=80&w=1600&auto=format&fit=crop)',
+        }}
         aria-hidden="true"
       />
     </div>
