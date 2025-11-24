@@ -37,11 +37,25 @@ def create_event(data: EventAdminCreate, session: SessionDep, user: User = Depen
     return EventOrganizerRead.model_validate(post_event)
 
 #in theory only the admin should be able to list all events so I commented out the check, but it's there in case?
-@router.get("/events/list", response_model=list[EventList])
-def list_events(session: SessionDep):
-    listed_events = crud.list_events(session)
+@router.get("/events/pub/list", response_model=list[EventList])
+def list_public_events(session: SessionDep):
+    listed_public_events = crud.list_public_events(session)
     
-    return listed_events 
+    return listed_public_events
+
+@router.get("/events/list")
+def list_events(session: SessionDep, user: User = Depends(get_current_user)):
+    listed_events = crud.list_events_for_roles(session, user)
+
+    if user.role == "student":
+        return [EventPublicRead.model_validate(e) for e in listed_events]
+
+    elif user.role == "organizer":
+        return [EventPublicRead.model_validate(e) for e in listed_events]
+
+    elif user.role == "admin":
+        return [EventOrganizerRead.model_validate(e) for e in listed_events]
+
 
 @router.get("/events/random")
 def random_button(session: SessionDep):

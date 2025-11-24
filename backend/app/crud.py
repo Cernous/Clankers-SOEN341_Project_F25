@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict
 
-from sqlmodel import Session, select, func, Sequence
+from sqlmodel import Session, select, func, Sequence, or_
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
@@ -234,8 +234,29 @@ def create_event(session: Session, data: EventDB) -> EventDB:
 
     return event
 
-def list_events(session: Session) -> List[EventDB]:
+def list_public_events(session: Session) -> List[EventDB]:
+    statement = select(EventDB).where(EventDB.visibility == "public")
+    events = session.exec(statement).all()
+    return events
+
+def list_events_for_roles(session: Session, user: User) -> List[EventDB]:
     statement = select(EventDB)
+
+    if user.role == "student":
+        statement = statement.where(EventDB.visibility == "public")
+
+    elif user.role == "organizer":
+        statement = statement.where(
+            or_(
+                EventDB.visibility == "public",
+                EventDB.organizer_id == user.id
+            )
+        )
+
+    elif user.role == "admin":
+        pass  # Admins can see all events  
+
+    
     events = session.exec(statement).all()
     return events
 
