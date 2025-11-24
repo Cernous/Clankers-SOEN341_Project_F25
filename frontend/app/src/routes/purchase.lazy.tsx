@@ -7,7 +7,6 @@ import type { SimpleEvent } from '../data/events.sample'
 
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
-  validateSearch: (search: PurchaseSearch): PurchaseSearch => search,
 })
 
 type TicketTier = { id: string; name: string; price: number; limit?: number }
@@ -19,14 +18,7 @@ type EventInfo = {
   banner?: string
   tiers: Array<TicketTier>
 }
-type PurchaseSearch = {
-  eventId?: number | string
-  title?: string
-  price?: number
-  start?: string
-  location?: string
-  qty?: number
-}
+
 const FALLBACK: EventInfo = {
   id: 0,
   title: 'Event',
@@ -128,15 +120,13 @@ export default function PurchasePage() {
 
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {
-    const title = String(search.title ?? FALLBACK.title)
-    const priceNum = Number(search?.price ?? 0)
-    const when = search?.start
-      ? new Date(search.start).toLocaleString()
-      : FALLBACK.date
-    const where = String(search?.location ?? FALLBACK.where)
+    const title = String(search.title)
+    const priceNum = Number(search.price)
+    const when = search.start
+    const where = String(search.location)
 
     return {
-      id: search?.eventId ?? FALLBACK.id,
+      id: search.eventId,
       title,
       date: when,
       where,
@@ -149,7 +139,7 @@ export default function PurchasePage() {
       id: String(event.id),
       title: event.title,
       date: event.date, // pretty date string
-      dateISO: search.start ?? '', // or keep '' if not available
+      dateISO: search.start as string, // or keep '' if not available
       org: 'Organizer', // or map from backend if you have it
       where: event.where || 'TBD',
       category: 'Other', // or derive from tags
