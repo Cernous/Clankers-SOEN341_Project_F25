@@ -133,6 +133,7 @@ def get_event_attendees(session: Session, event_id: int) -> str | None:
             # remove the attendee if the user no longer exist
             session.delete(a)
             event.tickets_left += 1
+            event.ticket_count -= 1
             continue
         csv_str_data.append(",".join([user.first_name, user.last_name, user.email, a.ticket]))
 
@@ -156,6 +157,7 @@ def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session:
 
     #update the event tickets
     event.tickets_left -= 1
+    event.ticket_count += 1
 
     #update attendees
     attendee = Attendees(user_id=user_id, event_id=event_id, ticket=new_ticket)
@@ -192,6 +194,7 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
     filtered_tickets = [t for t in tickets_list if not t.startswith(f"{event_id}:")] # removes the ticket from the user
     user.tickets = ','.join(filtered_tickets) if filtered_tickets else None
     event.tickets_left += 1
+    event.ticket_count -= 1
 
     session.delete(attendee)
     session.add(user)

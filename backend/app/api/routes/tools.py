@@ -61,6 +61,22 @@ def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_curr
     user = session.exec(usersTable.filter(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # no refund for tickets that this person has for
+    # pre-deletion cleanup
+    statement = select(Attendees).where(Attendees.user_id == user.id)
+    attending_table = session.exec(statement).all()
+
+    for a in attending_table:
+        event = crud.get_event_by_id(session=session, event_id=a.event_id)
+        if event:
+            event.ticket_count -= 1
+            event.tickets_left += 1
+            session.add(event)
+            session.commit()
+            session.refresh(event)
+        session.delete(a)
+
     session.delete(user)
     session.commit()
     return {"message": "User deleted successfully"}
