@@ -31,6 +31,7 @@
             "module": "pytest",
             "args": [
                 "test/testinit.py",
+                "-s"
             ],
             "cwd": "${workspaceFolder}/backend"
         }
