@@ -182,9 +182,9 @@ def assign_ticket_to_user(
 
     # tickets are saved as a CSV
     if not user.tickets or user.tickets.strip() == "":
-        user.tickets = new_ticket
+        user.tickets = f"{event_id}:{new_ticket}"
     else:
-        user.tickets += f",{new_ticket}"
+        user.tickets += f",{event_id}:{new_ticket}"
 
     # update the event tickets
     event.tickets_left -= 1
@@ -237,6 +237,10 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
     session.refresh(event)
     return True
 
+def get_event_by_ticket(user_id: str, ticket_str:str, session: Session) -> EventDB | None:
+    statement = select(Attendees).where(Attendees.user_id == user_id).where(Attendees.ticket == ticket_str)
+    ticket_row = session.exec(statement).first()
+    return get_event_by_id(session=session, event_id=ticket_row.event_id)
 
 def get_all_pronoun(session: Session) -> Dict[str, int]:
     statement = select(User.pronouns, func.count()).group_by(User.pronouns)

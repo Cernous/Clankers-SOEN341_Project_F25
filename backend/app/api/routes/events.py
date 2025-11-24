@@ -65,7 +65,7 @@ def random_button(session: SessionDep):
 
 @router.get("/events/get_tickets")
 def get_tickets(current_user: CurrentUser):
-    if current_user.tickets != "":
+    if current_user.tickets != "" and isinstance(current_user.tickets, str):
         return current_user.tickets
     return None
 
