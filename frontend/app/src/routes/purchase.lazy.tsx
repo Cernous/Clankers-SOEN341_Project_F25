@@ -32,6 +32,14 @@ const FALLBACK: EventInfo = {
 const TAX_RATE = 0.149 // example GST+QST
 const CONV_FEE = 0.5 // example per-ticket fee
 
+type PurchaseSearch = {
+  title?: string
+  price?: number | string
+  start?: string
+  location?: string
+  eventId?: number | string
+  qty?: number | string
+}
 export default function PurchasePage() {
   const navigate = useNavigate()
   const { isSaved, toggleSave, claimTicket } = useUserData()
