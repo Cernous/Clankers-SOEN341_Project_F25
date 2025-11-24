@@ -18,12 +18,14 @@ function RouteComponent() {
   const [title, setTitle] = React.useState('')
   const [description, setDescription] = React.useState('')
   const [start, setStart] = React.useState('') // datetime-local
-  const [end, setEnd] = React.useState('')     // datetime-local (optional)
+  const [end, setEnd] = React.useState('') // datetime-local (optional)
   const [location, setLocation] = React.useState('')
   const [ticketType, setTicketType] = React.useState<'free' | 'paid' | ''>('')
   const [price, setPrice] = React.useState<number>(0)
   const [tags, setTags] = React.useState('') // comma-separated
-  const [visibility, setVisibility] = React.useState<'public' | 'private'>('public')
+  const [visibility, setVisibility] = React.useState<'public' | 'private'>(
+    'public',
+  )
 
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -35,7 +37,8 @@ function RouteComponent() {
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-2xl font-bold mb-2">Event Creation</h1>
         <p className="text-neutral-700">
-          You need to be logged in as an <strong>Organizer</strong> or <strong>Admin</strong> to create events.
+          You need to be logged in as an <strong>Organizer</strong> or{' '}
+          <strong>Admin</strong> to create events.
         </p>
       </main>
     )
@@ -50,6 +53,9 @@ function RouteComponent() {
     if (!title.trim()) return setError('Title is required')
     if (!description.trim()) return setError('Description is required')
     if (!start) return setError('Start time is required')
+    if (end && new Date(end) < new Date(start)) {
+      return setError('End time cannot be before start time.')
+    }
     if (!location.trim()) return setError('Location is required')
     if (!ticketType) return setError('Please choose Free or Paid')
     if (ticketType === 'paid' && (isNaN(price) || price <= 0)) {
@@ -71,9 +77,9 @@ function RouteComponent() {
           location,
           start_time: startISO,
           end_time: endISO,
-          tags: tags.trim() || undefined,     // backend accepts optional
-          pictures: undefined,                // not in form yet
-          visibility,                         // required by backend
+          tags: tags.trim() || undefined, // backend accepts optional
+          pictures: undefined, // not in form yet
+          visibility, // required by backend
           // organizer_id is set server-side for organizers; admins can specify but we’ll let backend handle
         },
       })
@@ -97,12 +103,23 @@ function RouteComponent() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
-        {error && <div className="rounded-md bg-red-50 text-red-700 px-3 py-2">{error}</div>}
-        {success && <div className="rounded-md bg-green-50 text-green-700 px-3 py-2">{success}</div>}
+        {error && (
+          <div className="rounded-md bg-red-50 text-red-700 px-3 py-2">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="rounded-md bg-green-50 text-green-700 px-3 py-2">
+            {success}
+          </div>
+        )}
 
         <div>
-          <label htmlFor="title" className="text-neutral-600 block font-bold">Title</label>
+          <label htmlFor="title" className="text-neutral-600 block font-bold">
+            Title
+          </label>
           <input
+            maxLength={50}
             id="title"
             type="text"
             placeholder="Title"
@@ -113,8 +130,14 @@ function RouteComponent() {
         </div>
 
         <div>
-          <label htmlFor="description" className="text-neutral-600 block font-bold">Description</label>
+          <label
+            htmlFor="description"
+            className="text-neutral-600 block font-bold"
+          >
+            Description
+          </label>
           <textarea
+            maxLength={100}
             id="description"
             placeholder="Description"
             value={description}
@@ -125,7 +148,9 @@ function RouteComponent() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-neutral-600 block font-bold">Start Time</label>
+            <label className="text-neutral-600 block font-bold">
+              Start Time
+            </label>
             <input
               type="datetime-local"
               value={start}
@@ -135,9 +160,12 @@ function RouteComponent() {
             />
           </div>
           <div>
-            <label className="text-neutral-600 block font-bold">End Time (optional)</label>
+            <label className="text-neutral-600 block font-bold">
+              End Time (optional)
+            </label>
             <input
               type="datetime-local"
+              min={start || undefined}
               value={end}
               onChange={(e) => setEnd(e.target.value)}
               className="rounded-xl border border-neutral-300 px-3 py-2"
@@ -147,8 +175,14 @@ function RouteComponent() {
         </div>
 
         <div>
-          <label htmlFor="location" className="text-neutral-600 block font-bold">Location</label>
+          <label
+            htmlFor="location"
+            className="text-neutral-600 block font-bold"
+          >
+            Location
+          </label>
           <input
+            maxLength={50}
             id="location"
             type="text"
             placeholder="Location"
@@ -160,10 +194,14 @@ function RouteComponent() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-neutral-600 block font-bold">Ticket Type</label>
+            <label className="text-neutral-600 block font-bold">
+              Ticket Type
+            </label>
             <select
               value={ticketType}
-              onChange={(e) => setTicketType(e.target.value as 'free' | 'paid' | '')}
+              onChange={(e) =>
+                setTicketType(e.target.value as 'free' | 'paid' | '')
+              }
               className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
             >
               <option value="">--Please choose an option--</option>
@@ -176,6 +214,7 @@ function RouteComponent() {
             <div>
               <label className="text-neutral-600 block font-bold">Price</label>
               <input
+                max={9999}
                 type="number"
                 step="0.01"
                 min={0}
@@ -190,10 +229,14 @@ function RouteComponent() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-neutral-600 block font-bold">Visibility</label>
+            <label className="text-neutral-600 block font-bold">
+              Visibility
+            </label>
             <select
               value={visibility}
-              onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+              onChange={(e) =>
+                setVisibility(e.target.value as 'public' | 'private')
+              }
               className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
             >
               <option value="public">Public</option>
@@ -202,8 +245,11 @@ function RouteComponent() {
           </div>
 
           <div>
-            <label className="text-neutral-600 block font-bold">Tags (comma separated)</label>
+            <label className="text-neutral-600 block font-bold">
+              Tags (comma separated)
+            </label>
             <input
+              maxLength={50}
               type="text"
               placeholder="e.g. tech, workshop, robotics"
               value={tags}

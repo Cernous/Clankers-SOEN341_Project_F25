@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends
-from sqlmodel import Session, func, select
+from fastapi import APIRouter
 from datetime import datetime, timedelta, date, timezone
 
 from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
@@ -9,10 +8,11 @@ import crud
 
 router = APIRouter()
 
+
 @router.post("/seed-database", tags=["Admin Utilities"])
 def seed_database(session: SessionDep):
-    
-    #user dummy data
+
+    # user dummy data
     users = [
         UserCreate(
             email="alice@example.com",
@@ -33,7 +33,7 @@ def seed_database(session: SessionDep):
             password="hashed_pw2",
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 8, 22),
-            tickets=None
+            tickets=None,
         ),
         UserCreate(
             email="jordan@example.com",
@@ -244,18 +244,19 @@ def seed_database(session: SessionDep):
             password="hashed_pw22",
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 4, 20),
-        )
+        ),
     ]
 
     for u in users:
-        user_sesh = crud.verify_unique_email_username(session=session, username=u.username, email=u.email)
+        user_sesh = crud.verify_unique_email_username(
+            session=session, username=u.username, email=u.email
+        )
         if not user_sesh:
             crud.create_user(session=session, user_create=u)
-    
-    uids = crud.get_uid_by_role(session=session, 
-                         role=UserRole.ORGANIZER)
 
-    #event dummy data
+    uids = crud.get_uid_by_role(session=session, role=UserRole.ORGANIZER)
+
+    # event dummy data
     now = datetime.now(timezone.utc)
     events = [
         EventAdminCreate(
@@ -272,8 +273,7 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[0]
-            
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="Cybersecurity Summit",
@@ -289,7 +289,7 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=30,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="AI and Ethics Forum",
@@ -305,7 +305,7 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="Machine Learning Bootcamp",
@@ -321,9 +321,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Cybersecurity Awareness Night",
             description="Learn how to secure your digital identity.",
@@ -338,9 +337,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=120,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Cloud Computing Expo",
             description="Showcase of cloud platforms and tools.",
@@ -355,9 +353,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=150,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Intro to Robotics",
             description="An interactive session exploring robotics fundamentals.",
@@ -372,9 +369,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=40,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Blockchain & Web3 Meetup",
             description="Exploring decentralized technologies and applications.",
@@ -389,9 +385,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=60,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Data Science Career Panel",
             description="Industry professionals discuss roles in data science.",
@@ -406,9 +401,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=200,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Game Development Jam",
             description="Team-based game building competition.",
@@ -423,9 +417,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Quantum Computing Intro",
             description="Beginner-friendly explanation of quantum logic and algorithms.",
@@ -440,9 +433,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=70,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="VR/AR Experience Fair",
             description="Try immersive virtual and augmented reality technologies.",
@@ -457,9 +449,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=90,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="AI Hackathon 48h",
             description="48-hour hackathon focused on AI applications.",
@@ -474,9 +465,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=120,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Python for Beginners",
             description="Absolute beginner-level Python programming workshop.",
@@ -491,9 +481,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=35,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Sustainability in Tech",
             description="Understanding energy-conscious software and hardware development.",
@@ -508,9 +497,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=75,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Deep Learning Advanced Workshop",
             description="Dive deep into neural networks, transformers, and optimization tricks.",
@@ -525,9 +513,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=45,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Tech Startup Pitch Night",
             description="Founders present their startup ideas to a panel of judges.",
@@ -542,9 +529,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Math for AI",
             description="Crash course on linear algebra and calculus foundations for AI.",
@@ -559,9 +545,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=80,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Networking Fundamentals",
             description="Introductory talk on network protocols and architectures.",
@@ -576,9 +561,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=60,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Mobile App Development Workshop",
             description="Build your first cross-platform mobile app.",
@@ -593,9 +577,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Databases Crash Course",
             description="Learn SQL, indexes, ACID, and schema design basics.",
@@ -610,9 +593,8 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=40,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="AI in Healthcare Symposium",
             description="Exploring the role of AI in diagnosis and treatment.",
@@ -627,11 +609,10 @@ def seed_database(session: SessionDep):
             state="upcoming",
             count_attendees=0,
             tickets_left=150,
-            organizer_id=uids[1]
-        )
+            organizer_id=uids[1],
+        ),
     ]
 
-    
     for e in events:
         session.add(EventDB(**e.model_dump()))
 

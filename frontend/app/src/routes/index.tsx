@@ -23,8 +23,6 @@ function HomePage() {
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let mounted = true
-
     const toMonthDay = (iso: string) => {
       const d = new Date(iso)
       return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
@@ -57,17 +55,15 @@ function HomePage() {
                     : 'Other',
         }))
 
-        if (mounted) setEvents(mapped)
+        setEvents(mapped)
       } catch (err: any) {
-        if (mounted) setError(err?.message ?? 'Failed to load events')
+        setError(err?.message ?? 'Failed to load events')
       } finally {
-        if (mounted) setLoading(false)
+        setLoading(false)
       }
     })()
 
-    return () => {
-      mounted = false
-    }
+    return () => {}
   }, [])
 
   const upcoming = events.slice(0, 3)
@@ -88,13 +84,14 @@ function HomePage() {
           </h2>
           <Link
             to="/events"
-            className="text-sm font-semibold text-[#7A0019] hover:text-[#600013] transition-colors duration-200"
+            className="text-sm font-semibold text-primary hover:text-primaryActive transition-colors duration-200"
           >
             See all
           </Link>
         </div>
-        <p className="mb-6 text-neutral-600 text-lg">
+        <p className="mb-6 text-neutral-700 text-lg relative">
           A quick look at what's next on campus.
+          <span className="pointer-events-none absolute -right-6 -top-6 h-10 w-10 rounded-full bg-accentSunny opacity-40 blur-sm" />
         </p>
 
         {loading && (

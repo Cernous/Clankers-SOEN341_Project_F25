@@ -1,8 +1,9 @@
 // src/components/events/EventPreviewModal.tsx
+import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
+import { CalendarService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
-import { Link } from '@tanstack/react-router'
 
 type Props = {
   event: SimpleEvent | null
@@ -24,9 +25,31 @@ export default function EventPreviewModal({
 
   const saved = isSaved(event.id)
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isLoggedIn) return
-    toggleSave(event)
+
+    const numericId = Number(event.id)
+    if (!Number.isFinite(numericId)) {
+      console.error('Invalid event id for calendar toggle:', event.id)
+      alert('Could not update your calendar for this event (invalid ID).')
+      return
+    }
+
+    try {
+      if (saved) {
+        // UNSAVE: remove from backend calendar
+        await CalendarService.deleteEventCalendar({ eventId: numericId })
+      } else {
+        // SAVE: add to backend calendar
+        await CalendarService.saveEventCalendar({ eventId: numericId })
+      }
+
+      // Keep local state (UserDataContext) in sync with backend
+      toggleSave(event)
+    } catch (e) {
+      console.error('calendar toggle failed', e)
+      alert('Could not update your calendar. Please try again.')
+    }
   }
 
   const handleClaim = () => {
@@ -67,10 +90,11 @@ export default function EventPreviewModal({
               disabled={!isLoggedIn}
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+                'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200',
                 isLoggedIn
                   ? saved
                     ? 'bg-red-50 text-[#7A0019] border border-red-200'
-                    : 'border border-neutral-300 hover:bg-neutral-50'
+                    : 'border border-neutral-300 text-neutral-700'
                   : 'bg-neutral-300 cursor-not-allowed text-white',
               ].join(' ')}
               title={isLoggedIn ? '' : 'Log in to save'}
@@ -84,8 +108,9 @@ export default function EventPreviewModal({
               disabled={!isLoggedIn}
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
+                'hover:bg-primary hover:text-white hover:shadow-lg cursor-pointer active:bg-primaryActive',
                 isLoggedIn
-                  ? 'bg-[#7A0019] hover:bg-[#600013]'
+                  ? 'bg-[#7A0019]'
                   : 'bg-neutral-400 cursor-not-allowed',
               ].join(' ')}
               title={isLoggedIn ? '' : 'Log in to claim tickets'}
@@ -108,7 +133,7 @@ export default function EventPreviewModal({
         <div className="flex justify-end gap-2 border-t border-neutral-200 p-3">
           <button
             onClick={onClose}
-            className="rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-semibold hover:bg-neutral-50 transition-colors duration-200"
+            className="rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-semibold hover:bg-neutral-50 transition-colors duration-200 cursor-pointer"
           >
             Close
           </button>

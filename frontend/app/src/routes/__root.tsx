@@ -1,8 +1,12 @@
 import '../setupApi'
 
-import { HeadContent, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Scripts,
+  createRootRoute,
+  useLocation,
+} from '@tanstack/react-router'
 import { UserDataProvider } from '../hooks/UserDataContext'
-
 
 import Header from '../components/Header'
 import { AuthProvider } from '../hooks/AuthContext'
@@ -23,23 +27,27 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-
-  // paths where the header should be hidden
-  const hideHeaderPaths = ['/login']
-  const shouldHideHeader = hideHeaderPaths.includes(location.pathname)
+  const isLogin = location.pathname === '/login'
 
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body
+        className={
+          isLogin
+            ? 'login-page h-screen overflow-hidden flex flex-col'
+            : 'min-h-screen'
+        }
+      >
         {/* Provide Auth globally */}
         <AuthProvider>
           <UserDataProvider>
-          {/* Conditionally render header (hide on /login) */}
-          {!shouldHideHeader && <Header />}
-          {children}
+            {/* Conditionally render header (hide on /login) */}
+            {/* Always show header, even on login */}
+            <Header />
+            {children}
           </UserDataProvider>
         </AuthProvider>
 
