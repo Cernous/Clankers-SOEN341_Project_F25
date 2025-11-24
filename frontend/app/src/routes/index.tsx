@@ -23,7 +23,7 @@ function HomePage() {
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let mounted = true
+    
 
     const toMonthDay = (iso: string) => {
       const d = new Date(iso)
@@ -66,7 +66,7 @@ function HomePage() {
     })()
 
     return () => {
-      mounted = false
+      
     }
   }, [])
 

@@ -43,7 +43,7 @@ function EventDetailPage() {
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let mounted = true
+   
     ;(async () => {
       setLoading(true)
       setErr(null)
@@ -73,7 +73,7 @@ function EventDetailPage() {
     })()
 
     return () => {
-      mounted = false
+      
     }
   }, [eventId])
 
