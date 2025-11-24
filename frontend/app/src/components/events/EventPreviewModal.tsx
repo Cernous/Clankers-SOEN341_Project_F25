@@ -37,9 +37,9 @@ export default function EventPreviewModal({
         if (!Number.isFinite(numericId)) return
         // Try public read (works for all roles)
         const res: any = await EventsService.readPublicEvent({ eventId: numericId })
-        if (!ignore && res && typeof res.price === 'number') {
+       
           setPrice(res.price)
-        }
+      
       } catch (e) {
         // If fetch fails, leave price null (treated as free/unknown)
         console.warn('Could not fetch event price for modal', e)
