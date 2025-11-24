@@ -61,6 +61,22 @@ def delete_user(user_id: str, session: SessionDep, user: User = Depends(get_curr
     user = session.exec(usersTable.filter(User.id == user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # no refund for tickets that this person has for
+    # pre-deletion cleanup
+    statement = select(Attendees).where(Attendees.user_id == user.id)
+    attending_table = session.exec(statement).all()
+
+    for a in attending_table:
+        event = crud.get_event_by_id(session=session, event_id=a.event_id)
+        if event:
+            event.ticket_count -= 1
+            event.tickets_left += 1
+            session.add(event)
+            session.commit()
+            session.refresh(event)
+        session.delete(a)
+
     session.delete(user)
     session.commit()
     return {"message": "User deleted successfully"}
@@ -146,6 +162,21 @@ def get_event_average_age(event_id: int, session: SessionDep, user: User = Depen
         (today - u.date_of_birth).days / 365 for u in attendees
     ) / len(attendees)
     return {"average_age": round(avg_age, 2)}
+
+@router.get("/analytics/attendees-list-export/{event_id}", tags=["Analytics", "events"])
+def get_attendees_list(event_id: int, session: SessionDep, user: CurrentUser):
+    """
+        Export an event list as a csv str to be written unto a file
+        Scope: "organizer"
+    """
+    event = crud.get_event_by_id(session=session, event_id=event_id)
+    if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your event! Stop being nosy")
+    csv_data = crud.get_event_attendees(session=session, event_id=event_id)
+    if csv_data:
+        return csv_data
+    else:
+        raise HTTPException(status_code=403, detail="No attendees to export")
 
 @router.get("/analytics/get-all-events/detail", tags=["Analytics", "events"])
 def get_all_events(session: SessionDep, current_user: CurrentUser):
