@@ -235,7 +235,7 @@ function EventDetailPage() {
     if (!uid) return 'Anonymous'
     return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
   }
-
+  
   // Utility: insert a newline every `n` characters, preserving existing newlines
   function wrapEveryN(str: string, n: number): string {
     if (n <= 0) return str
@@ -251,7 +251,27 @@ function EventDetailPage() {
       })
       .join('\n')
   }
+  
+ 
+  const heroUrl = (() => {
+    const pics = data.pictures
+    const first = Array.isArray(pics) ? pics[0] : pics
+    if (!first) {
+      // fallback image if no picture was uploaded
+      return 'https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop'
+    }
 
+    const s = String(first)
+
+    // If backend ever starts returning full data URLs, just use them directly
+    if (s.startsWith('data:')) {
+      return s 
+    }
+  // Otherwise assume it's raw base64 and add a JPEG prefix
+    return `data:image/jpeg;base64,${s}`
+    
+
+  })()
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
@@ -283,12 +303,10 @@ function EventDetailPage() {
       <div className="grid gap-8 md:grid-cols-[2fr,1fr]">
         {/* LEFT */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          <div
-            className="h-60 w-full bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop')",
-            }}
+          <img
+            src={heroUrl}
+            alt="Event banner"
+            className="w-full  object-cover"
           />
           <div className="p-6">
             <h1 className="text-3xl font-extrabold tracking-tight">
