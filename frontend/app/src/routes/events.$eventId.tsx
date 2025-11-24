@@ -351,7 +351,7 @@ function EventDetailPage() {
                   ? saved
                     ? 'bg-red-50 text-[#7A0019] border border-red-200'
                     : 'border border-neutral-300 text-neutral-700'
-                  : 'bg-neutral-300 cursor-not-allowed text-white',
+                  : 'bg-neutral-300 cursor-not-allowed text-black',
               ].join(' ')}
               title={isLoggedIn ? '' : 'Log in to save'}
             >
