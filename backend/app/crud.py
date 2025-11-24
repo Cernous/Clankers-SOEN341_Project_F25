@@ -1,23 +1,22 @@
-import uuid
 from typing import Any, Dict
-
-from sqlmodel import Session, select, func, Sequence
-from sqlalchemy import func
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
+from sqlmodel import Session, select, func, or_
 
 from core.security import get_password_hash, verify_password
 from models import EventDB, User, UserCreate, UserUpdate, Review, Attendees
 
+
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
-        user_create, 
-        update={"hashed_password": get_password_hash(user_create.password)}
+        user_create, update={"hashed_password": get_password_hash(user_create.password)}
     )
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -32,29 +31,40 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+
 def get_user_by_uid(*, session: Session, uid: str) -> User | None:
-    usersTable = select(User)
-    session_user = session.exec(usersTable.filter(User.id == uid)).first()
+    user_table = select(User)
+    session_user = session.exec(user_table.filter(User.id == uid)).first()
     return session_user
+
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(func.lower(User.email) == func.lower(email))
     session_user = session.exec(statement).first()
     return session_user
 
+
 def get_user_by_username(*, session: Session, username: str) -> User | None:
     statement = select(User).where(func.lower(User.username) == func.lower(username))
     session_user = session.exec(statement).first()
     return session_user
+
 
 def get_uid_by_role(*, session: Session, role: str) -> list[str] | None:
     statement = select(User).where(func.lower(User.role) == role).column(User.id)
     session_users = session.exec(statement).all()
     return [u.id for u in session_users]
 
-def verify_unique_email_username(*, session: Session, username: str, email: str) -> bool:
-    statement = session.exec(select(User).where(email == User.email or username == User.username)).all()
-    return True if statement else False
+
+def verify_unique_email_username(
+    *, session: Session, username: str, email: str
+) -> bool:
+    user_email_find = get_user_by_email(session=session, email=email)
+    user_name_find = get_user_by_username(session=session, username=username)
+    if user_name_find or user_email_find:
+        return True
+    return False
+
 
 def authenticate(*, session: Session, username: str, password: str) -> User | None:
     db_user = get_user_by_username(session=session, username=username)
@@ -64,19 +74,23 @@ def authenticate(*, session: Session, username: str, password: str) -> User | No
         return None
     return db_user
 
-def create_review(session: Session, user_id: str, event_id: int, desc: str, star: int) -> bool:
+
+def create_review(
+    session: Session, user_id: str, event_id: int, desc: str, star: int
+) -> bool:
     review = Review(
         user_id=user_id,
         event_id=event_id,
         desc=desc,
         star=star,
         date_created=datetime.utcnow(),
-        visible=True
+        visible=True,
     )
     session.add(review)
     session.commit()
     session.refresh(review)
-    return True    
+    return True
+
 
 def delete_review(session: Session, review_id: int) -> bool:
     review = session.get(Review, review_id)
@@ -86,45 +100,57 @@ def delete_review(session: Session, review_id: int) -> bool:
         return True
     return False
 
+
 def get_reviews_for_event(session: Session, event_id: int):
     statement = select(Review).where(Review.event_id == event_id)
     reviews = session.exec(statement).all()
 
     reviews_with_names = []
     for review in reviews:
-        reviews_with_names.append({
-            "review_id": review.id,
-            "user_id": review.user_id,
-            "first_name": review.user.first_name if review.user else None,
-            "desc": review.desc,
-            "star": review.star,
-            "date_created": review.date_created
-        })
+        reviews_with_names.append(
+            {
+                "review_id": review.id,
+                "user_id": review.user_id,
+                "first_name": review.user.first_name if review.user else None,
+                "desc": review.desc,
+                "star": review.star,
+                "date_created": review.date_created,
+            }
+        )
 
     return reviews_with_names
+
 
 def get_event_attendees(event_id: int, session: Session) -> List[Attendees]:
     statement = select(Attendees).where(Attendees.event_id == event_id)
     return session.exec(statement).all()
 
+
 def get_user_tickets(user_id: str, session: Session) -> Optional[str]:
     statement = select(User.tickets).where(User.id == user_id)
     return session.exec(statement).first()
 
+
 def get_event_attendance_count(event_id: int, session: Session) -> int:
-    statement = select(func.count()).select_from(Attendees).where(Attendees.event_id == event_id)
+    statement = (
+        select(func.count())
+        .select_from(Attendees)
+        .where(Attendees.event_id == event_id)
+    )
     return session.exec(statement).one()
+
 
 def get_all_users(session: Session) -> List[User]:
     statement = select(User)
     return session.exec(statement).all()
+
 
 def get_event_attendees(session: Session, event_id: int) -> str | None:
     statement = select(Attendees).where(Attendees.event_id == event_id)
     attendees = session.exec(statement).all()
 
     event = get_event_by_id(session=session, event_id=event_id)
-    
+
     csv_str_data: list = ["FIRST NAME, LAST NAME, EMAIL ADDRESS, TICKET"]
 
     for a in attendees:
@@ -135,31 +161,36 @@ def get_event_attendees(session: Session, event_id: int) -> str | None:
             event.tickets_left += 1
             event.ticket_count -= 1
             continue
-        csv_str_data.append(",".join([user.first_name, user.last_name, user.email, a.ticket]))
+        csv_str_data.append(
+            ",".join([user.first_name, user.last_name, user.email, a.ticket])
+        )
 
     session.add(event)
     session.commit()
     session.refresh(event)
     return None if len(csv_str_data) <= 1 else "\n".join(csv_str_data)
 
-def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session: Session) -> bool:
+
+def assign_ticket_to_user(
+    user_id: str, event_id: int, new_ticket: str, session: Session
+) -> bool:
     user = session.get(User, user_id)
     event = session.get(EventDB, event_id)
 
     if not user or not event or event.tickets_left is None or event.tickets_left <= 0:
         return False
 
-    #tickets are saved as a CSV
+    # tickets are saved as a CSV
     if not user.tickets or user.tickets.strip() == "":
-        user.tickets = new_ticket
+        user.tickets = f"{event_id}:{new_ticket}"
     else:
-        user.tickets += f",{new_ticket}"
+        user.tickets += f",{event_id}:{new_ticket}"
 
-    #update the event tickets
+    # update the event tickets
     event.tickets_left -= 1
     event.ticket_count += 1
 
-    #update attendees
+    # update attendees
     attendee = Attendees(user_id=user_id, event_id=event_id, ticket=new_ticket)
     session.add(attendee)
 
@@ -170,8 +201,9 @@ def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session:
     session.refresh(event)
     return True
 
+
 def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
-    #We can add refund functionality here
+    # We can add refund functionality here
     user = session.get(User, user_id)
     event = session.get(EventDB, event_id)
     if not user or not event:
@@ -179,20 +211,21 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
 
     if not user.tickets:
         return False
-    
-    #update attendees list
+
+    # update attendees list
     statement = select(Attendees).where(
-        Attendees.user_id == user_id,
-        Attendees.event_id == event_id
+        Attendees.user_id == user_id, Attendees.event_id == event_id
     )
     attendee = session.exec(statement).first()
     if not attendee:
         return False
 
-    #remove from the csv
-    tickets_list = user.tickets.split(',')
-    filtered_tickets = [t for t in tickets_list if not t.startswith(f"{event_id}:")] # removes the ticket from the user
-    user.tickets = ','.join(filtered_tickets) if filtered_tickets else None
+    # remove from the csv
+    tickets_list = user.tickets.split(",")
+    filtered_tickets = [
+        t for t in tickets_list if not t.startswith(f"{event_id}:")
+    ]  # removes the ticket from the user
+    user.tickets = ",".join(filtered_tickets) if filtered_tickets else None
     event.tickets_left += 1
     event.ticket_count -= 1
 
@@ -204,6 +237,11 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
     session.refresh(event)
     return True
 
+def get_event_by_ticket(user_id: str, ticket_str:str, session: Session) -> EventDB | None:
+    statement = select(Attendees).where(Attendees.user_id == user_id).where(Attendees.ticket == ticket_str)
+    ticket_row = session.exec(statement).first()
+    return get_event_by_id(session=session, event_id=ticket_row.event_id)
+
 def get_all_pronoun(session: Session) -> Dict[str, int]:
     statement = select(User.pronouns, func.count()).group_by(User.pronouns)
     results = session.exec(statement).all()
@@ -211,15 +249,24 @@ def get_all_pronoun(session: Session) -> Dict[str, int]:
 
 def get_event_average_age(event_id: int, session: Session) -> Optional[float]:
     stmt = (
-        select(func.avg(func.extract("year", func.age(func.current_date(), User.date_of_birth))))
+        select(
+            func.avg(
+                func.extract("year", func.age(func.current_date, User.date_of_birth))
+            )
+        )
         .join(Attendees, Attendees.user_id == User.id)
         .where(Attendees.event_id == event_id)
     )
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
 
+
 def get_all_average_age(session: Session) -> Optional[float]:
-    stmt = select(func.avg(func.extract("year", func.age(func.current_date(), User.date_of_birth))))
+    stmt = select(
+        func.avg(
+            func.extract("year", func.age(func.current_date, User.date_of_birth))
+        )
+    )
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
 
@@ -234,21 +281,48 @@ def create_event(session: Session, data: EventDB) -> EventDB:
 
     return event
 
-def list_events(session: Session) -> List[EventDB]:
-    statement = select(EventDB)
+
+def list_public_events(session: Session) -> List[EventDB]:
+    statement = select(EventDB).where(EventDB.visibility == "public")
     events = session.exec(statement).all()
     return events
 
-def get_random_event(session: Session) -> EventDB:
-    #select a random public event from the database of existing databases organized by the tag public
-    statement = select(EventDB).where(EventDB.visibility == "public").order_by(func.random()).limit(1)
 
-    #loads chosen random event into event variable
+def list_events_for_roles(session: Session, user: User) -> List[EventDB]:
+    statement = select(EventDB)
+
+    if user.role == "student":
+        statement = statement.where(EventDB.visibility == "public")
+
+    elif user.role == "organizer":
+        statement = statement.where(
+            or_(EventDB.visibility == "public", EventDB.organizer_id == user.id)
+        )
+
+    elif user.role == "admin":
+        pass  # Admins can see all events
+
+    events = session.exec(statement).all()
+    return events
+
+
+def get_random_event(session: Session) -> EventDB:
+    # select a random public event from the database of existing databases organized by the tag public
+    statement = (
+        select(EventDB)
+        .where(EventDB.visibility == "public")
+        .order_by(func.random())
+        .limit(1)
+    )
+
+    # loads chosen random event into event variable
     return session.exec(statement).first()
+
 
 def get_event_by_id(session: Session, event_id: int) -> Optional[EventDB]:
 
     return session.get(EventDB, event_id)
+
 
 def delete_event_by_id(session: Session, event_id: int) -> bool:
     event = session.get(EventDB, event_id)
@@ -258,7 +332,10 @@ def delete_event_by_id(session: Session, event_id: int) -> bool:
         return True
     return False
 
-def update_event_by_id(session: Session, event_id: int, updates: dict) -> Optional[EventDB]:
+
+def update_event_by_id(
+    session: Session, event_id: int, updates: dict
+) -> Optional[EventDB]:
     event = session.get(EventDB, event_id)
     if not event:
         return None
@@ -272,6 +349,7 @@ def update_event_by_id(session: Session, event_id: int, updates: dict) -> Option
 
     return event
 
+
 def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
     for key, value in updates.items():
         setattr(event, key, value)
@@ -282,16 +360,17 @@ def patch_event(session: Session, event: EventDB, updates: dict) -> EventDB:
 
     return event
 
+
 def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
-    user:User = get_user_by_uid(session=session, uid=user_id)
-    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
-    saved_events:list[str] = calendar_data.strip("[]").split(",")
+    user: User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data: str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events: list[str] = calendar_data.strip("[]").split(",")
 
     if not get_event_by_id(session=session, event_id=event_id):
         return False
-    
+
     saved_events.append(str(event_id))
-    saved_events=list(set(saved_events)) # removes duplicates
+    saved_events = list(set(saved_events))  # removes duplicates
     user.saved_events = "[" + (",".join(saved_events)) + "]"
     user.sqlmodel_update(user)
     session.add(user)
@@ -299,14 +378,18 @@ def save_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
     session.refresh(user)
     return True
 
-def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
-    user:User = get_user_by_uid(session=session, uid=user_id)
-    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
-    saved_events:list[str] = calendar_data.strip("[]").split(",")
 
-    if not get_event_by_id(session=session, event_id=event_id) or str(event_id) not in saved_events:
+def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool:
+    user: User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data: str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events: list[str] = calendar_data.strip("[]").split(",")
+
+    if (
+        not get_event_by_id(session=session, event_id=event_id)
+        or str(event_id) not in saved_events
+    ):
         return False
-    
+
     saved_events.remove(str(event_id))
     user.saved_events = "[" + (",".join(saved_events)) + "]"
     user.sqlmodel_update(user)
@@ -315,17 +398,18 @@ def delete_event_calendar(session: Session, user_id: str, event_id: int) -> bool
     session.refresh(user)
     return True
 
+
 def get_user_calendar(session: Session, user_id: str) -> list[EventDB]:
-    user:User = get_user_by_uid(session=session, uid=user_id)
-    calendar_data:str = user.saved_events if user.saved_events is not None else "[]"
-    saved_events:list[str] = calendar_data.strip("[]").split(",")
-    calendar:list[EventDB] = []
-    validated_calendar:list[str] = []
+    user: User = get_user_by_uid(session=session, uid=user_id)
+    calendar_data: str = user.saved_events if user.saved_events is not None else "[]"
+    saved_events: list[str] = calendar_data.strip("[]").split(",")
+    calendar: list[EventDB] = []
+    validated_calendar: list[str] = []
 
     for events_id_str in saved_events:
         if not events_id_str.isnumeric():
             continue
-        
+
         id = int(events_id_str)
         event = get_event_by_id(session=session, event_id=id)
         # if the event does not exists
