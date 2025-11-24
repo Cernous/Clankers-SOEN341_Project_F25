@@ -1,0 +1,38 @@
+name: Validate Code Quality Using Pylint
+
+on:
+    push:
+        branches: [backend]
+    pull_request:
+        branches: [main, backend]
+
+jobs:
+    validate-openapi:
+        name: Pylint
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v5
+            
+            - name: Set Up Python
+              uses: actions/setup-python@v6
+              with:
+                    python-version: '3.13.7'
+            
+            - name: Activate Virtual Environment
+              run: |
+                    cd backend
+                    python -m venv .venv
+                    source .venv/bin/activate
+            
+            - name: Install Dependencies
+              run: |
+                    cd backend
+                    pip install -r requirements.txt
+                    pip install pylint
+
+            - name: Start Pylint
+              run: |
+                    cd backend
+                    python -m pylint app/
