@@ -23,8 +23,6 @@ function HomePage() {
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    
-
     const toMonthDay = (iso: string) => {
       const d = new Date(iso)
       return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
@@ -65,9 +63,7 @@ function HomePage() {
       }
     })()
 
-    return () => {
-      
-    }
+    return () => {}
   }, [])
 
   const upcoming = events.slice(0, 3)

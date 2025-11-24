@@ -16,8 +16,6 @@ function CalendarPage() {
   const [items, setItems] = React.useState<Array<SimpleEvent>>([])
 
   React.useEffect(() => {
-  
-
     const toMonthDay = (iso: string) => {
       const d = new Date(iso)
       return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
@@ -58,9 +56,7 @@ function CalendarPage() {
       }
     })()
 
-    return () => {
-      
-    }
+    return () => {}
   }, [])
   async function handleRemove(ev: SimpleEvent) {
     try {

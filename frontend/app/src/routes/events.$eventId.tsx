@@ -43,7 +43,6 @@ function EventDetailPage() {
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-   
     ;(async () => {
       setLoading(true)
       setErr(null)
@@ -72,9 +71,7 @@ function EventDetailPage() {
       }
     })()
 
-    return () => {
-      
-    }
+    return () => {}
   }, [eventId])
 
   // fetch reviews for this event

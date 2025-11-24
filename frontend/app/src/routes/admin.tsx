@@ -69,7 +69,6 @@ function AdminDashboard() {
   }, [isLoggedIn, user, navigate])
 
   React.useEffect(() => {
-    
     ;(async () => {
       setLoading(true)
       setError(null)
@@ -147,9 +146,7 @@ function AdminDashboard() {
       }
     })()
 
-    return () => {
-      
-    }
+    return () => {}
   }, [])
 
   if (!isLoggedIn || user?.role !== 'admin') {
