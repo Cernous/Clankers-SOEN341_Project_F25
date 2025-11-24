@@ -3,7 +3,9 @@ import { createLazyFileRoute, useNavigate } from '@tanstack/react-router'
 import { CalendarService, EventsService } from '../client'
 import { useUserData } from '../hooks/UserDataContext'
 import { useAuth } from '../hooks/AuthContext'
+import type { purchaseSearchSchema } from './purchase'
 import type { SimpleEvent } from '../data/events.sample'
+import type { z } from 'zod'
 
 export const Route = createLazyFileRoute('/purchase')({
   component: PurchasePage,
@@ -32,14 +34,8 @@ const FALLBACK: EventInfo = {
 const TAX_RATE = 0.149 // example GST+QST
 const CONV_FEE = 0.5 // example per-ticket fee
 
-type PurchaseSearch = {
-  title?: string
-  price?: number | string
-  start?: string
-  location?: string
-  eventId?: number | string
-  qty?: number | string
-}
+type PurchaseSearch = z.infer<typeof purchaseSearchSchema>
+
 export default function PurchasePage() {
   const navigate = useNavigate()
   const { isSaved, toggleSave, claimTicket } = useUserData()
@@ -124,7 +120,9 @@ export default function PurchasePage() {
     })
   }
 
-  const search = Route.useSearch()
+  // Use the search type inferred from the schema in purchase.tsx
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  const search = Route.useSearch() as PurchaseSearch
 
   // Build a single-tier event from search (or fallback)
   const event: EventInfo = React.useMemo(() => {

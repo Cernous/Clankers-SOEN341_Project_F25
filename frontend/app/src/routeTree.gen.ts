@@ -12,6 +12,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as PurchaseRouteImport } from './routes/purchase'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as EventCreationRouteImport } from './routes/event-creation'
@@ -21,7 +22,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 
 const SignupLazyRouteImport = createFileRoute('/signup')()
-const PurchaseLazyRouteImport = createFileRoute('/purchase')()
 const PaymentSuccessLazyRouteImport = createFileRoute('/payment-success')()
 
 const SignupLazyRoute = SignupLazyRouteImport.update({
@@ -29,11 +29,6 @@ const SignupLazyRoute = SignupLazyRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/signup.lazy').then((d) => d.Route))
-const PurchaseLazyRoute = PurchaseLazyRouteImport.update({
-  id: '/purchase',
-  path: '/purchase',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/purchase.lazy').then((d) => d.Route))
 const PaymentSuccessLazyRoute = PaymentSuccessLazyRouteImport.update({
   id: '/payment-success',
   path: '/payment-success',
@@ -46,6 +41,11 @@ const TicketsRoute = TicketsRouteImport.update({
   path: '/tickets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchaseRoute = PurchaseRouteImport.update({
+  id: '/purchase',
+  path: '/purchase',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/purchase.lazy').then((d) => d.Route))
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -89,9 +89,9 @@ export interface FileRoutesByFullPath {
   '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRouteWithChildren
   '/login': typeof LoginRoute
+  '/purchase': typeof PurchaseRoute
   '/tickets': typeof TicketsRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
-  '/purchase': typeof PurchaseLazyRoute
   '/signup': typeof SignupLazyRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -102,9 +102,9 @@ export interface FileRoutesByTo {
   '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRouteWithChildren
   '/login': typeof LoginRoute
+  '/purchase': typeof PurchaseRoute
   '/tickets': typeof TicketsRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
-  '/purchase': typeof PurchaseLazyRoute
   '/signup': typeof SignupLazyRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -116,9 +116,9 @@ export interface FileRoutesById {
   '/event-creation': typeof EventCreationRoute
   '/events': typeof EventsRouteWithChildren
   '/login': typeof LoginRoute
+  '/purchase': typeof PurchaseRoute
   '/tickets': typeof TicketsRoute
   '/payment-success': typeof PaymentSuccessLazyRoute
-  '/purchase': typeof PurchaseLazyRoute
   '/signup': typeof SignupLazyRoute
   '/events/$eventId': typeof EventsEventIdRoute
 }
@@ -131,9 +131,9 @@ export interface FileRouteTypes {
     | '/event-creation'
     | '/events'
     | '/login'
+    | '/purchase'
     | '/tickets'
     | '/payment-success'
-    | '/purchase'
     | '/signup'
     | '/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
@@ -144,9 +144,9 @@ export interface FileRouteTypes {
     | '/event-creation'
     | '/events'
     | '/login'
+    | '/purchase'
     | '/tickets'
     | '/payment-success'
-    | '/purchase'
     | '/signup'
     | '/events/$eventId'
   id:
@@ -157,9 +157,9 @@ export interface FileRouteTypes {
     | '/event-creation'
     | '/events'
     | '/login'
+    | '/purchase'
     | '/tickets'
     | '/payment-success'
-    | '/purchase'
     | '/signup'
     | '/events/$eventId'
   fileRoutesById: FileRoutesById
@@ -171,9 +171,9 @@ export interface RootRouteChildren {
   EventCreationRoute: typeof EventCreationRoute
   EventsRoute: typeof EventsRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PurchaseRoute: typeof PurchaseRoute
   TicketsRoute: typeof TicketsRoute
   PaymentSuccessLazyRoute: typeof PaymentSuccessLazyRoute
-  PurchaseLazyRoute: typeof PurchaseLazyRoute
   SignupLazyRoute: typeof SignupLazyRoute
 }
 
@@ -184,13 +184,6 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupLazyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/purchase': {
-      id: '/purchase'
-      path: '/purchase'
-      fullPath: '/purchase'
-      preLoaderRoute: typeof PurchaseLazyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment-success': {
@@ -205,6 +198,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/tickets'
       preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchase': {
+      id: '/purchase'
+      path: '/purchase'
+      fullPath: '/purchase'
+      preLoaderRoute: typeof PurchaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -277,9 +277,9 @@ const rootRouteChildren: RootRouteChildren = {
   EventCreationRoute: EventCreationRoute,
   EventsRoute: EventsRouteWithChildren,
   LoginRoute: LoginRoute,
+  PurchaseRoute: PurchaseRoute,
   TicketsRoute: TicketsRoute,
   PaymentSuccessLazyRoute: PaymentSuccessLazyRoute,
-  PurchaseLazyRoute: PurchaseLazyRoute,
   SignupLazyRoute: SignupLazyRoute,
 }
 export const routeTree = rootRouteImport
