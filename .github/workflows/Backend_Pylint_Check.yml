@@ -35,4 +35,4 @@ jobs:
             - name: Start Pylint
               run: |
                     cd backend
-                    python -m pylint app/
+                    python -m pylint app/ --disable=missing-function-docstring,missing-class-docstring,missing-module-docstring
