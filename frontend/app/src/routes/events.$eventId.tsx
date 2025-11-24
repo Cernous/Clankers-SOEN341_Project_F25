@@ -251,7 +251,7 @@ function EventDetailPage() {
       .split('\n')
       .map((segment) => {
         if (segment.length <= n) return segment
-        const parts: string[] = []
+        const parts: Array<string> = []
         for (let i = 0; i < segment.length; i += n) {
           parts.push(segment.slice(i, i + n))
         }
