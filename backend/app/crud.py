@@ -119,6 +119,28 @@ def get_all_users(session: Session) -> List[User]:
     statement = select(User)
     return session.exec(statement).all()
 
+def get_event_attendees(session: Session, event_id: int) -> str | None:
+    statement = select(Attendees).where(Attendees.event_id == event_id)
+    attendees = session.exec(statement).all()
+
+    event = get_event_by_id(session=session, event_id=event_id)
+    
+    csv_str_data: list = ["FIRST NAME, LAST NAME, EMAIL ADDRESS, TICKET"]
+
+    for a in attendees:
+        user = get_user_by_uid(session=session, uid=a.user_id)
+        if not user:
+            # remove the attendee if the user no longer exist
+            session.delete(a)
+            event.tickets_left += 1
+            continue
+        csv_str_data.append(",".join([user.first_name, user.last_name, user.email, a.ticket]))
+
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+    return None if len(csv_str_data) <= 1 else "\n".join(csv_str_data)
+
 def assign_ticket_to_user(user_id: str, event_id: int, new_ticket: str, session: Session) -> bool:
     user = session.get(User, user_id)
     event = session.get(EventDB, event_id)

@@ -147,6 +147,21 @@ def get_event_average_age(event_id: int, session: SessionDep, user: User = Depen
     ) / len(attendees)
     return {"average_age": round(avg_age, 2)}
 
+@router.get("/analytics/attendees-list-export/{event_id}", tags=["Analytics", "events"])
+def get_attendees_list(event_id: int, session: SessionDep, user: CurrentUser):
+    """
+        Export an event list as a csv str to be written unto a file
+        Scope: "organizer"
+    """
+    event = crud.get_event_by_id(session=session, event_id=event_id)
+    if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your event! Stop being nosy")
+    csv_data = crud.get_event_attendees(session=session, event_id=event_id)
+    if csv_data:
+        return csv_data
+    else:
+        raise HTTPException(status_code=403, detail="No attendees to export")
+
 @router.get("/analytics/get-all-events/detail", tags=["Analytics", "events"])
 def get_all_events(session: SessionDep, current_user: CurrentUser):
     """
