@@ -371,7 +371,7 @@ function EventDetailPage() {
           {/* Creator Controls */}
           {isLoggedIn &&
             user?.role === 'creator' &&
-            data?.organizer_id === user?.id && (
+            data?.organizer_id === user.id && (
               <div className="rounded-2xl border border-neutral-200 bg-white p-5">
                 <h4 className="text-sm font-semibold mb-3 text-neutral-900">
                   Event Management
