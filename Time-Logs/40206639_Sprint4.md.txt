@@ -1,0 +1,8 @@
+Name:
+
+|Date|Task|Time Spent|Notes|
+|11-22-2025|Mod Queue|1|---|
+|11-22-2025|Presentation|3|---|
+|11-23-2025|User Acceptance Tests Written|1.5|---|
+|11-23-2025|Diagrams|8|Two architectures, UML for backend|
+|11-24-2025|Report and code reviews|9|Mix of things, difficult to list it all, formatted report, checked last minute bugs, QA testing etc.|
