@@ -1,4 +1,5 @@
 import { useAuth } from '../hooks/AuthContext'
+import myImg from '../images/image.png'
 
 export default function Hero() {
   const { isLoggedIn } = useAuth()
@@ -37,7 +38,13 @@ export default function Hero() {
       </div>
 
       <div className="mt-12 h-64 rounded-3xl bg-gradient-to-br from-primary/10 via-accentLavender/20 to-accentMint/20 md:h-80 lg:h-[420px] shadow-card flex items-center justify-center">
-        <div className="rounded-2xl bg-white/70 backdrop-blur-sm px-8 py-6 shadow-soft max-w-md">
+        <div className="rounded-2xl bg-white/70 backdrop-blur-sm px-8 py-6 shadow-sof">
+          <img
+            src={myImg}
+            alt="lolz"
+            style={{ width: '600px', height: '200' }}
+          />
+
           <p className="m-0 text-center text-sm text-neutral-700">
             Stay tuned: more interactive dashboards & creator tools are coming
             soon.
