@@ -124,7 +124,7 @@ function EventDetailPage() {
     category: 'Other',
   }
   const saved = isSaved(event.id)
- const numericId = Number(event.id)
+  const numericId = Number(event.id)
   const handleSave = async () => {
     if (!isLoggedIn) return
 

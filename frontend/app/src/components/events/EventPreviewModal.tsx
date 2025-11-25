@@ -1,6 +1,6 @@
 // src/components/events/EventPreviewModal.tsx
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../../hooks/AuthContext'
+// import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
 import { CalendarService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
@@ -18,8 +18,8 @@ export default function EventPreviewModal({
   isLoggedIn,
   onClose,
 }: Props) {
-  const { user } = useAuth()
-  const { isSaved, toggleSave, claimTicket } = useUserData()
+  // const { user } = useAuth()
+  const { isSaved, toggleSave } = useUserData()
 
   if (!event) return null
 
@@ -50,15 +50,6 @@ export default function EventPreviewModal({
       console.error('calendar toggle failed', e)
       alert('Could not update your calendar. Please try again.')
     }
-  }
-
-  const handleClaim = () => {
-    if (!isLoggedIn || !user) return
-    const owner = user.username || user.email || 'me'
-    const t = claimTicket(event, owner, 'free')
-    alert(
-      `Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`,
-    )
   }
 
   return (
@@ -103,8 +94,6 @@ export default function EventPreviewModal({
             >
               {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
-
-           
 
             {/* View details */}
             <Link
