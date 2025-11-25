@@ -42,7 +42,7 @@ function EventAnalyticsPage() {
         if (
           !isLoggedIn ||
           user?.role !== 'creator' ||
-          eventData?.organizer_id !== user?.id
+          eventData?.organizer_id !== user.id
         ) {
           setError(
             'You do not have permission to view analytics for this event.',
