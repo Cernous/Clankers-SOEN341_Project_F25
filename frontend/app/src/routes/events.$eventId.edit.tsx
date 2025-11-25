@@ -1,7 +1,4 @@
-import * as React from 'react'
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { EventsService } from '../client'
-import { useAuth } from '../hooks/AuthContext'
+import { Link, createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/events/$eventId/edit')({
   component: EditEventPage,
@@ -9,18 +6,6 @@ export const Route = createFileRoute('/events/$eventId/edit')({
 
 function EditEventPage() {
   const { eventId } = Route.useParams()
-  const navigate = useNavigate()
-  const { isLoggedIn, user } = useAuth()
-
-  const [data, setData] = React.useState<any | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [submitting, setSubmitting] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-
-  // Load event data
-  React.useEffect(() => {
-    // TODO: Implement event loading and editing functionality
-  }, [eventId])
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">

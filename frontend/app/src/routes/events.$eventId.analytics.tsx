@@ -39,10 +39,11 @@ function EventAnalyticsPage() {
         setEvent(eventData)
 
         // Check if user is the creator of this event
+        const eventDataTyped = eventData as any
         if (
           !isLoggedIn ||
           user?.role !== 'creator' ||
-          eventData?.organizer_id !== user.id
+          eventDataTyped?.organizer_id !== user.id
         ) {
           setError(
             'You do not have permission to view analytics for this event.',
@@ -60,7 +61,7 @@ function EventAnalyticsPage() {
           totalTicketsSold: Math.floor(Math.random() * 80) + 5,
           revenue:
             (Math.floor(Math.random() * 1000) + 100) *
-            (Number(eventData.price) || 0),
+            (Number(eventDataTyped.price) || 0),
           viewsOverTime: Array.from({ length: 7 }, (_, i) => ({
             date: new Date(
               Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
