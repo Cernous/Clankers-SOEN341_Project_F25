@@ -21,6 +21,7 @@ import type {
   CalendarSaveEventCalendarResponse,
   EventsCreateEventData,
   EventsCreateEventResponse,
+  EventsListPublicEventsResponse,
   EventsListEventsResponse,
   EventsRandomButtonResponse,
   EventsGetTicketsResponse,
@@ -283,8 +284,20 @@ export class EventsService {
   }
 
   /**
-   * List Events
+   * List Public Events
    * @returns EventList Successful Response
+   * @throws ApiError
+   */
+  public static listPublicEvents(): CancelablePromise<EventsListPublicEventsResponse> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: '/clank/events/pub/list',
+    })
+  }
+
+  /**
+   * List Events
+   * @returns unknown Successful Response
    * @throws ApiError
    */
   public static listEvents(): CancelablePromise<EventsListEventsResponse> {
@@ -416,7 +429,6 @@ export class EventsService {
    * Delete Event
    * @param data The data for the request.
    * @param data.eventId
-   * @param data.requestBody
    * @returns unknown Successful Response
    * @throws ApiError
    */
@@ -429,8 +441,6 @@ export class EventsService {
       path: {
         event_id: data.eventId,
       },
-      body: data.requestBody,
-      mediaType: 'application/json',
       errors: {
         422: 'Validation Error',
       },
@@ -879,9 +889,9 @@ export class UsersService {
   ): CancelablePromise<UsersCreateUserResponse> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: '/clank/users/signup/{userRole}',
+      url: '/clank/users/signup/{user_role}',
       path: {
-        userRole: data.userRole,
+        user_role: data.userRole,
       },
       body: data.requestBody,
       mediaType: 'application/json',

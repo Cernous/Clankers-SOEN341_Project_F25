@@ -73,7 +73,7 @@ export default function PurchasePage() {
     } catch (e) {
       // Backend rejected (e.g. not enough tickets, auth, etc.)
       console.error('addTicket failed', e)
-      alert('Could not issue ticket(s). Please try again.')
+      alert('Could not issue ticket(s). You need to login.')
       return
     }
     // Only navigate if we successfully created tickets

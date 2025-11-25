@@ -32,7 +32,7 @@ function HomePage() {
     ;(async () => {
       try {
         // GET /clank/events/list  (public)
-        const list = await EventsService.listEvents()
+        const list = await EventsService.listPublicEvents()
 
         // Map backend -> SimpleEvent (id not in list payload, so synthesize)
         const mapped: Array<SimpleEvent> = list.map((e: any) => ({

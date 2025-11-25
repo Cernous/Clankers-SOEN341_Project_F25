@@ -169,7 +169,9 @@ export type EventsCreateEventData = {
 
 export type EventsCreateEventResponse = unknown
 
-export type EventsListEventsResponse = Array<EventList>
+export type EventsListPublicEventsResponse = Array<EventList>
+
+export type EventsListEventsResponse = unknown
 
 export type EventsRandomButtonResponse = unknown
 
@@ -203,7 +205,6 @@ export type EventsPatchEventResponse = unknown
 
 export type EventsDeleteEventData = {
   eventId: number
-  requestBody: EventUpdate
 }
 
 export type EventsDeleteEventResponse = unknown

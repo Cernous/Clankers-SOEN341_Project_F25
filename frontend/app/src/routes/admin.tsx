@@ -78,7 +78,7 @@ function AdminDashboard() {
       try {
         // ------- EVENTS -------
         const base = await EventsService.listEvents()
-        const baseList = Array.isArray(base) ? (base as Array<any>) : []
+        const baseList = Array.isArray(base) ? base : []
 
         const enriched = await Promise.all(
           baseList.map(async (e) => {
