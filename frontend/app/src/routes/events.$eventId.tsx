@@ -104,7 +104,7 @@ function EventDetailPage() {
   if (!data) return <main className="p-6">Not found.</main>
 
   const fmtDateTime = (iso?: string) =>
-    iso ? new Date(iso+"Z").toLocaleString() : '—'
+    iso ? new Date(iso + 'Z').toLocaleString() : '—'
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
