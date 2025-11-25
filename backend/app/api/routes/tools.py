@@ -5,7 +5,17 @@ Tool related API endpoints
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
-from models import EventDB, Token, User, UserCreate, UserRegister, UserRole, Attendees, ModQueue, AddToQueue
+from models import (
+    EventDB,
+    Token,
+    User,
+    UserCreate,
+    UserRegister,
+    UserRole,
+    Attendees,
+    ModQueue,
+    AddToQueue,
+)
 from api.deps import (
     CurrentUser,
     SessionDep,
@@ -42,6 +52,7 @@ def get_all_organizers(session: SessionDep, user: User = Depends(get_current_use
     users_table = select(User)
     return session.exec(users_table.where(UserRole.ORGANIZER == User.role)).all()
 
+
 @router.post("/users/create/", tags=["Users"])
 def create_user(
     user_role: str, user_register: UserRegister, session: SessionDep, user: CurrentUser
@@ -73,9 +84,7 @@ def create_user(
 
     user_out = crud.create_user(session=session, user_create=user_in)
 
-    return {
-        "message": f"User {user_register.username} successfully created"
-    }
+    return {"message": f"User {user_register.username} successfully created"}
 
 
 @router.delete("/users/delete/{user_id}", tags=["Users"])
@@ -182,7 +191,12 @@ def get_event_average_age(
     if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not your event! Stop being nosy")
     today = date.today()
-    statement = select(User).join(Attendees, Attendees.user_id == User.id).where(Attendees.event_id == event_id).where(User.date_of_birth.isnot(None))
+    statement = (
+        select(User)
+        .join(Attendees, Attendees.user_id == User.id)
+        .where(Attendees.event_id == event_id)
+        .where(User.date_of_birth.isnot(None))
+    )
     attendees = session.exec(statement).all()
     if not attendees:
         return {"average_age": None}
