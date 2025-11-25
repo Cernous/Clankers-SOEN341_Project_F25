@@ -422,6 +422,34 @@ function EventDetailPage() {
                 </div>
               </div>
             )}
+
+          {/* Analytics Rectangle - Only for creators */}
+          {isLoggedIn &&
+            user?.role === 'creator' &&
+            data?.organizer_id === user.id && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+                <h4 className="text-sm font-semibold mb-3 text-neutral-900">
+                  Quick Analytics
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <div className="text-lg font-bold text-blue-600">
+                      {Math.floor(Math.random() * 50) + 10}
+                    </div>
+                    <div className="text-xs text-blue-600">Attendees</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <div className="text-lg font-bold text-green-600">
+                      {Math.floor(Math.random() * 10) + 20}
+                    </div>
+                    <div className="text-xs text-green-600">Avg Age</div>
+                  </div>
+                </div>
+                <button className="mt-3 w-full rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 transition-colors">
+                  Export Attendee List
+                </button>
+              </div>
+            )}
         </aside>
       </div>
 
