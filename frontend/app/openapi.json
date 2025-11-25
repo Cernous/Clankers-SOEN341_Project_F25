@@ -38,7 +38,7 @@
         }
       }
     },
-    "/clank/users/signup/{userRole}": {
+    "/clank/users/signup/{user_role}": {
       "post": {
         "tags": ["users"],
         "summary": "Create User",
@@ -46,10 +46,10 @@
         "operationId": "users-create_user",
         "parameters": [
           {
-            "name": "userRole",
+            "name": "user_role",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Userrole" }
+            "schema": { "type": "string", "title": "User Role" }
           }
         ],
         "requestBody": {
@@ -246,11 +246,11 @@
         "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
-    "/clank/events/list": {
+    "/clank/events/pub/list": {
       "get": {
         "tags": ["events"],
-        "summary": "List Events",
-        "operationId": "events-list_events",
+        "summary": "List Public Events",
+        "operationId": "events-list_public_events",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -259,12 +259,26 @@
                 "schema": {
                   "items": { "$ref": "#/components/schemas/EventList" },
                   "type": "array",
-                  "title": "Response Events-List Events"
+                  "title": "Response Events-List Public Events"
                 }
               }
             }
           }
         }
+      }
+    },
+    "/clank/events/list": {
+      "get": {
+        "tags": ["events"],
+        "summary": "List Events",
+        "operationId": "events-list_events",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/clank/events/random": {
@@ -437,14 +451,6 @@
             "schema": { "type": "integer", "title": "Event Id" }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/EventUpdate" }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -820,7 +826,7 @@
       "get": {
         "tags": ["Tools", "Analytics", "events"],
         "summary": "Get Event Average Age",
-        "description": "Get the average age of the attendees in a given event \nScope: \"organizer\"",
+        "description": "Get the average age of the attendees in a given event\nScope: \"organizer\"",
         "operationId": "Tools-get_event_average_age",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [

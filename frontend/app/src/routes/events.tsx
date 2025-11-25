@@ -55,7 +55,7 @@ function EventsPage() {
 
     ;(async () => {
       try {
-        const list = await EventsService.listEvents() // GET /clank/events/list
+        const list = await EventsService.listPublicEvents() // GET /clank/events/list
 
         const mapped: Array<SimpleEvent> = await Promise.all(
           list.map(async (e: any) => {
