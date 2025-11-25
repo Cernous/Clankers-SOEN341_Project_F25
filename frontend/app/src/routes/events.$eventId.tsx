@@ -1,7 +1,7 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { CalendarService, EventsService } from '../client'
+import { CalendarService, EventsService, ToolsService } from '../client'
 import { useAuth } from '../hooks/AuthContext'
 import { useUserData } from '../hooks/UserDataContext'
 import type { SimpleEvent } from '../data/events.sample'
@@ -42,9 +42,13 @@ function EventDetailPage() {
   // --- delete state ---
   const [deleting, setDeleting] = React.useState(false)
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
-
+  const [attendeesCount, setAttendeesCount] = React.useState<number | null>(
+    null,
+  )
+  const [avgAge, setAvgAge] = React.useState<number | null>(null)
+  const [exporting, setExporting] = React.useState(false)
   React.useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setLoading(true)
       setErr(null)
       try {
@@ -72,7 +76,7 @@ function EventDetailPage() {
       }
     })()
 
-    return () => {}
+    return () => { }
   }, [eventId])
 
   // fetch reviews for this event
@@ -98,7 +102,39 @@ function EventDetailPage() {
   React.useEffect(() => {
     loadReviews()
   }, [loadReviews])
+  React.useEffect(() => {
+    // only load quick analytics if we have event data and user is the creator
+    if (!data) return
+    if (
+      !isLoggedIn ||
+      user?.role !== 'creator' ||
+      data?.organizer_id !== user.id
+    ) {
+      return
+    }
 
+    ; (async () => {
+      try {
+        const csv = await ToolsService.getAttendeesList({
+          eventId: Number(eventId),
+        })
+
+        let count = 0
+        if (typeof csv === 'string' && csv.trim().length > 0) {
+          const lines = csv.trim().split('\n')
+          const dataLines = lines.slice(1).filter((line) => line.trim() !== '')
+          count = dataLines.length
+        }
+
+        setAttendeesCount(count)
+        setAvgAge(null) // no real age data yet
+      } catch (e) {
+        console.error('Quick analytics load failed', e)
+        setAttendeesCount(null)
+        setAvgAge(null)
+      }
+    })()
+  }, [data, isLoggedIn, user, eventId])
   if (loading) return <main className="p-6">Loading…</main>
   if (err) return <main className="p-6 text-red-600">{err}</main>
   if (!data) return <main className="p-6">Not found.</main>
@@ -253,6 +289,7 @@ function EventDetailPage() {
       .join('\n')
   }
 
+
   const heroUrl = (() => {
     const pics = data.pictures
     const first = Array.isArray(pics) ? pics[0] : pics
@@ -270,6 +307,43 @@ function EventDetailPage() {
     // Otherwise assume it's raw base64 and add a JPEG prefix
     return `data:image/jpeg;base64,${s}`
   })()
+  async function handleExportAttendees() {
+    if (
+      !isLoggedIn ||
+      user?.role !== 'creator' ||
+      data?.organizer_id !== user.id
+    ) {
+      alert('Only the event creator can export the attendee list.')
+      return
+    }
+
+    setExporting(true)
+    try {
+      const raw = await ToolsService.getAttendeesList({
+        eventId: Number(eventId),
+      })
+
+      // again, force to string
+      const csv = String(raw)
+
+      const blob = new Blob([csv], {
+        type: 'text/csv;charset=utf-8;',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `event-${eventId}-attendees.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Export attendee list failed', e)
+      alert('Could not export attendee list. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
@@ -434,22 +508,27 @@ function EventDetailPage() {
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="bg-blue-50 rounded-lg p-3">
                     <div className="text-lg font-bold text-blue-600">
-                      {Math.floor(Math.random() * 50) + 10}
+                      {attendeesCount != null ? attendeesCount : '—'}
                     </div>
                     <div className="text-xs text-blue-600">Attendees</div>
                   </div>
                   <div className="bg-green-50 rounded-lg p-3">
                     <div className="text-lg font-bold text-green-600">
-                      {Math.floor(Math.random() * 10) + 20}
+                      {avgAge != null ? avgAge.toFixed(1) : 'N/A'}
                     </div>
                     <div className="text-xs text-green-600">Avg Age</div>
                   </div>
                 </div>
-                <button className="mt-3 w-full rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 transition-colors">
-                  Export Attendee List
+                <button
+                  onClick={handleExportAttendees}
+                  disabled={exporting}
+                  className="mt-3 w-full rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 transition-colors disabled:opacity-60"
+                >
+                  {exporting ? 'Exporting…' : 'Export Attendee List'}
                 </button>
               </div>
             )}
+
         </aside>
       </div>
 

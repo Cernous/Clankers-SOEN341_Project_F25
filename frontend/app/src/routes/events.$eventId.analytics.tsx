@@ -1,7 +1,7 @@
 // src/routes/events.$eventId.analytics.tsx
 import * as React from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { EventsService } from '../client'
+import { EventsService, ToolsService } from '../client' // ⬅️ add the tools service here
 import { useAuth } from '../hooks/AuthContext'
 
 export const Route = createFileRoute('/events/$eventId/analytics')({
@@ -9,12 +9,8 @@ export const Route = createFileRoute('/events/$eventId/analytics')({
 })
 
 type AnalyticsData = {
-  totalViews: number
-  totalRegistrations: number
-  totalTicketsSold: number
-  revenue: number
-  viewsOverTime: Array<{ date: string; views: number }>
-  registrationsByDay: Array<{ date: string; registrations: number }>
+  attendeesCount: number
+  averageAge?: number | null // keep for later, show N/A for now
 }
 
 function EventAnalyticsPage() {
@@ -32,14 +28,15 @@ function EventAnalyticsPage() {
       setError(null)
 
       try {
-        // Load event details first
+        // 1) Load event details
         const eventData = await EventsService.readEvent({
           eventId: Number(eventId),
         })
         setEvent(eventData)
 
-        // Check if user is the creator of this event
         const eventDataTyped = eventData as any
+
+        // 2) Ensure user is allowed to see analytics
         if (
           !isLoggedIn ||
           user?.role !== 'creator' ||
@@ -51,32 +48,28 @@ function EventAnalyticsPage() {
           return
         }
 
-        // For now, we'll use mock analytics data since the backend doesn't have analytics endpoints yet
-        // In a real implementation, you would call something like:
-        // const analyticsData = await EventsService.getEventAnalytics({ eventId: Number(eventId) })
+        // 3) Call real attendees export endpoint (CSV)
+        //    Return example:
+        //    "FIRST NAME, LAST NAME, EMAIL ADDRESS, TICKET\nBob,Martinez,bob@example.com,ORD-NIH8QW-1"
+        const csv = await ToolsService.getAttendeesList({
+          eventId: Number(eventId),
+        })
 
-        const mockAnalytics: AnalyticsData = {
-          totalViews: Math.floor(Math.random() * 500) + 50,
-          totalRegistrations: Math.floor(Math.random() * 100) + 10,
-          totalTicketsSold: Math.floor(Math.random() * 80) + 5,
-          revenue:
-            (Math.floor(Math.random() * 1000) + 100) *
-            (Number(eventDataTyped.price) || 0),
-          viewsOverTime: Array.from({ length: 7 }, (_, i) => ({
-            date: new Date(
-              Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
-            ).toLocaleDateString(),
-            views: Math.floor(Math.random() * 50) + 5,
-          })),
-          registrationsByDay: Array.from({ length: 7 }, (_, i) => ({
-            date: new Date(
-              Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
-            ).toLocaleDateString(),
-            registrations: Math.floor(Math.random() * 15) + 1,
-          })),
+        let attendeesCount = 0
+
+        if (typeof csv === 'string' && csv.trim().length > 0) {
+          const lines = csv.trim().split('\n')
+          // First line = header; remaining non-empty lines = attendees
+          const dataLines = lines.slice(1).filter((line) => line.trim() !== '')
+          attendeesCount = dataLines.length
         }
 
-        setAnalytics(mockAnalytics)
+        const analyticsData: AnalyticsData = {
+          attendeesCount,
+          averageAge: null, // we don't have age data yet
+        }
+
+        setAnalytics(analyticsData)
       } catch (e: any) {
         setError(e?.message ?? 'Failed to load analytics data')
       } finally {
@@ -139,92 +132,37 @@ function EventAnalyticsPage() {
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      {/* Key metrics – REAL data only */}
+      <div className="grid gap-6 md:grid-cols-2 mb-8">
         <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="text-2xl font-bold text-[#7A0019]">
-            {analytics.totalViews}
+          <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+            Attendees
           </div>
-          <div className="text-sm text-neutral-600">Total Views</div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="text-2xl font-bold text-blue-600">
-            {analytics.totalRegistrations}
+          <div className="mt-2 text-3xl font-bold text-[#7A0019]">
+            {analytics.attendeesCount}
           </div>
-          <div className="text-sm text-neutral-600">Registrations</div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="text-2xl font-bold text-green-600">
-            {analytics.totalTicketsSold}
-          </div>
-          <div className="text-sm text-neutral-600">Tickets Sold</div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="text-2xl font-bold text-purple-600">
-            ${analytics.revenue.toFixed(2)}
-          </div>
-          <div className="text-sm text-neutral-600">Revenue</div>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Views Over Time */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <h3 className="text-lg font-semibold mb-4">
-            Views Over Time (Last 7 Days)
-          </h3>
-          <div className="space-y-3">
-            {analytics.viewsOverTime.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm text-neutral-600">{item.date}</span>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 bg-[#7A0019] rounded"
-                    style={{
-                      width: `${(item.views / Math.max(...analytics.viewsOverTime.map((v) => v.views))) * 100}px`,
-                    }}
-                  />
-                  <span className="text-sm font-medium w-8 text-right">
-                    {item.views}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="mt-1 text-sm text-neutral-600">
+            Total rows in your attendees export.
           </div>
         </div>
 
-        {/* Registrations by Day */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <h3 className="text-lg font-semibold mb-4">
-            Registrations by Day (Last 7 Days)
-          </h3>
-          <div className="space-y-3">
-            {analytics.registrationsByDay.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm text-neutral-600">{item.date}</span>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 bg-blue-600 rounded"
-                    style={{
-                      width: `${(item.registrations / Math.max(...analytics.registrationsByDay.map((r) => r.registrations))) * 100}px`,
-                    }}
-                  />
-                  <span className="text-sm font-medium w-8 text-right">
-                    {item.registrations}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+            Average Age
+          </div>
+          <div className="mt-2 text-3xl font-bold text-neutral-900">
+            {analytics.averageAge != null
+              ? `${analytics.averageAge.toFixed(1)} yrs`
+              : 'N/A'}
+          </div>
+          <div className="mt-1 text-sm text-neutral-600">
+            Age data not available yet.
           </div>
         </div>
       </div>
 
       {/* Event Details Summary */}
-      <div className="mt-8 rounded-2xl border border-neutral-200 bg-white p-6">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6">
         <h3 className="text-lg font-semibold mb-4">Event Summary</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -261,15 +199,8 @@ function EventAnalyticsPage() {
           </div>
         </div>
       </div>
-
-      {/* Note about mock data */}
-      <div className="mt-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-        <div className="text-sm text-yellow-800">
-          <strong>Note:</strong> This analytics data is currently simulated for
-          demonstration purposes. In a production environment, this would show
-          real analytics data from your event tracking system.
-        </div>
-      </div>
     </main>
   )
 }
+
+export default EventAnalyticsPage
