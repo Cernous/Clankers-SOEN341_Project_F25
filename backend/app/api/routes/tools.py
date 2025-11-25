@@ -2,6 +2,7 @@
 Tool related API endpoints
 """
 
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
@@ -22,7 +23,6 @@ from api.deps import (
     get_current_user,
 )
 
-from datetime import date
 from sqlmodel import select
 import crud
 
@@ -82,7 +82,8 @@ def create_user(
         role=user_role,
     )
 
-    user_out = crud.create_user(session=session, user_create=user_in)
+    if not crud.create_user(session=session, user_create=user_in):
+        return {"message": f"User {user_register.username} creation failed"}
 
     return {"message": f"User {user_register.username} successfully created"}
 
@@ -133,8 +134,8 @@ def get_num_users(session: SessionDep, current_user: CurrentUser):
     """
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role")
-    userTable = select(User)
-    result = len(session.exec(userTable).all())
+    user_table = select(User)
+    result = len(session.exec(user_table).all())
     return {"number": result}
 
 

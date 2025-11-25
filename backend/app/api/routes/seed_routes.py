@@ -1,10 +1,11 @@
-from fastapi import APIRouter
 from datetime import datetime, timedelta, date, timezone
-
-from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
-from app.core.base64_images import EVENT_IMAGES
-from api.deps import SessionDep
+from fastapi import APIRouter
 import crud
+
+from models import EventAdminCreate, UserCreate, EventDB, UserRole
+from core.base64_images import EVENT_IMAGES
+from api.deps import SessionDep
+
 
 router = APIRouter()
 

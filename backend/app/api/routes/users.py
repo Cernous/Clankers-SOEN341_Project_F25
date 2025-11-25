@@ -2,6 +2,7 @@
 User management related API endpoints
 """
 
+from datetime import timedelta
 from fastapi import APIRouter, HTTPException
 
 import crud
@@ -22,7 +23,6 @@ from api.deps import (
 
 from core.config import settings
 from core import security
-from datetime import timedelta
 
 # being called by the router in the previous directory
 router = APIRouter(prefix="/users", tags=["users"])
