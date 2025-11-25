@@ -6,6 +6,7 @@ import EventPreviewModal from '../components/events/EventPreviewModal'
 import { useAuth } from '../hooks/AuthContext'
 import { useUserData } from '../hooks/UserDataContext'
 import { EventsService, UsersService } from '../client'
+import { getHeroUrl } from '../utils/getHeroUrl'
 import type { SimpleEvent } from '../data/events.sample' // keep the type for UI
 
 export const Route = createFileRoute('/events')({
@@ -80,6 +81,7 @@ function EventsPage() {
               org: orgName,
               where: e.location ?? 'TBD',
               category: toCategory(e.tags),
+              heroUrl: getHeroUrl(e.pictures),
             }
           }),
         )

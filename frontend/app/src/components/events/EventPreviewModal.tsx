@@ -1,6 +1,5 @@
 // src/components/events/EventPreviewModal.tsx
 import { Link } from '@tanstack/react-router'
-// import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
 import { CalendarService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
@@ -9,7 +8,6 @@ type Props = {
   event: SimpleEvent | null
   isLoggedIn: boolean
   onClose: () => void
-  // onRegister no longer required; use claimTicket() from context
   onRegister?: (ev: SimpleEvent) => void
 }
 
@@ -18,12 +16,13 @@ export default function EventPreviewModal({
   isLoggedIn,
   onClose,
 }: Props) {
-  // const { user } = useAuth()
   const { isSaved, toggleSave } = useUserData()
 
   if (!event) return null
 
   const saved = isSaved(event.id)
+
+  const heroUrl = event.heroUrl
 
   const handleSave = async () => {
     if (!isLoggedIn) return
@@ -37,14 +36,11 @@ export default function EventPreviewModal({
 
     try {
       if (saved) {
-        // UNSAVE: remove from backend calendar
         await CalendarService.deleteEventCalendar({ eventId: numericId })
       } else {
-        // SAVE: add to backend calendar
         await CalendarService.saveEventCalendar({ eventId: numericId })
       }
 
-      // Keep local state (UserDataContext) in sync with backend
       toggleSave(event)
     } catch (e) {
       console.error('calendar toggle failed', e)
@@ -59,13 +55,20 @@ export default function EventPreviewModal({
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
     >
-      {/* stop click from closing */}
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl"
       >
-        {/* image placeholder with subtle improvement */}
-        <div className="h-40 bg-gradient-to-r from-neutral-100 to-neutral-200" />
+        {/* Image header */}
+        <div className="relative h-40 w-full overflow-hidden">
+          <img
+            src={heroUrl}
+            alt={event.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-black/0" />
+        </div>
 
         <div className="p-5">
           <h3 className="m-0 text-xl font-bold">{event.title}</h3>
@@ -75,7 +78,6 @@ export default function EventPreviewModal({
           <p className="mt-2 text-neutral-700">{event.date}</p>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            {/* Save / Unsave */}
             <button
               onClick={handleSave}
               disabled={!isLoggedIn}
@@ -95,7 +97,6 @@ export default function EventPreviewModal({
               {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
 
-            {/* View details */}
             <Link
               to="/events/$eventId"
               params={{ eventId: event.id }}
