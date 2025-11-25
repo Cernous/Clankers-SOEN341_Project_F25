@@ -1,22 +1,23 @@
 """
-    This is where we create the different sqlmodels for the responses and request arguments
+This is where we create the different sqlmodels for the responses and request arguments
 """
+import uuid
+from datetime import datetime, date
+from enum import Enum
+from typing import Optional, Literal
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel, Uuid
-from typing import Optional, Literal
-from enum import Enum
-from datetime import datetime, date, timezone
-from functools import partial
-import uuid
+from sqlmodel import Field, Relationship, SQLModel
 
 
-#-----------USER MODELS-------------#
+# -----------USER MODELS-------------#
+
 
 class UserRole(str, Enum):
     ADMIN = "admin"
     STUDENT = "student"
     ORGANIZER = "organizer"
+
 
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, max_length=255, index=True)
@@ -27,8 +28,10 @@ class UserBase(SQLModel):
     date_of_birth: Optional[date] = Field(default=None)
     role: UserRole = Field(default=UserRole.STUDENT)
 
+
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
+
 
 class UserRegister(SQLModel):
     username: str = Field(unique=True, max_length=255)
@@ -39,49 +42,61 @@ class UserRegister(SQLModel):
     pronouns: str | None = None
     date_of_birth: Optional[date] = Field(default=None)
 
+
 class UserUpdate(SQLModel):
     email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
     pronouns: str | None = None
 
+
 class UserUpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
+
 
 class GetUserProfile(UserBase):
     tickets: Optional[str] = None
     reviews: list["Review"] = Relationship(back_populates="user")
 
+
 class UserPublic(UserBase):
     id: str
+
 
 class TicketHandler(SQLModel):
     tickets: Optional[str] = None
 
+
 class Message(SQLModel):
     message: str
+
 
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
 
+
 class TokenPayload(SQLModel):
     sub: str | None = None
+
 
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
 
+
 class User(UserBase, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     hashed_password: str
     tickets: Optional[str] = None
+    saved_events: Optional[str] = None
     reviews: list["Review"] = Relationship(back_populates="user")
     # insert list of events and list of saved events
 
 
-#-----------EVENT MODELS-------------#
+# -----------EVENT MODELS-------------#
+
 
 class EventCreate(SQLModel):
     name: str
@@ -98,10 +113,12 @@ class EventCreate(SQLModel):
     capacity: int = 1
     tickets_left: int = 1
 
+
 class EventAdminCreate(EventCreate):
     organizer_id: Optional[str] = None
 
-#we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
+
+# we don't inherit the EvenrBase here so that if the organizer/admin only want to update one field they can
 class EventUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -114,7 +131,9 @@ class EventUpdate(SQLModel):
     visibility: str
     state: str
 
+
 class EventPublicRead(SQLModel):
+    id: int
     name: str
     description: str
     price: float
@@ -124,8 +143,10 @@ class EventPublicRead(SQLModel):
     tags: str | None = None
     pictures: str | None = None
     reviews: list["Review"] = Relationship(back_populates="event")
+    organizer_id: Optional[str] = None
 
-#not just for organizers, also for admins!
+
+# not just for organizers, also for admins!
 class EventOrganizerRead(SQLModel):
     name: str
     description: str
@@ -148,6 +169,7 @@ class EventOrganizerRead(SQLModel):
     tickets_left: int = 1
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
+
 
 class EventDB(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -172,8 +194,10 @@ class EventDB(SQLModel, table=True):
     reviews: list["Review"] = Relationship(back_populates="event")
     attendees: list["Attendees"] = Relationship(back_populates="event")
 
-#to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
+
+# to be used for listing events with minimal info, for a landing page kinda deal.  Inherits from EventBase and adds tags and pictures
 class EventList(SQLModel):
+    id: int
     name: str
     description: str
     price: float
@@ -182,26 +206,31 @@ class EventList(SQLModel):
     end_time: datetime
     tags: str | None = None
     pictures: str | None = None
+    organizer_id: str
 
-#-----------REVIEW MODELS-------------#
 
-#review table, one to many relationship with each event
+# -----------REVIEW MODELS-------------#
+
+
+# review table, one to many relationship with each event
 class Review(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    user_id: str = Field(foreign_key="user.id") 
+    user_id: str = Field(foreign_key="user.id")
     event_id: int = Field(foreign_key="eventdb.id")
     desc: str | None = None
     star: int | None = None
     date_created: datetime = Field(default_factory=None)
     visible: str = Field(default="private")
-    
-    #This may cause infinite recursion we have to test it
+
+    # This may cause infinite recursion we have to test it
     user: Optional["User"] = Relationship(back_populates="reviews")
     event: Optional["EventDB"] = Relationship(back_populates="reviews")
-   
-#lets admin hide reviews
+
+
+# lets admin hide reviews
 class ReviewModerate(SQLModel):
     visible: Literal["public", "private"] = "private"
+
 
 class ReviewRead(SQLModel):
     first_name: str | None = None
@@ -210,6 +239,7 @@ class ReviewRead(SQLModel):
     star: int | None = None
     date_created: Optional[datetime] = Field(default=None)
 
+
 class ReviewAdd(SQLModel):
     user_id: str
     event_id: int
@@ -217,7 +247,9 @@ class ReviewAdd(SQLModel):
     star: int | None = None
     date_created: datetime = Field(default_factory=None)
 
-#-----------ATTENDEES MODELS-------------#
+
+# -----------ATTENDEES MODELS-------------#
+
 
 class Attendees(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -226,7 +258,9 @@ class Attendees(SQLModel, table=True):
     ticket: str | None = None
     event: Optional["EventDB"] = Relationship(back_populates="attendees")
 
-#-----------ATTENDEES MODELS-------------#
+
+# -----------ATTENDEES MODELS-------------#
+
 
 class ModQueue(SQLModel, table=True):
     req: int = Field(primary_key=True)
@@ -234,9 +268,11 @@ class ModQueue(SQLModel, table=True):
     desc: str = Field(default=None)
     date_created: datetime = Field(default_factory=datetime.utcnow)
 
+
 class AddToQueue(SQLModel):
     user_id: str
     desc: str
+
 
 class GetQueue(SQLModel):
     req: int = Field(primary_key=True)

@@ -1,8 +1,10 @@
 // src/routes/events.$eventId.tsx
 import * as React from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { EventsService } from '../client'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { CalendarService, EventsService } from '../client'
 import { useAuth } from '../hooks/AuthContext'
+import { useUserData } from '../hooks/UserDataContext'
+import type { SimpleEvent } from '../data/events.sample'
 
 export const Route = createFileRoute('/events/$eventId')({
   component: EventDetailPage,
@@ -27,12 +29,13 @@ function EventDetailPage() {
   const [loading, setLoading] = React.useState(true)
 
   // --- reviews state ---
-  const [reviews, setReviews] = React.useState<ReviewItem[]>([])
+  const [reviews, setReviews] = React.useState<Array<ReviewItem>>([])
   const [reviewsLoading, setReviewsLoading] = React.useState(true)
   const [reviewErr, setReviewErr] = React.useState<string | null>(null)
 
   // --- new review form ---
   const [reviewText, setReviewText] = React.useState('')
+  const MAX_REVIEW_CHARS = 500
   const [reviewStar, setReviewStar] = React.useState<number>(5)
   const [submitting, setSubmitting] = React.useState(false)
 
@@ -41,20 +44,35 @@ function EventDetailPage() {
   const [deleteErr, setDeleteErr] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    let mounted = true
-      ; (async () => {
+    ;(async () => {
+      setLoading(true)
+      setErr(null)
+      try {
+        let res: any
+
+        // 1) Try the protected endpoint
         try {
-          const res = await EventsService.readEvent({ eventId: Number(eventId) })
-          if (mounted) setData(res)
+          res = await EventsService.readEvent({ eventId: Number(eventId) })
         } catch (e: any) {
-          if (mounted) setErr(e?.message ?? 'Failed to load event')
-        } finally {
-          if (mounted) setLoading(false)
+          // 2) If unauthorized/forbidden, fall back to public endpoint
+          if (e?.status === 401 || e?.status === 403) {
+            res = await EventsService.readPublicEvent({
+              eventId: Number(eventId),
+            })
+          } else {
+            throw e
+          }
         }
-      })()
-    return () => {
-      mounted = false
-    }
+
+        setData(res)
+      } catch (e: any) {
+        setErr(e?.message ?? 'Failed to load event')
+      } finally {
+        setLoading(false)
+      }
+    })()
+
+    return () => {}
   }, [eventId])
 
   // fetch reviews for this event
@@ -62,9 +80,13 @@ function EventDetailPage() {
     setReviewsLoading(true)
     setReviewErr(null)
     try {
-      const res = await EventsService.getEventReviews({ eventId: Number(eventId) })
-      const list: ReviewItem[] = Array.isArray(res) ? (res as any) : ((res as any)?.reviews ?? [])
-      setReviews(list ?? [])
+      const res = await EventsService.getEventReviews({
+        eventId: Number(eventId),
+      })
+      const list: Array<ReviewItem> = Array.isArray(res)
+        ? (res as any)
+        : ((res as any)?.reviews ?? [])
+      setReviews(list)
     } catch (e: any) {
       setReviewErr(e?.message ?? 'Failed to load reviews')
       setReviews([])
@@ -81,15 +103,57 @@ function EventDetailPage() {
   if (err) return <main className="p-6 text-red-600">{err}</main>
   if (!data) return <main className="p-6">Not found.</main>
 
-  const fmtDateTime = (iso?: string) => (iso ? new Date(iso).toLocaleString() : '—')
+  const fmtDateTime = (iso?: string) =>
+    iso ? new Date(iso+"Z").toLocaleString() : '—'
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
 
+  // EXACT same logic as modal (transform backend data -> SimpleEvent then reuse)
+  const { isSaved, toggleSave } = useUserData()
+  const event: SimpleEvent = {
+    id: String(data.id),
+    title: String(data.name || 'Event'),
+    date: new Date(data.start_time).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }),
+    dateISO: String(data.start_time).slice(0, 10),
+    org: 'Organizer',
+    where: String(data.location || 'TBD'),
+    category: 'Other',
+  }
+  const saved = isSaved(event.id)
+  const numericId = Number(event.id)
+  const handleSave = async () => {
+    if (!isLoggedIn) return
+
+    // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
+    if (saved) {
+      await CalendarService.deleteEventCalendar({ eventId: numericId })
+      toggleSave(event)
+      return
+    }
+    try {
+      const numericId = Number(event.id)
+      if (!Number.isFinite(numericId)) {
+        console.error('Invalid event id for calendar save:', event.id)
+        alert('Could not save this event to your calendar (invalid ID).')
+        return
+      }
+
+      await CalendarService.saveEventCalendar({ eventId: numericId })
+
+      // Only update local state if backend call succeeded
+      toggleSave(event)
+    } catch (e) {
+      console.error('saveEventCalendar failed', e)
+      alert('Could not save this event to your calendar. Please try again.')
+    }
+  }
+
   // ---- admin-only check ----
-  const isAdmin =
-    isLoggedIn &&
-    (user?.role === 'admin')
+  const isAdmin = isLoggedIn && user?.role === 'admin'
 
   // ---- delete handler (admin only) ----
   async function handleDelete() {
@@ -128,8 +192,6 @@ function EventDetailPage() {
     }
   }
 
-
-
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!isLoggedIn || !user?.id) {
@@ -140,15 +202,23 @@ function EventDetailPage() {
       setReviewErr('Please write a comment.')
       return
     }
+    if (reviewText.length > MAX_REVIEW_CHARS) {
+      setReviewErr('Comment is too long. Please stay within 500 characters.')
+      return
+    }
+
+    // Force newline every 100 characters before sending
+    const wrapped = wrapEveryN(reviewText.trim(), 100)
+
     setSubmitting(true)
     setReviewErr(null)
     try {
       await EventsService.addReview({
         requestBody: {
-          desc: reviewText.trim(),
+          desc: wrapped.slice(0, MAX_REVIEW_CHARS),
           star: Math.max(1, Math.min(5, Number(reviewStar))),
           date_created: new Date().toISOString(),
-          user_id: String(user.username ?? user.id),
+          user_id: String(user.username),
           event_id: Number(eventId),
         },
       })
@@ -167,6 +237,39 @@ function EventDetailPage() {
     return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
   }
 
+  // Utility: insert a newline every `n` characters, preserving existing newlines
+  function wrapEveryN(str: string, n: number): string {
+    if (n <= 0) return str
+    return str
+      .split('\n')
+      .map((segment) => {
+        if (segment.length <= n) return segment
+        const parts: Array<string> = []
+        for (let i = 0; i < segment.length; i += n) {
+          parts.push(segment.slice(i, i + n))
+        }
+        return parts.join('\n')
+      })
+      .join('\n')
+  }
+
+  const heroUrl = (() => {
+    const pics = data.pictures
+    const first = Array.isArray(pics) ? pics[0] : pics
+    if (!first) {
+      // fallback image if no picture was uploaded
+      return 'https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop'
+    }
+
+    const s = String(first)
+
+    // If backend ever starts returning full data URLs, just use them directly
+    if (s.startsWith('data:')) {
+      return s
+    }
+    // Otherwise assume it's raw base64 and add a JPEG prefix
+    return `data:image/jpeg;base64,${s}`
+  })()
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
@@ -180,7 +283,9 @@ function EventDetailPage() {
         {/* Admin-only delete button */}
         {isAdmin && (
           <div className="flex items-center gap-2">
-            {deleteErr && <span className="text-sm text-red-600">{deleteErr}</span>}
+            {deleteErr && (
+              <span className="text-sm text-red-600">{deleteErr}</span>
+            )}
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -196,17 +301,19 @@ function EventDetailPage() {
       <div className="grid gap-8 md:grid-cols-[2fr,1fr]">
         {/* LEFT */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          <div
-            className="h-60 w-full bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop')",
-            }}
+          <img
+            src={heroUrl}
+            alt="Event banner"
+            className="w-full  object-cover"
           />
           <div className="p-6">
-            <h1 className="text-3xl font-extrabold tracking-tight">{data.name}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              {data.name}
+            </h1>
             {!!data.description && (
-              <p className="mt-3 text-neutral-700 leading-relaxed">{data.description}</p>
+              <p className="mt-3 text-neutral-700 leading-relaxed">
+                {data.description}
+              </p>
             )}
             {data.tags && (
               <div className="mt-4 flex flex-wrap gap-2">
@@ -232,12 +339,42 @@ function EventDetailPage() {
           <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Event info</h3>
             <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-              <li><span className="font-medium">Starts:</span> {fmtDateTime(data.start_time)}</li>
-              <li><span className="font-medium">Ends:</span> {fmtDateTime(data.end_time)}</li>
-              <li><span className="font-medium">Location:</span> {data.location ?? 'TBD'}</li>
-              <li><span className="font-medium">Price:</span> {fmtPrice(unitPrice)}</li>
+              <li>
+                <span className="font-medium">Starts:</span>{' '}
+                {fmtDateTime(data.start_time)}
+              </li>
+              <li>
+                <span className="font-medium">Ends:</span>{' '}
+                {fmtDateTime(data.end_time)}
+              </li>
+              <li>
+                <span className="font-medium">Location:</span>{' '}
+                {data.location ?? 'TBD'}
+              </li>
+              <li>
+                <span className="font-medium">Price:</span>{' '}
+                {fmtPrice(unitPrice)}
+              </li>
             </ul>
 
+            <button
+              onClick={handleSave}
+              disabled={!isLoggedIn}
+              className={[
+                'mt-5 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 active:bg-neutral-200',
+                isLoggedIn
+                  ? 'hover:bg-neutral-100 hover:shadow-md cursor-pointer'
+                  : '',
+                isLoggedIn
+                  ? saved
+                    ? 'bg-red-50 text-[#7A0019] border border-red-200'
+                    : 'border border-neutral-300 text-black'
+                  : 'bg-neutral-300 cursor-not-allowed text-black',
+              ].join(' ')}
+              title={isLoggedIn ? '' : 'Log in to save'}
+            >
+              {saved ? 'Unsave' : 'Save to Calendar'}
+            </button>
             <Link
               to="/purchase"
               search={{
@@ -245,10 +382,10 @@ function EventDetailPage() {
                 title: String(data.name),
                 price: unitPrice,
                 qty: 1,
-                start: data.start_time,          
-                location: data.location ?? '',   
+                start: data.start_time,
+                location: data.location ?? '',
               }}
-              className="mt-5 block w-full rounded-xl bg-[#7A0019] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#a30025]"
+              className="mt-3 block w-full rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Get Ticket
             </Link>
@@ -259,6 +396,32 @@ function EventDetailPage() {
               Tip: Add this event to your calendar so you don’t miss it.
             </p>
           </div>
+          {/* Creator Controls */}
+          {isLoggedIn &&
+            user?.role === 'creator' &&
+            data?.organizer_id === user.id && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+                <h4 className="text-sm font-semibold mb-3 text-neutral-900">
+                  Event Management
+                </h4>
+                <div className="space-y-2">
+                  <Link
+                    to="/events/$eventId/edit"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  >
+                    Edit Event
+                  </Link>
+                  <Link
+                    to="/events/$eventId/analytics"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                  >
+                    View Analytics
+                  </Link>
+                </div>
+              </div>
+            )}
         </aside>
       </div>
 
@@ -268,15 +431,17 @@ function EventDetailPage() {
           <h3 className="text-lg font-semibold">Comments</h3>
           <button
             onClick={loadReviews}
-            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-50"
+            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-50 cursor-pointer"
             title="Refresh comments"
           >
             Refresh
           </button>
         </div>
 
-        <div className="mt-4 space-y-5">
-          {reviewsLoading && <div className="text-sm text-neutral-600">Loading…</div>}
+        <div className="mt-4 space-y-5 max-h-96 overflow-y-auto pr-2">
+          {reviewsLoading && (
+            <div className="text-sm text-neutral-600">Loading…</div>
+          )}
           {reviewErr && <div className="text-sm text-red-600">{reviewErr}</div>}
           {!reviewsLoading && !reviews.length && !reviewErr && (
             <div className="text-sm text-neutral-600">No comments yet.</div>
@@ -287,40 +452,64 @@ function EventDetailPage() {
               <div className="flex-1">
                 <div className="text-sm">
                   <span className="font-semibold">{maskUser(r.user_id)}</span>{' '}
-                  <span className="text-neutral-500">· {fmtDateTime(r.date_created)}</span>{' '}
+                  <span className="text-neutral-500">
+                    · {fmtDateTime(r.date_created)}
+                  </span>{' '}
                   {typeof r.star === 'number' && (
                     <span className="ml-1 text-yellow-600">
                       {'★'.repeat(Math.max(1, Math.min(5, r.star)))}
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-neutral-800">{r.desc}</p>
+                <p className="mt-1 text-sm text-neutral-800 break-words whitespace-pre-wrap">
+                  {wrapEveryN(String(r.desc || ''), 100)}
+                </p>
               </div>
             </div>
           ))}
         </div>
 
-        <form onSubmit={submitReview} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            type="text"
-            placeholder={isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'}
-            value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            disabled={!isLoggedIn || submitting}
-            className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
-          />
+        <form
+          onSubmit={submitReview}
+          className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center"
+        >
+          <div className="flex-1 flex flex-col">
+            <input
+              type="text"
+              placeholder={
+                isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'
+              }
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              disabled={!isLoggedIn || submitting}
+              maxLength={MAX_REVIEW_CHARS}
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
+            />
+            <div className="mt-1 flex justify-between text-xs text-neutral-500">
+              <span>
+                {reviewText.length}/{MAX_REVIEW_CHARS}
+              </span>
+              {reviewText.length === MAX_REVIEW_CHARS && (
+                <span className="text-red-600">Max length reached</span>
+              )}
+            </div>
+          </div>
           <select
             value={reviewStar}
             onChange={(e) => setReviewStar(Number(e.target.value))}
             disabled={!isLoggedIn || submitting}
-            className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100"
+            className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100 cursor-pointer disabled:cursor-not-allowed"
           >
-            {[5, 4, 3, 2, 1].map(s => <option key={s} value={s}>{s}★</option>)}
+            {[5, 4, 3, 2, 1].map((s) => (
+              <option key={s} value={s}>
+                {s}★
+              </option>
+            ))}
           </select>
           <button
             type="submit"
             disabled={!isLoggedIn || submitting}
-            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60"
+            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? 'Posting…' : 'Post'}
           </button>

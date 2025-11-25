@@ -7,7 +7,5 @@ export type SimpleEvent = {
   dateISO: string
   org: string
   where: string
-  category: "Workshop" | "Music" | "Sports" | "Film" | "Arts" | "Other"
+  category: 'Workshop' | 'Music' | 'Sports' | 'Film' | 'Arts' | 'Other'
 }
-
-

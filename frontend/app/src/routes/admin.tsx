@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/AuthContext'
-import { EventsService,ToolsService } from '../client'
+import { EventsService, ToolsService } from '../client'
 
 export const Route = createFileRoute('/admin')({
   component: AdminDashboard,
@@ -50,10 +50,10 @@ function AdminDashboard() {
 
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [events, setEvents] = React.useState<AdminEvent[]>([])
+  const [events, setEvents] = React.useState<Array<AdminEvent>>([])
 
   // users state
-  const [users, setUsers] = React.useState<AdminUser[]>([])
+  const [users, setUsers] = React.useState<Array<AdminUser>>([])
   const [usersLoading, setUsersLoading] = React.useState(true)
   const [usersError, setUsersError] = React.useState<string | null>(null)
 
@@ -69,7 +69,6 @@ function AdminDashboard() {
   }, [isLoggedIn, user, navigate])
 
   React.useEffect(() => {
-    let mounted = true
     ;(async () => {
       setLoading(true)
       setError(null)
@@ -79,24 +78,26 @@ function AdminDashboard() {
       try {
         // ------- EVENTS -------
         const base = await EventsService.listEvents()
-        const baseList = Array.isArray(base) ? (base as any[]) : []
+        const baseList = Array.isArray(base) ? (base as Array<any>) : []
 
         const enriched = await Promise.all(
           baseList.map(async (e) => {
             const id = Number(e.id ?? e.event_id)
             try {
-              const detail = (await EventsService.readEvent({ eventId: id })) as EventDetail
+              const detail = (await EventsService.readEvent({
+                eventId: id,
+              })) as EventDetail
               return {
                 id,
-                name: detail?.name ?? e.name ?? 'Untitled',
-                location: detail?.location ?? e.location ?? null,
-                start_time: detail?.start_time ?? e.start_time,
-                end_time: detail?.end_time ?? e.end_time,
-                organizer_id: detail?.organizer_id ?? e.organizer_id ?? null,
-                count_attendees: Number(detail?.count_attendees ?? 0),
-                tickets_left: Number(detail?.tickets_left ?? 0),
-                price: detail?.price ?? e.price ?? null,
-                tags: detail?.tags ?? e.tags ?? null,
+                name: detail.name,
+                location: detail.location,
+                start_time: detail.start_time,
+                end_time: detail.end_time,
+                organizer_id: detail.organizer_id,
+                count_attendees: Number(detail.count_attendees),
+                tickets_left: Number(detail.tickets_left),
+                price: detail.price,
+                tags: detail.tags,
               } as AdminEvent
             } catch {
               return {
@@ -112,55 +113,56 @@ function AdminDashboard() {
                 tags: e.tags ?? null,
               } as AdminEvent
             }
-          })
+          }),
         )
-        if (mounted) setEvents(enriched)
+        setEvents(enriched)
 
         // ------- USERS -------
         try {
           const res = await ToolsService.getAllUsers()
-          const list: any[] = Array.isArray(res)
-            ? res as any[]
-            : (res as any)?.users ?? (res as any)?.data ?? []
-          const normalized: AdminUser[] = (list || []).map((u: any) => ({
-            id: String(u?.id ?? u?.user_id ?? ''),
-            username: u?.username ?? '',
-            email: u?.email ?? '',
-            role: u?.role ?? u?.user_type ?? '',
-            first_name: u?.first_name ?? null,
-            last_name: u?.last_name ?? null,
-          })).filter(u => !!u.id)
-          if (mounted) setUsers(normalized)
+          const list: Array<any> = Array.isArray(res)
+            ? res
+            : ((res as any)?.users ?? (res as any)?.data ?? [])
+          const normalized: Array<AdminUser> = list
+            .map((u: any) => ({
+              id: String(u?.id ?? u?.user_id ?? ''),
+              username: u?.username ?? '',
+              email: u?.email ?? '',
+              role: u?.role ?? u?.user_type ?? '',
+              first_name: u?.first_name ?? null,
+              last_name: u?.last_name ?? null,
+            }))
+            .filter((u) => !!u.id)
+          setUsers(normalized)
         } catch (e: any) {
-          if (mounted) setUsersError(e?.message ?? 'Failed to load users')
+          setUsersError(e?.message ?? 'Failed to load users')
         } finally {
-          if (mounted) setUsersLoading(false)
+          setUsersLoading(false)
         }
-
       } catch (err: any) {
-        if (mounted) setError(err?.message ?? 'Failed to load admin data')
+        setError(err?.message ?? 'Failed to load admin data')
       } finally {
-        if (mounted) setLoading(false)
+        setLoading(false)
       }
     })()
 
-    return () => {
-      mounted = false
-    }
+    return () => {}
   }, [])
 
   if (!isLoggedIn || user?.role !== 'admin') {
-    return <div className="mx-auto max-w-4xl px-4 py-10">Checking permissions…</div>
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10">Checking permissions…</div>
+    )
   }
 
   // derived stats
   const totalEvents = events.length
   const totalIssued = events.reduce(
     (sum, e) => sum + (Number(e.count_attendees ?? 0) || 0),
-    0
+    0,
   )
   const activeOrganizers = new Set(
-    events.map((e) => String(e.organizer_id ?? '')).filter(Boolean)
+    events.map((e) => String(e.organizer_id ?? '')).filter(Boolean),
   ).size
 
   const totalUsers = users.length
@@ -171,13 +173,15 @@ function AdminDashboard() {
     setAvgAgeValue('—')
     try {
       const numId = Number(avgAgeEventId)
-      const res = await EventsService.toolsGetEventAverageAge({ eventId: numId })
+      const res = await EventsService.toolsGetEventAverageAge({
+        eventId: numId,
+      })
       const val =
         typeof res === 'number'
           ? res
           : typeof (res as any)?.average_age === 'number'
-          ? (res as any).average_age
-          : null
+            ? (res as any).average_age
+            : null
       setAvgAgeValue(val != null ? `${val.toFixed(1)} yrs` : 'N/A')
     } catch {
       setAvgAgeValue('Error')
@@ -194,10 +198,9 @@ function AdminDashboard() {
       // optimistic remove
       setUsers((prev) => prev.filter((u) => String(u.id) !== String(uid)))
     } catch (e: any) {
-      const msg =
-        e?.body?.detail
-          ? JSON.stringify(e.body.detail)
-          : e?.message ?? 'Failed to delete user'
+      const msg = e?.body?.detail
+        ? JSON.stringify(e.body.detail)
+        : (e?.message ?? 'Failed to delete user')
       alert(msg)
     }
   }
@@ -209,8 +212,14 @@ function AdminDashboard() {
         <p className="text-neutral-600">Platform-wide overview & moderation.</p>
       </header>
 
-      {loading && <div className="rounded-xl border bg-white p-5">Loading…</div>}
-      {error && <div className="rounded-xl border bg-white p-5 text-red-600">{error}</div>}
+      {loading && (
+        <div className="rounded-xl border bg-white p-5">Loading…</div>
+      )}
+      {error && (
+        <div className="rounded-xl border bg-white p-5 text-red-600">
+          {error}
+        </div>
+      )}
 
       {!loading && !error && (
         <>
@@ -249,7 +258,8 @@ function AdminDashboard() {
                 {avgAgeLoading ? 'Computing…' : 'Get Average Age'}
               </button>
               <div className="text-sm text-neutral-700 sm:ml-4">
-                Average age: <span className="font-semibold">{avgAgeValue}</span>
+                Average age:{' '}
+                <span className="font-semibold">{avgAgeValue}</span>
               </div>
             </div>
           </section>
@@ -272,12 +282,16 @@ function AdminDashboard() {
                   {events.slice(0, 8).map((e, i) => (
                     <tr key={String(e.id)} className={i > 0 ? 'border-t' : ''}>
                       <td className="px-4 py-2">{e.name}</td>
-                      <td className="px-4 py-2">{String(e.organizer_id ?? '—')}</td>
+                      <td className="px-4 py-2">
+                        {String(e.organizer_id ?? '—')}
+                      </td>
                       <td className="px-4 py-2">
                         {new Date(e.start_time).toLocaleString()}
                       </td>
                       <td className="px-4 py-2">{e.location ?? '—'}</td>
-                      <td className="px-4 py-2">{Number(e.count_attendees ?? 0)}</td>
+                      <td className="px-4 py-2">
+                        {Number(e.count_attendees ?? 0)}
+                      </td>
                     </tr>
                   ))}
                   {!events.length && (
@@ -308,7 +322,9 @@ function AdminDashboard() {
                 <tbody>
                   {usersLoading && (
                     <tr>
-                      <td className="px-4 py-4" colSpan={4}>Loading…</td>
+                      <td className="px-4 py-4" colSpan={4}>
+                        Loading…
+                      </td>
                     </tr>
                   )}
                   {usersError && !usersLoading && (
@@ -318,29 +334,31 @@ function AdminDashboard() {
                       </td>
                     </tr>
                   )}
-                  {!usersLoading && !usersError && users.map((u, i) => (
-                    <tr key={u.id} className={i > 0 ? 'border-t' : ''}>
-                      <td className="px-4 py-2">
-                        {u.username || '—'}
-                      </td>
-                      <td className="px-4 py-2">
-                        {u.email || '—'}
-                      </td>
-                      <td className="px-4 py-2 capitalize">
-                        {u.role || '—'}
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          disabled={String(u.id) === String(user?.id)}
-                          className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                          title={String(u.id) === String(user?.id) ? 'You cannot delete yourself' : 'Delete user'}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {!usersLoading &&
+                    !usersError &&
+                    users.map((u, i) => (
+                      <tr key={u.id} className={i > 0 ? 'border-t' : ''}>
+                        <td className="px-4 py-2">{u.username || '—'}</td>
+                        <td className="px-4 py-2">{u.email || '—'}</td>
+                        <td className="px-4 py-2 capitalize">
+                          {u.role || '—'}
+                        </td>
+                        <td className="px-4 py-2">
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            disabled={String(u.id) === String(user.id)}
+                            className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                            title={
+                              String(u.id) === String(user.id)
+                                ? 'You cannot delete yourself'
+                                : 'Delete user'
+                            }
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   {!usersLoading && !usersError && !users.length && (
                     <tr>
                       <td className="px-4 py-4 text-neutral-500" colSpan={4}>
@@ -357,7 +375,9 @@ function AdminDashboard() {
           <section className="mt-8">
             <h2 className="text-lg font-semibold mb-3">Moderation Queue</h2>
             <div className="rounded-xl border bg-white p-4">
-              <p className="text-sm text-neutral-600">No pending items. (stub)</p>
+              <p className="text-sm text-neutral-600">
+                No pending items. (stub)
+              </p>
             </div>
           </section>
         </>
@@ -366,12 +386,22 @@ function AdminDashboard() {
   )
 }
 
-function Card({ title, value, hint }: { title: string; value: string; hint?: string }) {
+function Card({
+  title,
+  value,
+  hint,
+}: {
+  title: string
+  value: string
+  hint?: string
+}) {
   return (
     <div className="rounded-xl border bg-white p-5 shadow-sm">
       <div className="text-sm text-neutral-500">{title}</div>
       <div className="text-3xl font-extrabold">{value}</div>
-      {hint ? <div className="text-xs text-neutral-400 mt-1">{hint}</div> : null}
+      {hint ? (
+        <div className="text-xs text-neutral-400 mt-1">{hint}</div>
+      ) : null}
     </div>
   )
 }

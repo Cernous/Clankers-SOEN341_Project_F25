@@ -7,9 +7,5 @@
   "git": true,
   "version": 1,
   "framework": "react-cra",
-  "chosenAddOns": [
-    "eslint",
-    "start",
-    "form"
-  ]
+  "chosenAddOns": ["eslint", "start", "form"]
 }

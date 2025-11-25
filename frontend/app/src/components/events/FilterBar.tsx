@@ -10,9 +10,9 @@ type Props = {
 }
 
 export default function FilterBar({
-  query = "",
-  category = "",
-  date = "",
+  query = '',
+  category = '',
+  date = '',
   onQueryChange,
   onCategoryChange,
   onDateChange,
@@ -31,7 +31,7 @@ export default function FilterBar({
       <select
         value={category}
         onChange={(e) => onCategoryChange?.(e.target.value)}
-        className="min-w-[160px] rounded-xl border border-neutral-300 px-3 py-2"
+        className="min-w-[160px] rounded-xl border border-neutral-300 px-3 py-2 cursor-pointer"
       >
         <option value="">All categories</option>
         <option>Workshop</option>
@@ -52,7 +52,7 @@ export default function FilterBar({
       <button
         type="button"
         onClick={onFeelingLucky}
-        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
+        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-primary/10 hover:text-neutral-900 hover:shadow-md active:bg-primary/20 cursor-pointer transition-colors"
       >
         Feeling Lucky
       </button>

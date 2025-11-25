@@ -1,6 +1,6 @@
 import React from 'react'
-import { OpenAPI, LoginService } from '../client'
-import { setToken, getToken, clearToken } from '../client/tokenStore'
+import { LoginService, OpenAPI } from '../client'
+import { clearToken, getToken, setToken } from '../lib/tokenStore'
 
 export type UserRole = 'student' | 'creator' | 'admin'
 
@@ -18,6 +18,16 @@ type AuthContextShape = {
   isLoggedIn: boolean
   loginWithCredentials: (email: string, password: string) => Promise<void>
   signupStudent: (args: {
+    email: string
+    username: string
+    password: string
+    first_name?: string
+    last_name?: string
+    pronouns?: string
+    date_of_birth?: string
+    role: 'student' | 'creator' | 'admin'
+  }) => Promise<void>
+  createUserAsAdmin: (args: {
     email: string
     username: string
     password: string
@@ -52,56 +62,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(() => loadUser())
   const [token, setTokenState] = React.useState<string | null>(() => getToken())
 
-  const fetchMe = React.useCallback(async (tkn?: string) => {
-    const res = await fetch(`${OpenAPI.BASE}/clank/users/me`, {
-      headers: { Authorization: `Bearer ${tkn ?? token}` },
-    })
-    if (!res.ok) throw new Error('Failed to fetch user')
-    const me = await res.json()
-    const mapped: User = {
-      id: me.id,
-      firstName: me.first_name,
-      lastName: me.last_name,
-      email: me.email,
-      username: me.username,
-      role: me.role === 'organizer' ? 'creator' : me.role,
-    }
-    setUser(mapped)
-    saveUser(mapped)
-  }, [token])
+  const fetchMe = React.useCallback(
+    async (tkn?: string) => {
+      const res = await fetch(`${OpenAPI.BASE}/clank/users/me`, {
+        headers: { Authorization: `Bearer ${tkn ?? token}` },
+      })
+      if (!res.ok) throw new Error('Failed to fetch user')
+      const me = await res.json()
+      const mapped: User = {
+        id: me.id,
+        firstName: me.first_name,
+        lastName: me.last_name,
+        email: me.email,
+        username: me.username,
+        role: me.role === 'organizer' ? 'creator' : me.role,
+      }
+      setUser(mapped)
+      saveUser(mapped)
+    },
+    [token],
+  )
 
-  const loginWithCredentials = React.useCallback(async (email: string, password: string) => {
-    const resp = await LoginService.loginAccessToken({
-      formData: { username: email, password },
-    })
-    setToken(resp.access_token)
-    setTokenState(resp.access_token)
-    await fetchMe(resp.access_token)
-  }, [fetchMe])
+  const loginWithCredentials = React.useCallback(
+    async (email: string, password: string) => {
+      const resp = await LoginService.loginAccessToken({
+        formData: { username: email, password },
+      })
+      setToken(resp.access_token)
+      setTokenState(resp.access_token)
+      await fetchMe(resp.access_token)
+    },
+    [fetchMe],
+  )
 
-  const signupStudent = React.useCallback(async (args: any) => {
-    const backendRole = args.role === 'creator' ? 'organizer' : 'student'
+  // Normal self-signup (logs in as the new user)
+  const signupStudent = React.useCallback(
+    async (args: any) => {
+      const backendRole = args.role === 'creator' ? 'organizer' : args.role // handles student/admin
 
-    const res = await fetch(`${OpenAPI.BASE}/clank/users/signup/${backendRole}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: args.email,
-        username: args.username,
-        password: args.password,
-        first_name: args.first_name,
-        last_name: args.last_name,
-        pronouns: args.pronouns,
-        date_of_birth: args.date_of_birth,
-      }),
-    })
+      const res = await fetch(
+        `${OpenAPI.BASE}/clank/users/signup/${backendRole}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: args.email,
+            username: args.username,
+            password: args.password,
+            first_name: args.first_name,
+            last_name: args.last_name,
+            pronouns: args.pronouns,
+            date_of_birth: args.date_of_birth,
+          }),
+        },
+      )
+      if (!res.ok) throw new Error(await res.text())
+
+      const data = await res.json() // expected { access_token, token_type }
+      setToken(data.access_token)
+      setTokenState(data.access_token)
+      await fetchMe(data.access_token)
+    },
+    [fetchMe],
+  )
+
+  // Admin creates another user (DOES NOT change current login)
+  const createUserAsAdmin = React.useCallback(async (args: any) => {
+    const backendRole = args.role === 'creator' ? 'organizer' : args.role // student/admin/creator
+
+    const res = await fetch(
+      `${OpenAPI.BASE}/clank/users/signup/${backendRole}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: args.email,
+          username: args.username,
+          password: args.password,
+          first_name: args.first_name,
+          last_name: args.last_name,
+          pronouns: args.pronouns,
+          date_of_birth: args.date_of_birth,
+        }),
+      },
+    )
     if (!res.ok) throw new Error(await res.text())
 
-    const data = await res.json() // expected { access_token, token_type }
-    setToken(data.access_token)
-    setTokenState(data.access_token)
-    await fetchMe(data.access_token)
-  }, [fetchMe])
+    // IMPORTANT: do NOT call setToken / setTokenState / fetchMe here
+  }, [])
 
   const logout = React.useCallback(() => {
     clearToken()
@@ -116,9 +164,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoggedIn: !!token,
       loginWithCredentials,
       signupStudent,
+      createUserAsAdmin,
       logout,
     }),
-    [user, token, loginWithCredentials, signupStudent, logout],
+    [
+      user,
+      token,
+      loginWithCredentials,
+      signupStudent,
+      createUserAsAdmin,
+      logout,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

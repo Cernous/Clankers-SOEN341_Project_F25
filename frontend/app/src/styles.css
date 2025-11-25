@@ -1,17 +1,49 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 body {
   @apply m-0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  /* Lighter, blue background with primary accent */
+  background:
+    radial-gradient(
+      circle at 10% 15%,
+      rgba(145, 35, 56, 0.48),
+      transparent 85%
+    ),
+    /* boldest primary color accent */
+      radial-gradient(
+        circle at 15% 20%,
+        rgba(80, 140, 255, 0.18),
+        transparent 65%
+      ),
+    /* light blue accent */
+      radial-gradient(
+        circle at 85% 30%,
+        rgba(178, 200, 255, 0.16),
+        transparent 60%
+      ),
+    /* blue-lavender */
+      radial-gradient(
+        circle at 50% 85%,
+        rgba(120, 200, 255, 0.14),
+        transparent 65%
+      ),
+    /* blue-mint */
+      linear-gradient(to bottom, #e3ecfa 0%, #c9daf8 60%, #eaf3fb 100%); /* light blue gradient */
+  background-attachment: fixed;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* Plain white background for login page */
+body.login-page {
+  background: #ffffff !important;
+}
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* This rule is for URL */
@@ -30,23 +62,70 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7A0019;
+  background: #912338;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #600013;
+  background: #701a29;
 }
 
 /* Smooth transitions for all interactive elements */
 * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke,
+    opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #7A0019;
+  outline: 2px solid #912338;
   outline-offset: 2px;
+}
+
+/* Brand utility classes */
+.bg-primary {
+  background-color: #912338;
+}
+.bg-primary-hover {
+  background-color: #a93a4f;
+}
+.bg-primary-active {
+  background-color: #701a29;
+}
+.text-primary {
+  color: #912338;
+}
+.text-primary-hover {
+  color: #a93a4f;
+}
+.border-primary {
+  border-color: #912338;
+}
+
+/* Global button hover highlight (excludes disabled) */
+button:not([disabled]) {
+  position: relative;
+  transition:
+    box-shadow 150ms,
+    filter 150ms,
+    transform 150ms;
+}
+button:not([disabled]):hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+button:not([disabled]):active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transform: translateY(1px);
+}
+button[disabled] {
+  cursor: not-allowed;
+}
+
+/* Pointer cursor only on date input calendar icon (Chrome/WebKit) */
+input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
 }

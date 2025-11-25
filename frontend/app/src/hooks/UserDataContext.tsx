@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { CalendarService } from '../client'
+import { useAuth } from '../hooks/AuthContext'
 import type { SimpleEvent } from '../data/events.sample'
 
 export type TicketType = 'free' | 'paid'
@@ -16,8 +18,8 @@ export type Ticket = {
 }
 
 type Ctx = {
-  saved: string[]
-  tickets: Ticket[]
+  saved: Array<string>
+  tickets: Array<Ticket>
   isSaved: (eventId: string) => boolean
   toggleSave: (ev: SimpleEvent) => void
   claimTicket: (ev: SimpleEvent, owner: string, type?: TicketType) => Ticket
@@ -27,16 +29,21 @@ type Ctx = {
 const UserDataContext = React.createContext<Ctx | null>(null)
 
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
-  const [saved, setSaved] = React.useState<string[]>([])
-  const [tickets, setTickets] = React.useState<Ticket[]>([])
+  const { isLoggedIn } = useAuth()
+  const [saved, setSaved] = React.useState<Array<string>>([])
+  const [tickets, setTickets] = React.useState<Array<Ticket>>([])
 
   const isSaved = React.useCallback(
     (eventId: string) => saved.includes(eventId),
-    [saved]
+    [saved],
   )
 
   const toggleSave = React.useCallback((ev: SimpleEvent) => {
-    setSaved(prev => prev.includes(ev.id) ? prev.filter(id => id !== ev.id) : [...prev, ev.id])
+    setSaved((prev) =>
+      prev.includes(ev.id)
+        ? prev.filter((id) => id !== ev.id)
+        : [...prev, ev.id],
+    )
   }, [])
 
   const claimTicket = React.useCallback(
@@ -52,10 +59,10 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
         issuedAt: new Date().toISOString(),
         type,
       }
-      setTickets(prev => [t, ...prev])
+      setTickets((prev) => [t, ...prev])
       return t
     },
-    []
+    [],
   )
 
   const clearAll = React.useCallback(() => {
@@ -63,8 +70,42 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     setTickets([])
   }, [])
 
-  const value: Ctx = { saved, tickets, isSaved, toggleSave, claimTicket, clearAll }
+  const value: Ctx = {
+    saved,
+    tickets,
+    isSaved,
+    toggleSave,
+    claimTicket,
+    clearAll,
+  }
+  React.useEffect(() => {
+    let cancelled = false
 
+    async function loadCalendar() {
+      if (!isLoggedIn) {
+        // if logged out, clear local state
+        setSaved([])
+        return
+      }
+
+      try {
+        const res = await CalendarService.getUserCalendar()
+        const list = Array.isArray(res) ? res : ((res as any).events ?? [])
+
+        const ids = list.map((e: any) => String(e.id))
+        if (!cancelled) {
+          setSaved(ids)
+        }
+      } catch (e) {
+        console.error('Failed to hydrate saved events from calendar', e)
+      }
+    }
+
+    loadCalendar()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoggedIn])
   return (
     <UserDataContext.Provider value={value}>
       {children}
@@ -74,6 +115,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
 
 export function useUserData() {
   const ctx = React.useContext(UserDataContext)
-  if (!ctx) throw new Error('useUserData must be used within <UserDataProvider>')
+  if (!ctx)
+    throw new Error('useUserData must be used within <UserDataProvider>')
   return ctx
 }
