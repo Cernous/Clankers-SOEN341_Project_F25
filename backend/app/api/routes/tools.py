@@ -5,7 +5,7 @@ Tool related API endpoints
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
-from models import EventDB, User, UserRole, Attendees, ModQueue, AddToQueue
+from models import EventDB, Token, User, UserCreate, UserRegister, UserRole, Attendees, ModQueue, AddToQueue
 from api.deps import (
     CurrentUser,
     SessionDep,
@@ -41,6 +41,41 @@ def get_all_organizers(session: SessionDep, user: User = Depends(get_current_use
         raise HTTPException(status_code=403, detail="Invalid role used")
     users_table = select(User)
     return session.exec(users_table.where(UserRole.ORGANIZER == User.role)).all()
+
+@router.post("/users/create/", tags=["Users"])
+def create_user(
+    user_role: str, user_register: UserRegister, session: SessionDep, user: CurrentUser
+):
+    """
+    Directly creates a new user in the database
+    Scope: "admin"
+    """
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Invalid Permission Level")
+    user_sesh = crud.verify_unique_email_username(
+        session=session, username=user_register.username, email=user_register.email
+    )
+    if user_sesh:
+        raise HTTPException(
+            status_code=403,
+            detail="Username or Email has been previously used. Please try again",
+        )
+    user_in = UserCreate(
+        email=user_register.email,
+        username=user_register.username,
+        first_name=user_register.first_name,
+        last_name=user_register.last_name,
+        pronouns=user_register.pronouns,
+        password=user_register.password,
+        date_of_birth=user_register.date_of_birth,
+        role=user_role,
+    )
+
+    user_out = crud.create_user(session=session, user_create=user_in)
+
+    return {
+        "message": f"User {user_register.username} successfully created"
+    }
 
 
 @router.delete("/users/delete/{user_id}", tags=["Users"])
