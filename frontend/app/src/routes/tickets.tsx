@@ -1,9 +1,9 @@
+import * as React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import QRCode from 'react-qr-code'
-import { useUserData } from '../hooks/UserDataContext'
 import { useAuth } from '../hooks/AuthContext'
 import { EventsService } from '../client'
-import * as React from 'react'
+
 export const Route = createFileRoute('/tickets')({
   component: TicketsPage,
 })
@@ -11,7 +11,7 @@ export const Route = createFileRoute('/tickets')({
 function TicketsPage() {
   const { user, isLoggedIn } = useAuth()
 
-  const [ticketIds, setTicketIds] = React.useState<string[]>([])
+  const [ticketIds, setTicketIds] = React.useState<Array<string>>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -25,33 +25,27 @@ function TicketsPage() {
 
     let mounted = true
 
-      ; (async () => {
-        try {
-          const res = await EventsService.getTickets()
+    ;(async () => {
+      try {
+        const res = await EventsService.getTickets()
 
-          // getTickets returns e.g. "ORD-I7J7VA-1,ORD-C60OSP-2,..."
-          const raw =
-            typeof res === 'string'
-              ? res
-              : ((res as any).tickets as string | undefined) ?? ''
+        // getTickets returns e.g. "ORD-I7J7VA-1,ORD-C60OSP-2,..."
+        const raw =
+          typeof res === 'string'
+            ? res
+            : (((res as any).tickets as string | undefined) ?? '')
+        const ids = raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
 
-          const ids =
-            raw
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean) ?? []
-
-          if (mounted) {
-            setTicketIds(ids)
-          }
-        } catch (e: any) {
-          if (mounted) {
-            setError(e?.message ?? 'Failed to load tickets')
-          }
-        } finally {
-          if (mounted) setLoading(false)
-        }
-      })()
+        setTicketIds(ids)
+      } catch (e: any) {
+        setError(e?.message ?? 'Failed to load tickets')
+      } finally {
+        setLoading(false)
+      }
+    })()
 
     return () => {
       mounted = false
@@ -87,12 +81,8 @@ function TicketsPage() {
               className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
             >
               {/* We no longer know event title/date/where from backend; show what we can */}
-              <h3 className="m-0 text-lg font-semibold truncate">
-                Ticket
-              </h3>
-              <p className="mt-1 text-sm text-neutral-600">
-                Ticket Code: {id}
-              </p>
+              <h3 className="m-0 text-lg font-semibold truncate">Ticket</h3>
+              <p className="mt-1 text-sm text-neutral-600">Ticket Code: {id}</p>
 
               <div className="mt-4 flex justify-center">
                 <TicketQR
