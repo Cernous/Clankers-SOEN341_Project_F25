@@ -124,12 +124,13 @@ function EventDetailPage() {
     category: 'Other',
   }
   const saved = isSaved(event.id)
-
+ const numericId = Number(event.id)
   const handleSave = async () => {
     if (!isLoggedIn) return
 
     // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
     if (saved) {
+      await CalendarService.deleteEventCalendar({ eventId: numericId })
       toggleSave(event)
       return
     }

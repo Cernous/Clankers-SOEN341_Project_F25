@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from datetime import datetime, timedelta, date, timezone
 
 from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
-from app.core.base64_images import EVENT_IMAGES
+from core.base64_images import EVENT_IMAGES
 from api.deps import SessionDep
 import crud
 

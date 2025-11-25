@@ -104,21 +104,7 @@ export default function EventPreviewModal({
               {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
 
-            {/* Claim ticket */}
-            <button
-              onClick={handleClaim}
-              disabled={!isLoggedIn}
-              className={[
-                'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
-                'hover:bg-primary hover:text-white hover:shadow-lg cursor-pointer active:bg-primaryActive',
-                isLoggedIn
-                  ? 'bg-[#7A0019]'
-                  : 'bg-neutral-400 cursor-not-allowed',
-              ].join(' ')}
-              title={isLoggedIn ? '' : 'Log in to claim tickets'}
-            >
-              Claim Free Ticket
-            </button>
+           
 
             {/* View details */}
             <Link
