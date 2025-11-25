@@ -45,7 +45,7 @@ def list_public_events(session: SessionDep):
 @router.get("/events/list")
 def list_events(session: SessionDep, user: User = Depends(get_current_user)):
     listed_events = crud.list_events_for_roles(session, user)
-    match(user.role):
+    match (user.role):
         case "organizer":
             return [EventPublicRead.model_validate(e) for e in listed_events]
         case "admin":

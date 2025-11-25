@@ -2,17 +2,27 @@
 Tool related API endpoints
 """
 
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
-from models import EventDB, User, UserRole, Attendees, ModQueue, AddToQueue
+from models import (
+    EventDB,
+    Token,
+    User,
+    UserCreate,
+    UserRegister,
+    UserRole,
+    Attendees,
+    ModQueue,
+    AddToQueue,
+)
 from api.deps import (
     CurrentUser,
     SessionDep,
     get_current_user,
 )
 
-from datetime import date
 from sqlmodel import select
 import crud
 
@@ -41,6 +51,41 @@ def get_all_organizers(session: SessionDep, user: User = Depends(get_current_use
         raise HTTPException(status_code=403, detail="Invalid role used")
     users_table = select(User)
     return session.exec(users_table.where(UserRole.ORGANIZER == User.role)).all()
+
+
+@router.post("/users/create/", tags=["Users"])
+def create_user(
+    user_role: str, user_register: UserRegister, session: SessionDep, user: CurrentUser
+):
+    """
+    Directly creates a new user in the database
+    Scope: "admin"
+    """
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Invalid Permission Level")
+    user_sesh = crud.verify_unique_email_username(
+        session=session, username=user_register.username, email=user_register.email
+    )
+    if user_sesh:
+        raise HTTPException(
+            status_code=403,
+            detail="Username or Email has been previously used. Please try again",
+        )
+    user_in = UserCreate(
+        email=user_register.email,
+        username=user_register.username,
+        first_name=user_register.first_name,
+        last_name=user_register.last_name,
+        pronouns=user_register.pronouns,
+        password=user_register.password,
+        date_of_birth=user_register.date_of_birth,
+        role=user_role,
+    )
+
+    if not crud.create_user(session=session, user_create=user_in):
+        return {"message": f"User {user_register.username} creation failed"}
+
+    return {"message": f"User {user_register.username} successfully created"}
 
 
 @router.delete("/users/delete/{user_id}", tags=["Users"])
@@ -89,8 +134,8 @@ def get_num_users(session: SessionDep, current_user: CurrentUser):
     """
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Invalid role")
-    userTable = select(User)
-    result = len(session.exec(userTable).all())
+    user_table = select(User)
+    result = len(session.exec(user_table).all())
     return {"number": result}
 
 
@@ -147,7 +192,12 @@ def get_event_average_age(
     if user.role != UserRole.ORGANIZER and event.organizer_id != user.id:
         raise HTTPException(status_code=403, detail="Not your event! Stop being nosy")
     today = date.today()
-    statement = select(User).join(Attendees, Attendees.user_id == User.id).where(Attendees.event_id == event_id).where(User.date_of_birth.isnot(None))
+    statement = (
+        select(User)
+        .join(Attendees, Attendees.user_id == User.id)
+        .where(Attendees.event_id == event_id)
+        .where(User.date_of_birth.isnot(None))
+    )
     attendees = session.exec(statement).all()
     if not attendees:
         return {"average_age": None}
