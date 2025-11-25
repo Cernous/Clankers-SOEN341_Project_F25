@@ -237,15 +237,24 @@ def remove_ticket(user_id: str, event_id: int, session: Session) -> bool:
     session.refresh(event)
     return True
 
-def get_event_by_ticket(user_id: str, ticket_str:str, session: Session) -> EventDB | None:
-    statement = select(Attendees).where(Attendees.user_id == user_id).where(Attendees.ticket == ticket_str)
+
+def get_event_by_ticket(
+    user_id: str, ticket_str: str, session: Session
+) -> EventDB | None:
+    statement = (
+        select(Attendees)
+        .where(Attendees.user_id == user_id)
+        .where(Attendees.ticket == ticket_str)
+    )
     ticket_row = session.exec(statement).first()
     return get_event_by_id(session=session, event_id=ticket_row.event_id)
+
 
 def get_all_pronoun(session: Session) -> Dict[str, int]:
     statement = select(User.pronouns, func.count()).group_by(User.pronouns)
     results = session.exec(statement).all()
     return {pronoun if pronoun else "Unspecified": count for pronoun, count in results}
+
 
 def get_event_average_age(event_id: int, session: Session) -> Optional[float]:
     stmt = (
@@ -263,9 +272,7 @@ def get_event_average_age(event_id: int, session: Session) -> Optional[float]:
 
 def get_all_average_age(session: Session) -> Optional[float]:
     stmt = select(
-        func.avg(
-            func.extract("year", func.age(func.current_date, User.date_of_birth))
-        )
+        func.avg(func.extract("year", func.age(func.current_date, User.date_of_birth)))
     )
     result = session.exec(stmt).first()
     return float(result) if result is not None else None
