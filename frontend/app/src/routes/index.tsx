@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/AuthContext'
 
 // use the typed SDK
 import { EventsService } from '../client'
+import { getHeroUrl } from '../utils/getHeroUrl'
 import type { SimpleEvent } from '../data/events.sample'
 
 export const Route = createFileRoute('/')({
@@ -53,6 +54,7 @@ function HomePage() {
                   : /art/i.test(e.tags ?? '')
                     ? 'Arts'
                     : 'Other',
+          heroUrl: getHeroUrl(e.pictures),
         }))
 
         setEvents(mapped)

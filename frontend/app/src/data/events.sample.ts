@@ -1,5 +1,4 @@
 // src/data/events.sample.ts
-
 export type SimpleEvent = {
   id: string
   title: string
@@ -8,4 +7,5 @@ export type SimpleEvent = {
   org: string
   where: string
   category: 'Workshop' | 'Music' | 'Sports' | 'Film' | 'Arts' | 'Other'
+  heroUrl?: string
 }
