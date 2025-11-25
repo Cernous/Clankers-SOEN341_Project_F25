@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Depends
-from sqlmodel import Session, func, select
+from fastapi import APIRouter
 from datetime import datetime, timedelta, date, timezone
 
 from models import EventAdminCreate, UserCreate, User, EventDB, UserRole
+from core.base64_images import EVENT_IMAGES
 from api.deps import SessionDep
 import crud
 
 router = APIRouter()
 
+
 @router.post("/seed-database", tags=["Admin Utilities"])
 def seed_database(session: SessionDep):
-    
-    #user dummy data
+
+    # user dummy data
     users = [
         UserCreate(
             email="alice@example.com",
@@ -32,7 +33,7 @@ def seed_database(session: SessionDep):
             password="hashed_pw2",
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 8, 22),
-            tickets=None
+            tickets=None,
         ),
         UserCreate(
             email="jordan@example.com",
@@ -243,18 +244,19 @@ def seed_database(session: SessionDep):
             password="hashed_pw22",
             role=UserRole.STUDENT,
             date_of_birth=date(1999, 4, 20),
-        )
+        ),
     ]
 
     for u in users:
-        user_sesh = crud.verify_unique_email_username(session=session, username=u.username, email=u.email)
+        user_sesh = crud.verify_unique_email_username(
+            session=session, username=u.username, email=u.email
+        )
         if not user_sesh:
             crud.create_user(session=session, user_create=u)
-    
-    uids = crud.get_uid_by_role(session=session, 
-                         role=UserRole.ORGANIZER)
 
-    #event dummy data
+    uids = crud.get_uid_by_role(session=session, role=UserRole.ORGANIZER)
+
+    # event dummy data
     now = datetime.now(timezone.utc)
     events = [
         EventAdminCreate(
@@ -266,12 +268,12 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=7, hours=4),
             tags="tech,expo,student",
             visibility="public",
+            pictures = EVENT_IMAGES["auditorium"],
 	        capacity=400,
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[0]
-            
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="Cybersecurity Summit",
@@ -282,11 +284,12 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=14, hours=6),
             tags="cybersecurity,hacking,infosec",
             visibility="public",
+             pictures = EVENT_IMAGES["auditorium"],           
 	        capacity=40,
             state="upcoming",
             count_attendees=0,
             tickets_left=30,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="AI and Ethics Forum",
@@ -297,11 +300,12 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=21, hours=3),
             tags="AI,ethics,forum",
             visibility="public",
+            pictures = EVENT_IMAGES["auditorium"],
 	        capacity=80,
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
         EventAdminCreate(
             name="Machine Learning Bootcamp",
@@ -312,13 +316,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=10, hours=6),
             tags="ML,workshop,training",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=50,
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Cybersecurity Awareness Night",
             description="Learn how to secure your digital identity.",
@@ -328,13 +332,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=5, hours=2),
             tags="security,cyber,lecture",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=120,
             state="upcoming",
             count_attendees=0,
             tickets_left=120,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Cloud Computing Expo",
             description="Showcase of cloud platforms and tools.",
@@ -344,13 +348,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=30, hours=5),
             tags="cloud,expo,technology",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=150,
             state="upcoming",
             count_attendees=0,
             tickets_left=150,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Intro to Robotics",
             description="An interactive session exploring robotics fundamentals.",
@@ -360,13 +364,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=14, hours=4),
             tags="robotics,workshop",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=40,
             state="upcoming",
             count_attendees=0,
             tickets_left=40,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Blockchain & Web3 Meetup",
             description="Exploring decentralized technologies and applications.",
@@ -376,13 +380,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=18, hours=3),
             tags="blockchain,web3,meetup",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=60,
             state="upcoming",
             count_attendees=0,
             tickets_left=60,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Data Science Career Panel",
             description="Industry professionals discuss roles in data science.",
@@ -392,13 +396,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=25, hours=2),
             tags="data,career,panel",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=200,
             state="upcoming",
             count_attendees=0,
             tickets_left=200,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Game Development Jam",
             description="Team-based game building competition.",
@@ -408,13 +412,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=42),
             tags="game,jam,development",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=100,
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Quantum Computing Intro",
             description="Beginner-friendly explanation of quantum logic and algorithms.",
@@ -424,13 +428,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=16, hours=3),
             tags="quantum,computing,lecture",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=70,
             state="upcoming",
             count_attendees=0,
             tickets_left=70,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="VR/AR Experience Fair",
             description="Try immersive virtual and augmented reality technologies.",
@@ -440,13 +444,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=12, hours=5),
             tags="vr,ar,expo",
             visibility="public",
+            pictures = EVENT_IMAGES["classroom"],
             capacity=90,
             state="upcoming",
             count_attendees=0,
             tickets_left=90,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="AI Hackathon 48h",
             description="48-hour hackathon focused on AI applications.",
@@ -456,13 +460,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=47),
             tags="ai,hackathon,competition",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=120,
             state="upcoming",
             count_attendees=0,
             tickets_left=120,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Python for Beginners",
             description="Absolute beginner-level Python programming workshop.",
@@ -472,13 +476,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=4, hours=3),
             tags="python,programming,workshop",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=35,
             state="upcoming",
             count_attendees=0,
             tickets_left=35,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Sustainability in Tech",
             description="Understanding energy-conscious software and hardware development.",
@@ -488,13 +492,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=22, hours=2),
             tags="sustainability,tech,environment",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=75,
             state="upcoming",
             count_attendees=0,
             tickets_left=75,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Deep Learning Advanced Workshop",
             description="Dive deep into neural networks, transformers, and optimization tricks.",
@@ -504,13 +508,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=28, hours=6),
             tags="deep learning,neural networks,training",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=45,
             state="upcoming",
             count_attendees=0,
             tickets_left=45,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Tech Startup Pitch Night",
             description="Founders present their startup ideas to a panel of judges.",
@@ -520,13 +524,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=20, hours=3),
             tags="startup,pitch,entrepreneurship",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=100,
             state="upcoming",
             count_attendees=0,
             tickets_left=100,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Math for AI",
             description="Crash course on linear algebra and calculus foundations for AI.",
@@ -536,13 +540,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=9, hours=3),
             tags="math,ai,lecture",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=80,
             state="upcoming",
             count_attendees=0,
             tickets_left=80,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="Networking Fundamentals",
             description="Introductory talk on network protocols and architectures.",
@@ -552,13 +556,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=11, hours=2),
             tags="networking,tech,lecture",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=60,
             state="upcoming",
             count_attendees=0,
             tickets_left=60,
-            organizer_id=uids[1]
+            organizer_id=uids[1],
         ),
-
         EventAdminCreate(
             name="Mobile App Development Workshop",
             description="Build your first cross-platform mobile app.",
@@ -568,13 +572,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=17, hours=5),
             tags="mobile,app,workshop",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=50,
             state="upcoming",
             count_attendees=0,
             tickets_left=50,
-            organizer_id=uids[2]
+            organizer_id=uids[2],
         ),
-
         EventAdminCreate(
             name="Databases Crash Course",
             description="Learn SQL, indexes, ACID, and schema design basics.",
@@ -584,13 +588,13 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=8, hours=3),
             tags="database,sql,training",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=40,
             state="upcoming",
             count_attendees=0,
             tickets_left=40,
-            organizer_id=uids[0]
+            organizer_id=uids[0],
         ),
-
         EventAdminCreate(
             name="AI in Healthcare Symposium",
             description="Exploring the role of AI in diagnosis and treatment.",
@@ -600,15 +604,15 @@ def seed_database(session: SessionDep):
             end_time=now + timedelta(days=35, hours=4),
             tags="ai,healthcare,symposium",
             visibility="public",
+            pictures = EVENT_IMAGES["sports_field"],
             capacity=150,
             state="upcoming",
             count_attendees=0,
             tickets_left=150,
-            organizer_id=uids[1]
-        )
+            organizer_id=uids[1],
+        ),
     ]
 
-    
     for e in events:
         session.add(EventDB(**e.model_dump()))
 

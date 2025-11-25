@@ -84,7 +84,7 @@ function HomePage() {
           </h2>
           <Link
             to="/events"
-            className="text-sm font-semibold text-primary hover:text-primaryActive transition-colors duration-200"
+            className="text-sm font-semibold text-primary transition-colors duration-200 rounded-full px-4 py-2 hover:bg-primary hover:text-white hover:shadow-md active:bg-primaryActive"
           >
             See all
           </Link>
