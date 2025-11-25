@@ -1,15 +1,15 @@
 import axios from 'axios'
-import { ApiError } from './ApiError'
-import { CancelablePromise } from './CancelablePromise'
 import type {
   AxiosError,
-  AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
+  AxiosInstance,
 } from 'axios'
 
+import { ApiError } from './ApiError'
 import type { ApiRequestOptions } from './ApiRequestOptions'
 import type { ApiResult } from './ApiResult'
+import { CancelablePromise } from './CancelablePromise'
 import type { OnCancel } from './CancelablePromise'
 import type { OpenAPIConfig } from './OpenAPI'
 
@@ -43,7 +43,7 @@ export const base64 = (str: string): string => {
 }
 
 export const getQueryString = (params: Record<string, unknown>): string => {
-  const qs: Array<string> = []
+  const qs: string[] = []
 
   const append = (key: string, value: unknown) => {
     qs.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)

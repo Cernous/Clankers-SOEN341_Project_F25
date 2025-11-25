@@ -6,7 +6,7 @@ type Middleware<T> = (value: T) => T | Promise<T>
 type Resolver<T> = (options: ApiRequestOptions<T>) => Promise<T>
 
 export class Interceptors<T> {
-  _fns: Array<Middleware<T>>
+  _fns: Middleware<T>[]
 
   constructor() {
     this._fns = []

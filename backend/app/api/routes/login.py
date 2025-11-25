@@ -1,25 +1,24 @@
 from datetime import timedelta
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 import crud
-from api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from api.deps import SessionDep
 from core import security
 from core.config import settings
-from core.security import get_password_hash
-from models import Message, NewPassword, Token, UserPublic
+from models import Token
 
-router = APIRouter(tags=['login'], prefix="/login")
+router = APIRouter(tags=["login"], prefix="/login")
+
 
 @router.post("/access-token")
 def login_access_token(
-    session: SessionDep, form_data:Annotated[OAuth2PasswordRequestForm, Depends()]
+    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
     """
-        OAuth2 Compatible Token login, get an access token for future requests
+    OAuth2 Compatible Token login, get an access token for future requests
     """
 
     user = crud.authenticate(

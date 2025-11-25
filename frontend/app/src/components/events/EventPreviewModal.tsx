@@ -1,6 +1,6 @@
 // src/components/events/EventPreviewModal.tsx
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../../hooks/AuthContext'
+// import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
 import { CalendarService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
@@ -18,8 +18,8 @@ export default function EventPreviewModal({
   isLoggedIn,
   onClose,
 }: Props) {
-  const { user } = useAuth()
-  const { isSaved, toggleSave, claimTicket } = useUserData()
+  // const { user } = useAuth()
+  const { isSaved, toggleSave } = useUserData()
 
   if (!event) return null
 
@@ -52,15 +52,6 @@ export default function EventPreviewModal({
     }
   }
 
-  const handleClaim = () => {
-    if (!isLoggedIn || !user) return
-    const owner = user.username || user.email || 'me'
-    const t = claimTicket(event, owner, 'free')
-    alert(
-      `Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`,
-    )
-  }
-
   return (
     <div
       role="dialog"
@@ -90,32 +81,18 @@ export default function EventPreviewModal({
               disabled={!isLoggedIn}
               className={[
                 'rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
-                'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200',
+                isLoggedIn
+                  ? 'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200'
+                  : 'cursor-not-allowed',
                 isLoggedIn
                   ? saved
                     ? 'bg-red-50 text-[#7A0019] border border-red-200'
-                    : 'border border-neutral-300 text-neutral-700'
-                  : 'bg-neutral-300 cursor-not-allowed text-white',
+                    : 'border border-neutral-300 text-black'
+                  : 'bg-neutral-300 text-black',
               ].join(' ')}
               title={isLoggedIn ? '' : 'Log in to save'}
             >
               {saved ? 'Unsave' : 'Save to Calendar'}
-            </button>
-
-            {/* Claim ticket */}
-            <button
-              onClick={handleClaim}
-              disabled={!isLoggedIn}
-              className={[
-                'rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200',
-                'hover:bg-primary hover:text-white hover:shadow-lg cursor-pointer active:bg-primaryActive',
-                isLoggedIn
-                  ? 'bg-[#7A0019]'
-                  : 'bg-neutral-400 cursor-not-allowed',
-              ].join(' ')}
-              title={isLoggedIn ? '' : 'Log in to claim tickets'}
-            >
-              Claim Free Ticket
             </button>
 
             {/* View details */}

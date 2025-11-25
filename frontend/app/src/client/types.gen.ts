@@ -141,6 +141,12 @@ export type ToolsGetEventAverageAgeData = {
 
 export type ToolsGetEventAverageAgeResponse = unknown
 
+export type ToolsGetAttendeesListData = {
+  eventId: number
+}
+
+export type ToolsGetAttendeesListResponse = unknown
+
 export type ToolsGetAllEventsResponse = unknown
 
 export type CalendarGetUserCalendarResponse = Array<EventList>
@@ -166,6 +172,8 @@ export type EventsCreateEventResponse = unknown
 export type EventsListEventsResponse = Array<EventList>
 
 export type EventsRandomButtonResponse = unknown
+
+export type EventsGetTicketsResponse = unknown
 
 export type EventsReadPublicEventData = {
   eventId: number

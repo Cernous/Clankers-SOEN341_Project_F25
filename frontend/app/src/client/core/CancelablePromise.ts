@@ -21,7 +21,7 @@ export class CancelablePromise<T> implements Promise<T> {
   private _isResolved: boolean
   private _isRejected: boolean
   private _isCancelled: boolean
-  readonly cancelHandlers: Array<() => void>
+  readonly cancelHandlers: (() => void)[]
   readonly promise: Promise<T>
   private _resolve?: (value: T | PromiseLike<T>) => void
   private _reject?: (reason?: unknown) => void
