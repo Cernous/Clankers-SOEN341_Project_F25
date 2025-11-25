@@ -4,6 +4,11 @@ import QRCode from 'react-qr-code'
 import { useAuth } from '../hooks/AuthContext'
 import { EventsService } from '../client'
 
+type TicketWithEvent = {
+  ticketCode: string // full string "1:ORD-I7J7VA-1"
+  eventId: number | null
+  event?: any
+}
 export const Route = createFileRoute('/tickets')({
   component: TicketsPage,
 })
@@ -11,7 +16,8 @@ export const Route = createFileRoute('/tickets')({
 function TicketsPage() {
   const { user, isLoggedIn } = useAuth()
 
-  const [ticketIds, setTicketIds] = React.useState<Array<string>>([])
+  const [tickets, setTickets] = React.useState<Array<TicketWithEvent>>([])
+
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -23,34 +29,72 @@ function TicketsPage() {
       return
     }
 
-    // let mounted = true
-
     ;(async () => {
       try {
         const res = await EventsService.getTickets()
 
-        // getTickets returns e.g. "ORD-I7J7VA-1,ORD-C60OSP-2,..."
+        // getTickets returns e.g. "1:ORD-I7J7VA-1,1:ORD-C60OSP-2,..."
         const raw =
           typeof res === 'string'
             ? res
             : (((res as any).tickets as string | undefined) ?? '')
-        const ids = raw
+
+        const ticketCodes = raw
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
 
-        setTicketIds(ids)
+        // Parse "eventId:ORD-XYZ-1"
+        const baseTickets: Array<TicketWithEvent> = ticketCodes.map((code) => {
+          const [eventIdPart] = code.split(':')
+          const eventIdNum = Number(eventIdPart)
+          return {
+            ticketCode: code,
+            eventId: Number.isFinite(eventIdNum) ? eventIdNum : null,
+          }
+        })
+
+        // Unique valid event ids
+        const uniqueEventIds = Array.from(
+          new Set(
+            baseTickets
+              .map((t) => t.eventId)
+              .filter((id): id is number => id != null && Number.isFinite(id)),
+          ),
+        )
+
+        const eventsById: Record<number, any> = {}
+
+        // Fetch each event once
+        await Promise.all(
+          uniqueEventIds.map(async (id) => {
+            try {
+              const ev = await EventsService.readEvent({ eventId: id })
+              eventsById[id] = ev
+            } catch (e) {
+              console.error('Failed to load event for ticket eventId=', id, e)
+            }
+          }),
+        )
+
+        // Attach events back onto tickets
+        const withEvents: Array<TicketWithEvent> = baseTickets.map((t) => ({
+          ...t,
+          event: t.eventId != null ? eventsById[t.eventId] : undefined,
+        }))
+
+        setTickets(withEvents)
       } catch (e: any) {
+        console.error('Failed to load tickets', e)
         setError(e?.message ?? 'Failed to load tickets')
       } finally {
         setLoading(false)
       }
     })()
-
-    return () => {
-      // mounted = false
-    }
   }, [isLoggedIn])
+
+  const fmtDateTime = (iso?: string) =>
+    iso ? new Date(iso + 'Z').toLocaleString() : '—'
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -69,25 +113,37 @@ function TicketsPage() {
         <div className="rounded-xl border bg-white p-6 text-red-600">
           {error}
         </div>
-      ) : ticketIds.length === 0 ? (
+      ) : tickets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-300 p-6 text-neutral-600">
           No tickets yet. Purchase or claim a ticket from an event page.
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {ticketIds.map((id) => (
+          {tickets.map((t) => (
             <li
-              key={id}
+              key={t.ticketCode}
               className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
             >
-              {/* We no longer know event title/date/where from backend; show what we can */}
-              <h3 className="m-0 text-lg font-semibold truncate">Ticket</h3>
-              <p className="mt-1 text-sm text-neutral-600">Ticket Code: {id}</p>
+              {/* Event details if available */}
+              <h3 className="m-0 text-lg font-semibold truncate">
+                {t.event?.name ?? 'Ticket'}
+              </h3>
+
+              {t.event && (
+                <p className="mt-1 text-sm text-neutral-600">
+                  {t.event.location ?? 'TBD'} •{' '}
+                  {fmtDateTime(t.event.start_time)}
+                </p>
+              )}
+
+              <p className="mt-2 text-sm text-neutral-600">
+                Ticket Code: {t.ticketCode}
+              </p>
 
               <div className="mt-4 flex justify-center">
                 <TicketQR
                   payload={{
-                    ticketId: id,
+                    ticketId: t.ticketCode,
                     owner: ownerId,
                   }}
                 />
@@ -97,7 +153,7 @@ function TicketsPage() {
                 <span className="text-xs text-neutral-500">
                   Owner: {ownerId}
                 </span>
-                <DownloadQRButton fileName={`${id}.png`} />
+                <DownloadQRButton fileName={`${t.ticketCode}.png`} />
               </div>
             </li>
           ))}
