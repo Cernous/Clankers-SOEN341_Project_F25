@@ -104,8 +104,6 @@ export default function EventPreviewModal({
               {saved ? 'Unsave' : 'Save to Calendar'}
             </button>
 
-           
-
             {/* View details */}
             <Link
               to="/events/$eventId"

@@ -66,7 +66,7 @@ export default function PurchasePage() {
         const code = `ORD-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${i + 1}`
         await EventsService.addTicket({
           eventId: eventIdNum,
-          
+
           ticket: code, // this goes as query param ?ticket=...
         })
       }
