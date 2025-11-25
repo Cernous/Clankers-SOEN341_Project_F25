@@ -35,6 +35,7 @@ function EventDetailPage() {
 
   // --- new review form ---
   const [reviewText, setReviewText] = React.useState('')
+  const MAX_REVIEW_CHARS = 500
   const [reviewStar, setReviewStar] = React.useState<number>(5)
   const [submitting, setSubmitting] = React.useState(false)
 
@@ -103,7 +104,7 @@ function EventDetailPage() {
   if (!data) return <main className="p-6">Not found.</main>
 
   const fmtDateTime = (iso?: string) =>
-    iso ? new Date(iso).toLocaleString() : '—'
+    iso ? new Date(iso+"Z").toLocaleString() : '—'
   const fmtPrice = (price?: number) =>
     price && Number(price) > 0 ? `$${Number(price).toFixed(2)}` : 'Free'
   const unitPrice = Number(data.price || 0)
@@ -123,12 +124,13 @@ function EventDetailPage() {
     category: 'Other',
   }
   const saved = isSaved(event.id)
-
+  const numericId = Number(event.id)
   const handleSave = async () => {
     if (!isLoggedIn) return
 
     // If it's already saved locally, just unsave in UI (we don’t have a backend "unsave" endpoint)
     if (saved) {
+      await CalendarService.deleteEventCalendar({ eventId: numericId })
       toggleSave(event)
       return
     }
@@ -200,12 +202,20 @@ function EventDetailPage() {
       setReviewErr('Please write a comment.')
       return
     }
+    if (reviewText.length > MAX_REVIEW_CHARS) {
+      setReviewErr('Comment is too long. Please stay within 500 characters.')
+      return
+    }
+
+    // Force newline every 100 characters before sending
+    const wrapped = wrapEveryN(reviewText.trim(), 100)
+
     setSubmitting(true)
     setReviewErr(null)
     try {
       await EventsService.addReview({
         requestBody: {
-          desc: reviewText.trim(),
+          desc: wrapped.slice(0, MAX_REVIEW_CHARS),
           star: Math.max(1, Math.min(5, Number(reviewStar))),
           date_created: new Date().toISOString(),
           user_id: String(user.username),
@@ -227,6 +237,39 @@ function EventDetailPage() {
     return uid.length > 10 || uid.includes('-') ? `${uid.slice(0, 6)}…` : uid
   }
 
+  // Utility: insert a newline every `n` characters, preserving existing newlines
+  function wrapEveryN(str: string, n: number): string {
+    if (n <= 0) return str
+    return str
+      .split('\n')
+      .map((segment) => {
+        if (segment.length <= n) return segment
+        const parts: Array<string> = []
+        for (let i = 0; i < segment.length; i += n) {
+          parts.push(segment.slice(i, i + n))
+        }
+        return parts.join('\n')
+      })
+      .join('\n')
+  }
+
+  const heroUrl = (() => {
+    const pics = data.pictures
+    const first = Array.isArray(pics) ? pics[0] : pics
+    if (!first) {
+      // fallback image if no picture was uploaded
+      return 'https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop'
+    }
+
+    const s = String(first)
+
+    // If backend ever starts returning full data URLs, just use them directly
+    if (s.startsWith('data:')) {
+      return s
+    }
+    // Otherwise assume it's raw base64 and add a JPEG prefix
+    return `data:image/jpeg;base64,${s}`
+  })()
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
@@ -258,12 +301,10 @@ function EventDetailPage() {
       <div className="grid gap-8 md:grid-cols-[2fr,1fr]">
         {/* LEFT */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          <div
-            className="h-60 w-full bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1529336953121-ad3c0f3f1f59?q=80&w=1600&auto=format&fit=crop')",
-            }}
+          <img
+            src={heroUrl}
+            alt="Event banner"
+            className="w-full  object-cover"
           />
           <div className="p-6">
             <h1 className="text-3xl font-extrabold tracking-tight">
@@ -320,13 +361,15 @@ function EventDetailPage() {
               onClick={handleSave}
               disabled={!isLoggedIn}
               className={[
-                'mt-5 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
-                'hover:bg-neutral-100 hover:shadow-md cursor-pointer active:bg-neutral-200',
+                'mt-5 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 active:bg-neutral-200',
+                isLoggedIn
+                  ? 'hover:bg-neutral-100 hover:shadow-md cursor-pointer'
+                  : '',
                 isLoggedIn
                   ? saved
                     ? 'bg-red-50 text-[#7A0019] border border-red-200'
-                    : 'border border-neutral-300 text-neutral-700'
-                  : 'bg-neutral-300 cursor-not-allowed text-white',
+                    : 'border border-neutral-300 text-black'
+                  : 'bg-neutral-300 cursor-not-allowed text-black',
               ].join(' ')}
               title={isLoggedIn ? '' : 'Log in to save'}
             >
@@ -353,6 +396,32 @@ function EventDetailPage() {
               Tip: Add this event to your calendar so you don’t miss it.
             </p>
           </div>
+          {/* Creator Controls */}
+          {isLoggedIn &&
+            user?.role === 'creator' &&
+            data?.organizer_id === user.id && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+                <h4 className="text-sm font-semibold mb-3 text-neutral-900">
+                  Event Management
+                </h4>
+                <div className="space-y-2">
+                  <Link
+                    to="/events/$eventId/edit"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  >
+                    Edit Event
+                  </Link>
+                  <Link
+                    to="/events/$eventId/analytics"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                  >
+                    View Analytics
+                  </Link>
+                </div>
+              </div>
+            )}
         </aside>
       </div>
 
@@ -362,14 +431,14 @@ function EventDetailPage() {
           <h3 className="text-lg font-semibold">Comments</h3>
           <button
             onClick={loadReviews}
-            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-50"
+            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-50 cursor-pointer"
             title="Refresh comments"
           >
             Refresh
           </button>
         </div>
 
-        <div className="mt-4 space-y-5">
+        <div className="mt-4 space-y-5 max-h-96 overflow-y-auto pr-2">
           {reviewsLoading && (
             <div className="text-sm text-neutral-600">Loading…</div>
           )}
@@ -392,7 +461,9 @@ function EventDetailPage() {
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-neutral-800">{r.desc}</p>
+                <p className="mt-1 text-sm text-neutral-800 break-words whitespace-pre-wrap">
+                  {wrapEveryN(String(r.desc || ''), 100)}
+                </p>
               </div>
             </div>
           ))}
@@ -402,21 +473,32 @@ function EventDetailPage() {
           onSubmit={submitReview}
           className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center"
         >
-          <input
-            type="text"
-            placeholder={
-              isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'
-            }
-            value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            disabled={!isLoggedIn || submitting}
-            className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
-          />
+          <div className="flex-1 flex flex-col">
+            <input
+              type="text"
+              placeholder={
+                isLoggedIn ? 'Write a comment…' : 'Sign in to write a comment'
+              }
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              disabled={!isLoggedIn || submitting}
+              maxLength={MAX_REVIEW_CHARS}
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 disabled:bg-neutral-100"
+            />
+            <div className="mt-1 flex justify-between text-xs text-neutral-500">
+              <span>
+                {reviewText.length}/{MAX_REVIEW_CHARS}
+              </span>
+              {reviewText.length === MAX_REVIEW_CHARS && (
+                <span className="text-red-600">Max length reached</span>
+              )}
+            </div>
+          </div>
           <select
             value={reviewStar}
             onChange={(e) => setReviewStar(Number(e.target.value))}
             disabled={!isLoggedIn || submitting}
-            className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100"
+            className="rounded-xl border border-neutral-300 px-2 py-2 text-sm outline-none focus:border-neutral-400 disabled:bg-neutral-100 cursor-pointer disabled:cursor-not-allowed"
           >
             {[5, 4, 3, 2, 1].map((s) => (
               <option key={s} value={s}>
@@ -427,7 +509,7 @@ function EventDetailPage() {
           <button
             type="submit"
             disabled={!isLoggedIn || submitting}
-            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60"
+            className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? 'Posting…' : 'Post'}
           </button>
