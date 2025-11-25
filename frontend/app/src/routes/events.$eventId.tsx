@@ -48,7 +48,7 @@ function EventDetailPage() {
   const [avgAge, setAvgAge] = React.useState<number | null>(null)
   const [exporting, setExporting] = React.useState(false)
   React.useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       setLoading(true)
       setErr(null)
       try {
@@ -76,7 +76,7 @@ function EventDetailPage() {
       }
     })()
 
-    return () => { }
+    return () => {}
   }, [eventId])
 
   // fetch reviews for this event
@@ -113,7 +113,7 @@ function EventDetailPage() {
       return
     }
 
-    ; (async () => {
+    ;(async () => {
       try {
         const csv = await ToolsService.getAttendeesList({
           eventId: Number(eventId),
@@ -288,7 +288,6 @@ function EventDetailPage() {
       })
       .join('\n')
   }
-
 
   const heroUrl = (() => {
     const pics = data.pictures
@@ -528,7 +527,6 @@ function EventDetailPage() {
                 </button>
               </div>
             )}
-
         </aside>
       </div>
 
