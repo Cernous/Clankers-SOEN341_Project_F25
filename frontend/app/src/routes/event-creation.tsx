@@ -235,7 +235,7 @@ function RouteComponent() {
               onChange={(e) =>
                 setTicketType(e.target.value as 'free' | 'paid' | '')
               }
-              className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
+              className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 cursor-pointer"
             >
               <option value="">--Please choose an option--</option>
               <option value="free">Free</option>
@@ -270,7 +270,7 @@ function RouteComponent() {
               onChange={(e) =>
                 setVisibility(e.target.value as 'public' | 'private')
               }
-              className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400"
+              className="min-w-[200px] flex-1 rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 cursor-pointer"
             >
               <option value="public">Public</option>
               <option value="private">Private</option>
@@ -314,7 +314,7 @@ function RouteComponent() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-60"
+            className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? 'Creating…' : 'Create'}
           </button>

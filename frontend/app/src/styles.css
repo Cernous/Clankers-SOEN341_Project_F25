@@ -129,3 +129,8 @@ button[disabled] {
 input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
+
+/* Pointer cursor for create event calendar icon */
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
