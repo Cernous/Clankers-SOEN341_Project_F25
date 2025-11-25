@@ -58,10 +58,10 @@ function AdminDashboard() {
   const [usersError, setUsersError] = React.useState<string | null>(null)
 
   // analytics (average age)
-  const [avgAgeEventId, setAvgAgeEventId] = React.useState<string>('') // dropdown
+
   const [avgAgeValue, setAvgAgeValue] = React.useState<string>('—')
   const [avgAgeLoading, setAvgAgeLoading] = React.useState(false)
-
+  const [showAllEvents, setShowAllEvents] = React.useState(false)
   React.useEffect(() => {
     if (!isLoggedIn || user?.role !== 'admin') {
       navigate({ to: '/' })
@@ -115,7 +115,13 @@ function AdminDashboard() {
             }
           }),
         )
-        setEvents(enriched)
+        // sort by start_time descending (most recent first)
+        const sorted = [...enriched].sort((a, b) => {
+          const da = new Date(a.start_time).getTime()
+          const db = new Date(b.start_time).getTime()
+          return db - da
+        })
+        setEvents(sorted)
 
         // ------- USERS -------
         try {
@@ -166,24 +172,29 @@ function AdminDashboard() {
   ).size
 
   const totalUsers = users.length
+  const recentEvents = showAllEvents ? events : events.slice(0, 8)
 
   async function fetchAverageAge() {
-    if (!avgAgeEventId) return
     setAvgAgeLoading(true)
     setAvgAgeValue('—')
+
     try {
-      const numId = Number(avgAgeEventId)
-      const res = await EventsService.toolsGetEventAverageAge({
-        eventId: numId,
-      })
+      // 👇 call your platform-wide endpoint here
+      const res = await ToolsService.getAverageAge()
+
+      // Handle both primitive and object-shaped responses
       const val =
         typeof res === 'number'
           ? res
           : typeof (res as any)?.average_age === 'number'
             ? (res as any).average_age
-            : null
+            : typeof (res as any)?.avg_age === 'number'
+              ? (res as any).avg_age
+              : null
+
       setAvgAgeValue(val != null ? `${val.toFixed(1)} yrs` : 'N/A')
-    } catch {
+    } catch (e) {
+      console.error('Failed to fetch average age', e)
       setAvgAgeValue('Error')
     } finally {
       setAvgAgeLoading(false)
@@ -235,32 +246,24 @@ function AdminDashboard() {
           <section className="mt-8">
             <h2 className="text-lg font-semibold mb-3">Analytics</h2>
             <div className="rounded-xl border bg-white p-5 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="text-sm">
-                <span className="block text-neutral-600 mb-1">Event</span>
-                <select
-                  value={avgAgeEventId}
-                  onChange={(e) => setAvgAgeEventId(e.target.value)}
-                  className="min-w-[280px] rounded-lg border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-400 cursor-pointer"
-                >
-                  <option value="">— Select an event —</option>
-                  {events.map((e) => (
-                    <option key={String(e.id)} value={String(e.id)}>
-                      {e.name}
-                    </option>
-                  ))}
-                </select>
+              <label className="text-sm flex-1">
+                <span className="block text-neutral-600 mb-1">
+                  Platform-wide average age
+                </span>
+                <input
+                  type="text"
+                  readOnly
+                  value={avgAgeValue}
+                  className="w-full min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 bg-neutral-50 text-sm"
+                />
               </label>
               <button
                 onClick={fetchAverageAge}
-                disabled={!avgAgeEventId || avgAgeLoading}
+                disabled={avgAgeLoading}
                 className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-900 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 {avgAgeLoading ? 'Computing…' : 'Get Average Age'}
               </button>
-              <div className="text-sm text-neutral-700 sm:ml-4">
-                Average age:{' '}
-                <span className="font-semibold">{avgAgeValue}</span>
-              </div>
             </div>
           </section>
 
@@ -279,7 +282,7 @@ function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {events.slice(0, 8).map((e, i) => (
+                  {recentEvents.map((e, i) => (
                     <tr key={String(e.id)} className={i > 0 ? 'border-t' : ''}>
                       <td className="px-4 py-2">{e.name}</td>
                       <td className="px-4 py-2">
@@ -303,6 +306,17 @@ function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+              {events.length > 8 && (
+                <div className="border-t bg-white px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllEvents((prev) => !prev)}
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-800"
+                  >
+                    {showAllEvents ? 'Show top 8 only' : 'Show all events'}
+                  </button>
+                </div>
+              )}
             </div>
           </section>
 

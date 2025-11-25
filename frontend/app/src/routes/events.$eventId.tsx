@@ -115,19 +115,41 @@ function EventDetailPage() {
 
     ;(async () => {
       try {
-        const csv = await ToolsService.getAttendeesList({
-          eventId: Number(eventId),
-        })
+        const numericId = Number(eventId)
+        if (!Number.isFinite(numericId)) {
+          console.error('Invalid event id for analytics:', eventId)
+          setAttendeesCount(null)
+          setAvgAge(null)
+          return
+        }
 
+        // Fetch attendees CSV and average age in parallel
+        const [csv, ageRes] = await Promise.all([
+          ToolsService.getAttendeesList({ eventId: numericId }),
+          ToolsService.getEventAverageAge({ eventId: numericId }),
+        ])
+
+        // ---- attendees count from CSV ----
         let count = 0
         if (typeof csv === 'string' && csv.trim().length > 0) {
           const lines = csv.trim().split('\n')
           const dataLines = lines.slice(1).filter((line) => line.trim() !== '')
           count = dataLines.length
         }
-
         setAttendeesCount(count)
-        setAvgAge(null) // no real age data yet
+
+        // ---- average age from toolsGetEventAverageAge ----
+        let avg: number | null = null
+
+        if (typeof ageRes === 'number') {
+          avg = ageRes
+        } else if (ageRes && typeof ageRes === 'object') {
+          // adjust property name if your API uses something else
+          avg =
+            (ageRes as any).average_age ?? (ageRes as any).averageAge ?? null
+        }
+
+        setAvgAge(avg)
       } catch (e) {
         console.error('Quick analytics load failed', e)
         setAttendeesCount(null)
@@ -135,6 +157,7 @@ function EventDetailPage() {
       }
     })()
   }, [data, isLoggedIn, user, eventId])
+
   if (loading) return <main className="p-6">Loading…</main>
   if (err) return <main className="p-6 text-red-600">{err}</main>
   if (!data) return <main className="p-6">Not found.</main>
