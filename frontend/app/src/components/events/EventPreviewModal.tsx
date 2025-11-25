@@ -52,15 +52,6 @@ export default function EventPreviewModal({
     }
   }
 
-  const handleClaim = () => {
-    if (!isLoggedIn || !user) return
-    const owner = user.username || user.email || 'me'
-    const t = claimTicket(event, owner, 'free')
-    alert(
-      `Ticket issued!\n\nTicket ID: ${t.id}\nEvent: ${t.title}\nOwner: ${t.owner}`,
-    )
-  }
-
   return (
     <div
       role="dialog"

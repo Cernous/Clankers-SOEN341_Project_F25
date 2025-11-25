@@ -23,7 +23,7 @@ function TicketsPage() {
       return
     }
 
-    let mounted = true
+    // let mounted = true
 
     ;(async () => {
       try {
@@ -48,7 +48,7 @@ function TicketsPage() {
     })()
 
     return () => {
-      mounted = false
+      // mounted = false
     }
   }, [isLoggedIn])
 
