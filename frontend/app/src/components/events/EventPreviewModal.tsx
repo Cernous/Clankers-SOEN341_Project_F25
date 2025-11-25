@@ -1,6 +1,6 @@
 // src/components/events/EventPreviewModal.tsx
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../../hooks/AuthContext'
+// import { useAuth } from '../../hooks/AuthContext'
 import { useUserData } from '../../hooks/UserDataContext'
 import { CalendarService } from '../../client'
 import type { SimpleEvent } from '../../data/events.sample'
@@ -18,8 +18,8 @@ export default function EventPreviewModal({
   isLoggedIn,
   onClose,
 }: Props) {
-  const { user } = useAuth()
-  const { isSaved, toggleSave, claimTicket } = useUserData()
+  // const { user } = useAuth()
+  const { isSaved, toggleSave } = useUserData()
 
   if (!event) return null
 
