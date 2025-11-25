@@ -396,6 +396,32 @@ function EventDetailPage() {
               Tip: Add this event to your calendar so you don’t miss it.
             </p>
           </div>
+          {/* Creator Controls */}
+          {isLoggedIn &&
+            user?.role === 'creator' &&
+            data?.organizer_id === user.id && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+                <h4 className="text-sm font-semibold mb-3 text-neutral-900">
+                  Event Management
+                </h4>
+                <div className="space-y-2">
+                  <Link
+                    to="/events/$eventId/edit"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  >
+                    Edit Event
+                  </Link>
+                  <Link
+                    to="/events/$eventId/analytics"
+                    params={{ eventId }}
+                    className="block w-full rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                  >
+                    View Analytics
+                  </Link>
+                </div>
+              </div>
+            )}
         </aside>
       </div>
 
